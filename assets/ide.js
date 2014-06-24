@@ -79,6 +79,12 @@ function socket() {
 			output.innerHTML += messageActual.replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
 			output.scrollTop = output.scrollHeight;
 			return;
+		} else if (message.substring(0, 7) == "error: ") {
+			messageActual = message.substring(7);
+			output.innerHTML += "<span style=\"color:red;\">SERVER ERROR:";
+			output.innerHTML += messageActual.replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
+			output.innerHTML += "</span>";
+			output.scrollTop = output.scrollHeight;
 		}
 	};
 }
