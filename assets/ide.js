@@ -164,8 +164,8 @@ function newFile() {
 }
 
 function loadFile(div) {
-	filename = div.innerHTML;
-	titleHolder.innerHTML = filename;
+	filename = div.innerHTML.replace(/ /g, "-")+".py";
+	titleHolder.innerHTML = div.innerHTML;
 	contents = GET("/api/readfile?file="+filename);
 	editor.setValue(contents);
 	removePopup();
