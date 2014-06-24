@@ -55,21 +55,29 @@
 			<h4 id="title">API Documentation</h4>
 		</header>
 		<h4>GET</h4>
-			<h5>/api/listfiles</h5>
-			<div class="holder">
-				Outputs the names of the files directly inside of /projects, seperated by line breaks(\n)
-			</div>
-			<h5>/api/readfile</h5>
-			<div class="holder">
-				<h6>file</h6> : Name of the file in /projects to read<br>
-				Outputs the content of the file denoted by the file arguement
-			</div>
+		<h5>/api/listfiles</h5>
+		<div class="holder">
+			Outputs the names of the files directly inside of /projects, seperated by line breaks(\n)
+		</div>
+		<h5>/api/readfile</h5>
+		<div class="holder">
+			<h6>file</h6> : Name of the file in /projects to read<br>
+			Outputs the content of the file denoted by the file arguement
+		</div>
 		<h4>POST</h4>
-			<h5>/api/savefile</h5>
-			<div class="holder">
-				<h6>file</h6> : Name of the file in /projects to read<br>
-				<h6>content</h6> : The data to write to the file<br>
-				Outputs the content of the file denoted by the file arguement	
-			</div>		
+		<h5>/api/savefile</h5>
+		<div class="holder">
+			<h6>file</h6> : Name of the file in /projects to read<br>
+			<h6>content</h6> : The data to write to the file<br>
+			Outputs the content of the file denoted by the file arguement	
+		</div>	
+		<h4>Web Socket</h4>
+		<h5>/api/socket</h5>
+		<div class="holder">
+			The server expects to receive the name of the file(Only the name, /projects/ is prefixed to it by the server) to run as the first message<br>
+			Once the server has received the filename, it will create a subprocess and start sending output back prefixed with "output: " any server error messages will be preceeded by "error: "<br>
+			To simulate a Control+C message, send "close", the process may not halt, since the python script could handle the KeyboardInterrupt<br>
+			The server will close the socket when the process has halted
+		</div>
 	</body>
 </html>
