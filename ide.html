@@ -1,0 +1,227 @@
+<html>
+	<!--
+		IDEAS:
+			Hotkeys(Override Ctrl+S, etc)
+			Web sockets for output(Use built-in library)
+	-->
+	<head>
+		<title>{{.title}}</title>
+		<style>
+			body {
+				margin: 0; /*Override default*/
+				overflow: hidden;
+			}
+
+			header {
+				height: 2em;
+				background-color: #555;
+				width: 100%;
+				color: #fff;
+			}
+			
+			.headerbutton {
+				width: 1.75em;
+				height: 1.75em;
+				position: relative;
+				cursor: pointer;
+				z-index: 2;
+			}
+
+			.CodeMirror {
+				height: auto !IMPORTANT;
+			}
+
+			.holder {
+				background-color: #000;
+				opacity: 0.4;
+				position: absolute;
+				z-index: 3;
+				width: 100%;
+				height: 100%;
+				left: 0;
+				top: 0;
+			}
+
+			.popup {
+				background-color: #eee;
+				position: absolute;
+				z-index: 4;
+				left: 50%;
+				top: 50%;
+				border-radius: 4px;
+			}
+
+			.filepopup {
+				width: 250px;
+				height: 100px;
+				margin-left: -125px;
+				margin-top: -50px;
+			}
+
+			.filetext {
+				position: relative;
+				width: 100%;
+				height: 26px;
+				left: 0;
+				top: 4px;
+				font-size: 16px;
+				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+			}
+
+			.popuptitle {
+				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+				font-size: 16px;
+				text-align: center;
+				padding-top: 3px;
+				padding-bottom: 3px;
+				background-color: #aaa;
+				position: relative;
+				margin: 0;
+				left: 0;
+				top: 0;
+			}
+
+			.filecancel {
+				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+				font-size: 16px;
+				text-align: center;
+				background-color: #aaa;
+				position: relative;
+				margin: 0;
+				left: 2.5%;
+				top: -12px;
+				width: 45%;
+				height: 25px;
+			}
+
+			.fileokay {
+				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+				font-size: 16px;
+				text-align: center;
+				background-color: #aaa;
+				position: relative;
+				margin: 0;
+				left: 52.5%;
+				top: 13px;
+				width: 45%;
+				height: 25px;
+			}
+
+			.folderpopup {
+				width: 400px;
+				height: 300px;
+				margin-left: -200px;
+				margin-top: -150px;
+			}
+
+			.fileholder {
+				position: relative;
+				background-color: inherit;
+				margin: 0;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 240px;
+				overflow-y: auto;
+				overflow-x: hidden;
+			}
+
+			.foldercancel {
+				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+				font-size: 16px;
+				text-align: center;
+				background-color: #aaa;
+				position: relative;
+				margin: 0;
+				left: 2.5%;
+				width: 45%;
+				height: 25px;
+			}
+
+			.foldernew {
+				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+				font-size: 16px;
+				text-align: center;
+				background-color: #aaa;
+				position: relative;
+				margin: 0;
+				left: 52.5%;
+				top: -25px;
+				width: 45%;
+				height: 25px;
+			}
+
+			.filediv {
+				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+				font-size: 16px;
+				text-align: center;
+				background-color: #aaa;
+				margin: 0;
+				position: relative;
+				width: 96%;
+				left: 2%;
+				margin-top: 2%;
+				height: 20px;
+			}
+
+			#title {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: inherit;
+				text-align: center;
+				vertical-align: middle;
+				margin: 0;
+				margin-top: 0.5em;
+				color: white;
+				z-index: 1;
+				font-family: monospace;
+			}
+
+			#output {
+				overflow-y: auto;
+				position: absolute;
+				top: 80%;
+				bottom: 0;
+				left: 0;
+				margin-top: 2em;
+				width: 100%;
+				border-top-color: #00232c;
+				border-top-style: solid;
+				border-top-width: 1px;
+				font-family: monospace;
+				line-height: 1em;
+				z-index: 3;
+			}
+
+			#webview {
+				width: 0;
+				position: absolute;
+				top: 2em;
+				bottom: 0;
+				height: 100%;
+				left: 100%;
+			}
+		</style>
+		<link rel="stylesheet" href="/cm.css">
+		<link rel="stylesheet" href="/theme.css">
+		<script src="/cm.js"></script>
+		<script src="/mode.js"></script>
+		<script src="/ide.js"></script>
+	</head>
+	<body>
+		<header>
+			<img id="play" class="headerbutton" src="/images/play.png" onclick="run()"></img>
+			<img id="open" class="headerbutton" src="/images/folder.png" onclick="openFile()"></img>
+			<h4 id="title">Untitled</h4>
+			<img id="browser" style="position:absolute;left:100%;margin-left:-1.75em;" class="headerbutton" src="/images/browser.png" onclick="toggleWeb()"></img>
+		</header>
+		<div id="ide" style="width:100%">
+			<div style="height:80%;width:100%;" id="codewrapper"></div>
+			<div id="output"></div>
+		</div>
+		<iframe id="webview" src="http://www.dev.raspberrystem.com">
+		</iframe>
+	</body>
+</html>
