@@ -1,8 +1,10 @@
-//TODO error highlighting
+//TODO:
+//Error highlighting
 //Improve the UI and UX
 //Linting?
 //Optimize CM
 //API Docs
+//Custom colors and themes?
 var codewrapper, output, ide, editor, web, titleHolder, playButton;
 //The URL is needed for the web socket connection
 var url = document.baseURI.match(/\/\/[a-zA-Z0-9\.]+/)[0].substring(2);

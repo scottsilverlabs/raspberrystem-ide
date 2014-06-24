@@ -1,0 +1,75 @@
+<html>
+	<head>
+		<title>API Documentation</title>
+		<style>
+			body {
+				margin: 0; /*Override default*/
+				overflow: hidden;
+				font-family: monospace;
+				font-size: 0.9em;
+			}
+
+			header {
+				height: 2em;
+				background-color: #555;
+				width: 100%;
+				color: #fff;
+			}
+
+			h5 {
+				font-size: 1em;
+				margin-left: 1em;
+			}
+
+			h6 {
+				font-size: 0.9em;
+				margin-top: 0;
+				margin-bottom: 0;
+				display: inline;
+			}
+
+			#title {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: inherit;
+				text-align: center;
+				vertical-align: middle;
+				margin: 0;
+				margin-top: 0.5em;
+				color: white;
+				z-index: 1;
+				font-family: monospace;
+			}
+
+			.holder {
+				margin: 0;
+				margin-left: 2em;
+				background-color: #efefef;
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<h4 id="title">API Documentation</h4>
+		</header>
+		<h4>GET</h4>
+			<h5>/api/listfiles</h5>
+			<div class="holder">
+				Outputs the names of the files directly inside of /projects, seperated by line breaks(\n)
+			</div>
+			<h5>/api/readfile</h5>
+			<div class="holder">
+				<h6>file</h6> : Name of the file in /projects to read<br>
+				Outputs the content of the file denoted by the file arguement
+			</div>
+		<h4>POST</h4>
+			<h5>/api/savefile</h5>
+			<div class="holder">
+				<h6>file</h6> : Name of the file in /projects to read<br>
+				<h6>content</h6> : The data to write to the file<br>
+				Outputs the content of the file denoted by the file arguement	
+			</div>		
+	</body>
+</html>

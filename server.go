@@ -1,5 +1,7 @@
 package main
 
+//TODO config file to change ports and color
+
 import (
 	"code.google.com/p/go.net/websocket"
 	"github.com/kr/pty"
@@ -14,14 +16,20 @@ import (
 )
 
 var ide *template.Template
+var api *template.Template
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
 
 func main() {
-	content, err := ioutil.ReadFile("/etc/ide/ide.html") //ide.html is actually a go template
+	content, err := ioutil.ReadFile("/etc/ide/ide.html")   //ide.html is actually a go template
+	acontent, aerr := ioutil.ReadFile("/etc/ide/api.html") //ide.html is actually a go template
 	if err != nil {
 		panic(err)
 	}
+	if aerr != nil {
+		panic(aerr)
+	}
 	ide, err = template.New("page").Parse(string(content))
+	api, err = template.New("page").Parse(string(acontent))
 	if err != nil {
 		panic(err)
 	}
@@ -31,6 +39,7 @@ func main() {
 	http.HandleFunc("/cm.css", cmCss)
 	http.HandleFunc("/mode.js", mode)
 	http.HandleFunc("/theme.css", theme)
+	http.HandleFunc("/api/", apiDoc)
 	http.HandleFunc("/api/listfiles", listFiles)
 	http.HandleFunc("/api/readfile", readFile)
 	http.HandleFunc("/api/savefile", saveFile)
@@ -48,6 +57,10 @@ func index(w http.ResponseWriter, r *http.Request) {
 		"title": "RStem IDE@" + string(hostname),
 	}
 	ide.ExecuteTemplate(w, "page", data)
+}
+
+func apiDoc(w http.ResponseWriter, r *http.Request) {
+	api.ExecuteTemplate(w, "page", nil)
 }
 
 func ideJs(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +109,7 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(contents))
 }
 
+//Potential issue here because POST requests tend to have size limits
 func saveFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	name := r.Form.Get("file")
@@ -103,10 +117,11 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	ioutil.WriteFile("/projects/"+name, []byte(content), 0744)
 }
 
+//Called as a goroutine to wait for the close command and kill the process.
 func watchClose(s *websocket.Conn, p *os.Process) {
 	data := make([]byte, 512)
 	n, _ := s.Read(data)
-	payload := string(data[:n])
+	payload := string(data[:n]) //[:n] to cut out padding
 	if payload == "close" {
 		p.Signal(syscall.SIGINT)
 	}
@@ -115,7 +130,7 @@ func watchClose(s *websocket.Conn, p *os.Process) {
 func socketServer(s *websocket.Conn) {
 	data := make([]byte, 512)
 	n, _ := s.Read(data)
-	com := exec.Command("python3", "/projects/"+string(data[:n]))
+	com := exec.Command("python3", "/projects/"+string(data[:n])) //[:n] to cut out padding
 	pt, err := pty.Start(com)
 	if err != nil {
 		s.Write([]byte("error: " + err.Error()))
@@ -132,7 +147,7 @@ func socketServer(s *websocket.Conn) {
 		} else if n > 0 {
 			s.Write([]byte("output: " + string(out[:n])))
 		}
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 100) //For minimal CPU impact
 	}
 	s.Close()
 }
