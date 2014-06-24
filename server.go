@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -18,15 +19,27 @@ import (
 var ide *template.Template
 var api *template.Template
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
+var config = map[string]string{"port": "80"}
 
 func main() {
-	content, err := ioutil.ReadFile("/etc/ide/ide.html")   //ide.html is actually a go template
-	acontent, aerr := ioutil.ReadFile("/etc/ide/api.html") //ide.html is actually a go template
+	content, err := ioutil.ReadFile("/etc/ide/ide.html")        //ide.html is actually a go template
+	acontent, aerr := ioutil.ReadFile("/etc/ide/api.html")      //ide.html is actually a go template
+	settings, serr := ioutil.ReadFile("/etc/ide/settings.conf") //ide.html is actually a go template
 	if err != nil {
 		panic(err)
 	}
 	if aerr != nil {
 		panic(aerr)
+	}
+	if serr == nil {
+		set := strings.Split(string(settings), "\n")
+		for _, line := range set {
+			if len(line) > 0 && line[0:1] != "#" {
+				line = strings.Split(line, "#")[0]
+				lsplit := strings.Split(line, " ")
+				config[strings.ToLower(lsplit[0])] = strings.TrimRight(line[len(lsplit[0])+1:], " ")
+			}
+		}
 	}
 	ide, err = template.New("page").Parse(string(content))
 	api, err = template.New("page").Parse(string(acontent))
@@ -45,7 +58,7 @@ func main() {
 	http.HandleFunc("/api/savefile", saveFile)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("/etc/ide/assets/images"))))
-	err = http.ListenAndServe(":80", nil)
+	err = http.ListenAndServe(":"+config["port"], nil)
 	if err != nil {
 		panic(err)
 	}

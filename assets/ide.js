@@ -3,8 +3,8 @@
 //Improve the UI and UX
 //Linting?
 //Optimize CM
-//API Docs
 //Custom colors and themes?
+//Setup pi image to boot into X with midori -e Fullscreen -a http://127.0.0.1
 var codewrapper, output, ide, editor, web, titleHolder, playButton;
 //The URL is needed for the web socket connection
 var url = document.baseURI.match(/\/\/[a-zA-Z0-9\.]+/)[0].substring(2);
