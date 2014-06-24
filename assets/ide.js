@@ -1,3 +1,8 @@
+//TODO error highlighting
+//Improve the UI and UX
+//Linting?
+//Optimize CM
+//API Docs
 var codewrapper, output, ide, editor, web, titleHolder, playButton;
 //The URL is needed for the web socket connection
 var url = document.baseURI.match(/\/\/[a-zA-Z0-9\.]+/)[0].substring(2);
@@ -7,7 +12,7 @@ window.onload = function main() {
 	ide = document.getElementById("ide");
 	web = document.getElementById("webview");
 	playButton = document.getElementById("play");
-	titleHolder = document.getElementById("title")
+	titleHolder = document.getElementById("title");
 	editor = CodeMirror(document.getElementById("codewrapper"), {
 		mode: {
 			name: "python",
@@ -71,7 +76,8 @@ function socket() {
 		message = event.data;
 		if (message.substring(0, 8) == "output: ") {
 			messageActual = message.substring(8);
-			output.innerHTML += messageActual.replace(/\n/g, "<br>");
+			output.innerHTML += messageActual.replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
+			output.scrollTop = output.scrollHeight;
 			return;
 		}
 	};
@@ -83,7 +89,7 @@ function run() {
 		output.innerHTML = "";
 		socket();
 	} else {
-		ws.close();
+		ws.send("close");
 	}
 }
 

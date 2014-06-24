@@ -2,13 +2,14 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
-	"fmt"
 	"github.com/kr/pty"
 	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
+	"syscall"
 	"time"
 )
 
@@ -102,14 +103,24 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	ioutil.WriteFile("/projects/"+name, []byte(content), 0744)
 }
 
-func socketServer(s *websocket.Conn) {
-	defer s.Close()
+func watchClose(s *websocket.Conn, p *os.Process) {
 	data := make([]byte, 512)
-	n, err := s.Read(data)
-	pt, err := pty.Start(exec.Command("python3", "/projects/"+string(data[:n])))
-	if err != nil {
-		fmt.Println(err)
+	n, _ := s.Read(data)
+	payload := string(data[:n])
+	if payload == "close" {
+		p.Signal(syscall.SIGINT)
 	}
+}
+
+func socketServer(s *websocket.Conn) {
+	data := make([]byte, 512)
+	n, _ := s.Read(data)
+	com := exec.Command("python3", "/projects/"+string(data[:n]))
+	pt, err := pty.Start(com)
+	if err != nil {
+		s.Write([]byte("error: " + err.Error()))
+	}
+	go watchClose(s, com.Process)
 	for {
 		out := make([]byte, 1024)
 		n, err := pt.Read(out)
@@ -119,8 +130,9 @@ func socketServer(s *websocket.Conn) {
 			}
 			s.Write([]byte("error: " + err.Error()))
 		} else if n > 0 {
-			s.Write([]byte("output: " + string(out)))
+			s.Write([]byte("output: " + string(out[:n])))
 		}
 		time.Sleep(time.Millisecond * 100)
 	}
+	s.Close()
 }
