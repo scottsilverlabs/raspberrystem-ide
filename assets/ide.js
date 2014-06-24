@@ -105,8 +105,8 @@ function toggleWeb() {
 
 var back, popup, text;
 function removePopup() {
-	back.remove();
-	popup.remove();
+	back.parentNode.removeChild(back);
+	popup.parentNode.removeChild(popup);
 }
 
 //Called when the newFile okay button is pressed
