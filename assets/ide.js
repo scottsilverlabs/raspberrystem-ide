@@ -1,5 +1,4 @@
 //TODO:
-//Error highlighting
 //Improve the UI and UX
 //Linting?
 //Optimize CM

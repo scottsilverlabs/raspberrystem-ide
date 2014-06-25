@@ -1,7 +1,5 @@
 package main
 
-//TODO config file to change ports and color
-
 import (
 	"code.google.com/p/go.net/websocket"
 	"github.com/kr/pty"
@@ -19,7 +17,7 @@ import (
 var ide *template.Template
 var api *template.Template
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
-var config = map[string]string{"port": "80"}
+var config = map[string]string{"port": "80", "projectdir": "/projects/"}
 
 func main() {
 	content, err := ioutil.ReadFile("/etc/ide/ide.html") //ide.html is actually a go template
@@ -41,6 +39,7 @@ func main() {
 			}
 		}
 	}
+	os.Mkdir(config["projectdir"], 0775)
 	ide, err = template.New("page").Parse(string(content))
 	api, err = template.New("page").Parse(string(acontent))
 	if err != nil {
@@ -98,7 +97,7 @@ func mode(w http.ResponseWriter, r *http.Request) {
 
 func listFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	files, _ := ioutil.ReadDir("/projects/")
+	files, _ := ioutil.ReadDir(config["projectdir"])
 	var list string
 	for _, f := range files {
 		if !f.IsDir() {
@@ -114,7 +113,7 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	opts := r.URL.Query()
 	fname := strings.Trim(opts.Get("file"), " ./")
-	contents, err := ioutil.ReadFile("/projects/" + fname)
+	contents, err := ioutil.ReadFile(config["projectdir"] + fname)
 	if err != nil {
 		io.WriteString(w, "error")
 		return
@@ -127,7 +126,7 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	name := strings.Trim(r.Form.Get("file"), " ./")
 	content := r.Form.Get("content")
-	ioutil.WriteFile("/projects/"+name, []byte(content), 0744)
+	ioutil.WriteFile(config["projectdir"]+name, []byte(content), 0744)
 }
 
 //Called as a goroutine to wait for the close command and kill the process.
@@ -143,7 +142,7 @@ func watchClose(s *websocket.Conn, p *os.Process) {
 func socketServer(s *websocket.Conn) {
 	data := make([]byte, 512)
 	n, _ := s.Read(data)
-	com := exec.Command("python3", "/projects/"+string(data[:n])) //[:n] to cut out padding
+	com := exec.Command("python3", config["projectdir"]+string(data[:n])) //[:n] to cut out padding
 	pt, err := pty.Start(com)
 	if err != nil {
 		s.Write([]byte("error: " + err.Error()))
