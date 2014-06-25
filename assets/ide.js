@@ -22,6 +22,7 @@ window.onload = function main() {
 			version: 3,
 			singleLineStringErrors: false
 		},
+		autofocus: true,
 		lineNumbers: true,
 		indentUnit: 4,
 		matchBrackets: true,
@@ -61,17 +62,63 @@ function save() {
 	}
 }
 
+var errs = [];
+var errRegex = new RegExp(/[ ]+File "\/projects\/.+", line \d+\n.+\n.+\^\n.+: .+/g);
+var traceRegex = new RegExp(/[ ]+File "\/projects\/.+", line \d+, in.+\n.+\n.+: .+/g);
+var stripRegex = new RegExp(/(^\s+|\s+$)/g);
 function errorHighlight() {
-	var errString = output.innerHTML.replace(/<br>/g, "\n");
-	var errString = output.innerHTML.replace(/&nbsp;/g, " ");
+	var errString = outputtext.innerHTML;
+	var lines = errString.split("\n");
+	var errors = errString.match(errRegex);
+	for (var i in errors) {
+		var err = errors[i];
+		var errLines = err.split("\n");
+		var errLinePos = errLines[0].split(", ")[1].substring(5);
+		var line = editor.lineInfo(errLinePos-1);
+		var stripped = errLines[1].replace(stripRegex, "");
+		var match = line.text.indexOf(stripped);
+		var start = {"line": errLinePos-1, "ch": match};
+		var end = {"line": errLinePos-1, "ch": match+stripped.length};
+		errs.push(editor.markText(start, end, {
+			className: "cm-error",
+			clearOnEnter: true,
+			title: errLines[3],
+		}));
+		if (i === 0) {
+			editor.scrollTo(0, errLinePos);
+		}
+	}
+	var traces = errString.match(traceRegex);
+	console.log(traces);
+	for (i in traces) {
+		err = traces[i];
+		errLines = err.split("\n");
+		errLinePos = errLines[0].split(", ")[1].substring(5);
+		line = editor.lineInfo(errLinePos-1);
+		stripped = errLines[1].replace(stripRegex, "");
+		match = line.text.indexOf(stripped);
+		start = {"line": errLinePos-1, "ch": match};
+		end = {"line": errLinePos-1, "ch": match+stripped.length};
+		errs.push(editor.markText(start, end, {
+			className: "cm-error",
+			clearOnEnter: true,
+			title: errLines[2],
+		}));
+		if (i == 0) {
+			editor.scrollTo(0, errLinePos);
+		}
+	}
+	console.log(errs);
 }
 
 var ws = null;
 function socket() {
 	ws = new WebSocket("ws://"+url+"/api/socket");
 	ws.onopen = function (event) {
-		console.log("Open");
-		console.log(filename);
+		while ((a = errs.pop()) !== undefined) {
+			console.log(a);
+			a.clear();
+		}
 		ws.send(filename);
 		playButton.src = "/images/stop.png";
 	};
@@ -84,14 +131,14 @@ function socket() {
 	ws.onmessage = function (event) {
 		message = event.data;
 		if (message.substring(0, 8) == "output: ") {
-			messageActual = message.substring(8);
-			outputtext.innerHTML += messageActual.replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
+			messageActual = message.substring(8).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+			outputtext.innerHTML += messageActual;
 			output.scrollTop = output.scrollHeight;
 			return;
 		} else if (message.substring(0, 7) == "error: ") {
-			messageActual = message.substring(7);
+			messageActual = message.substring(7).replace(/</g, "&lt;").replace(/>/g, "&gt;");
 			outputtext.innerHTML += "<span style=\"color:red;\">SERVER ERROR:";
-			outputtext.innerHTML += messageActual.replace(/[\r]\n/g, "<br>");
+			outputtext.innerHTML += messageActual;
 			outputtext.innerHTML += "</span>";
 			output.scrollTop = output.scrollHeight;
 		}
