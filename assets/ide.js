@@ -3,7 +3,7 @@
 //Linting?
 //Optimize CM
 //Custom colors and themes?
-//Setup pi image to boot into X with midori -e Fullscreen -a http://127.0.0.1
+//Setup pi image to boot into X with midori -e Fullscreen -a http://127.0.0.1?
 var codewrapper, output, ide, editor, web, titleHolder, playButton;
 //The URL is needed for the web socket connection
 var url = document.baseURI.match(/\/\/[a-zA-Z0-9\.]+/)[0].substring(2);
@@ -54,7 +54,7 @@ function POST(url, args) {
 	return req.responseText;
 }
 
-var filename = "Untitled";
+var filename = "Untitled.py";
 function save() {
 	if (filename !== "") {
 		POST("/api/savefile", {"file": filename, "content": editor.getValue()});
