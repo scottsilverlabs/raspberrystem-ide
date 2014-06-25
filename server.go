@@ -22,9 +22,9 @@ var hostname, _ = ioutil.ReadFile("/etc/hostname")
 var config = map[string]string{"port": "80"}
 
 func main() {
-	content, err := ioutil.ReadFile("/etc/ide/ide.html")        //ide.html is actually a go template
-	acontent, aerr := ioutil.ReadFile("/etc/ide/api.html")      //ide.html is actually a go template
-	settings, serr := ioutil.ReadFile("/etc/ide/settings.conf") //ide.html is actually a go template
+	content, err := ioutil.ReadFile("/etc/ide/ide.html") //ide.html is actually a go template
+	acontent, aerr := ioutil.ReadFile("/etc/ide/api.html")
+	settings, serr := ioutil.ReadFile("/etc/ide/settings.conf")
 	if err != nil {
 		panic(err)
 	}
@@ -113,7 +113,7 @@ func listFiles(w http.ResponseWriter, r *http.Request) {
 func readFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	opts := r.URL.Query()
-	fname := opts.Get("file")
+	fname := strings.Trim(opts.Get("file"), " ./")
 	contents, err := ioutil.ReadFile("/projects/" + fname)
 	if err != nil {
 		io.WriteString(w, "error")
@@ -125,7 +125,7 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 //Potential issue here because POST requests tend to have size limits
 func saveFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	name := r.Form.Get("file")
+	name := strings.Trim(r.Form.Get("file"), " ./")
 	content := r.Form.Get("content")
 	ioutil.WriteFile("/projects/"+name, []byte(content), 0744)
 }

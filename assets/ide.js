@@ -11,6 +11,7 @@ var url = document.baseURI.match(/\/\/[a-zA-Z0-9\.]+/)[0].substring(2);
 window.onload = function main() {
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
+	outputtext = document.getElementById("output").firstChild;
 	ide = document.getElementById("ide");
 	web = document.getElementById("webview");
 	playButton = document.getElementById("play");
@@ -60,6 +61,11 @@ function save() {
 	}
 }
 
+function errorHighlight() {
+	var errString = output.innerHTML.replace(/<br>/g, "\n");
+	var errString = output.innerHTML.replace(/&nbsp;/g, " ");
+}
+
 var ws = null;
 function socket() {
 	ws = new WebSocket("ws://"+url+"/api/socket");
@@ -72,20 +78,21 @@ function socket() {
 	ws.onclose = function (event) {
 		console.log("Close");
 		ws = null;
+		errorHighlight();
 		playButton.src = "/images/play.png";
 	};
 	ws.onmessage = function (event) {
 		message = event.data;
 		if (message.substring(0, 8) == "output: ") {
 			messageActual = message.substring(8);
-			output.innerHTML += messageActual.replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
+			outputtext.innerHTML += messageActual.replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
 			output.scrollTop = output.scrollHeight;
 			return;
 		} else if (message.substring(0, 7) == "error: ") {
 			messageActual = message.substring(7);
-			output.innerHTML += "<span style=\"color:red;\">SERVER ERROR:";
-			output.innerHTML += messageActual.replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
-			output.innerHTML += "</span>";
+			outputtext.innerHTML += "<span style=\"color:red;\">SERVER ERROR:";
+			outputtext.innerHTML += messageActual.replace(/[\r]\n/g, "<br>");
+			outputtext.innerHTML += "</span>";
 			output.scrollTop = output.scrollHeight;
 		}
 	};
@@ -94,7 +101,7 @@ function socket() {
 function run() {
 	if (ws === null){
 		save();
-		output.innerHTML = "";
+		outputtext.innerHTML = "";
 		socket();
 	} else {
 		ws.send("close");
