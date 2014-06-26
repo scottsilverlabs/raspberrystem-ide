@@ -50,13 +50,14 @@ func main() {
 	http.HandleFunc("/cm.js", cmJs)
 	http.HandleFunc("/cm.css", cmCss)
 	http.HandleFunc("/mode.js", mode)
-	http.HandleFunc("/theme.css", theme)
 	http.HandleFunc("/api/", apiDoc)
 	http.HandleFunc("/api/listfiles", listFiles)
+	http.HandleFunc("/api/listthemes", listThemes)
 	http.HandleFunc("/api/readfile", readFile)
 	http.HandleFunc("/api/savefile", saveFile)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("/etc/ide/assets/images"))))
+	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir("/etc/ide/assets/themes"))))
 	err = http.ListenAndServe(":"+config["port"], nil)
 	if err != nil {
 		panic(err)
@@ -87,10 +88,6 @@ func cmCss(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/assets/cmirror/codemirror.css")
 }
 
-func theme(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "/etc/ide/assets/cmirror/solarized.css")
-}
-
 func mode(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/assets/cmirror/python.js")
 }
@@ -98,6 +95,20 @@ func mode(w http.ResponseWriter, r *http.Request) {
 func listFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	files, _ := ioutil.ReadDir(config["projectdir"])
+	var list string
+	for _, f := range files {
+		if !f.IsDir() {
+			list += "\n" + f.Name()
+		}
+	}
+	if list != "" {
+		io.WriteString(w, list[1:])
+	}
+}
+
+func listThemes(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	files, _ := ioutil.ReadDir("/etc/ide/assets/themes/")
 	var list string
 	for _, f := range files {
 		if !f.IsDir() {

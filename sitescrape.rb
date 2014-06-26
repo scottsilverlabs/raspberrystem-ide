@@ -11,15 +11,24 @@ json = html[/posts = \[.+\]/][8..-1]
 posts = JSON.parse json
 if !Dir.exists? "./website"
 	Dir.mkdir "./website"
-	Dir.mkdir "./website/images"
-	Dir.mkdir "./website/videos"
-	Dir.mkdir "./website/pages"
-	Dir.mkdir "./website/src"
 end
 @queue = []
 @scanned = {}
+@urlhashes = {}
+
+def formatUrl(url)
+	puts "Orig orig: "+url
+	if !url[0, 5] == "http:"
+		url = "http://"+url[/[a-zA-Z0-9].+/]
+	end
+	puts "Orig: "+url
+	url = URI.join(@basedomain, url).to_s.gsub("www.", "")
+	puts "New: "+url
+	return url
+end
 
 def tolocal(url)
+=begin
 	puts url
 	name = url[/\/[a-zA-Z\d\-\.]+\/$/]
 	if url[/page_id=\d+$/]
@@ -37,11 +46,16 @@ def tolocal(url)
 		path = "videos/"
 	end
 	puts path+name
-	return path+name
+=end
+	url = formatUrl(url)
+	return @urlhashes[url] if @urlhashes[url]
+	@urlhashes[url] = url.hash.to_s(16).gsub("-", "0")
+	return @urlhashes[url] #.to_s(16) to convert to hex
 end
 def crawl(url)
 	@scanned[url] = true
-	url = URI.join(@basedomain, url).to_s
+	url = formatUrl(url)
+	puts "Scanning "+url
 	page = nil
 	begin
 		page = open url
@@ -79,7 +93,7 @@ def crawl(url)
 		f = File.open "./website/"+tolocal(url), "w"
 		f.write body
 	else
-		puts "Type:" + type.to_s
+		puts "Unsupported type:" + type.to_s
 	end
 end
 @queue.push baseurl

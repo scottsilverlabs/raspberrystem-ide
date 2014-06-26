@@ -1,0 +1,134 @@
+/*
+Solarized theme for code-mirror
+http://ethanschoonover.com/solarized
+*/
+
+/*
+Solarized color pallet
+http://ethanschoonover.com/solarized/img/solarized-palette.png
+*/
+.solarized-light.base03 { color: #002b36; }
+.solarized-light.base02 { color: #073642; }
+.solarized-light.base01 { color: #586e75; }
+.solarized-light.base00 { color: #657b83; }
+.solarized-light.base0 { color: #839496; }
+.solarized-light.base1 { color: #93a1a1; }
+.solarized-light.base2 { color: #eee8d5; }
+.solarized-light.base3  { color: #fdf6e3; }
+.solarized-light.solar-yellow  { color: #b58900; }
+.solarized-light.solar-orange  { color: #cb4b16; }
+.solarized-light.solar-red { color: #dc322f; }
+.solarized-light.solar-magenta { color: #d33682; }
+.solarized-light.solar-violet  { color: #6c71c4; }
+.solarized-light.solar-blue { color: #268bd2; }
+.solarized-light.solar-cyan { color: #2aa198; }
+.solarized-light.solar-green { color: #859900; }
+.maincolor { background-color: #ff7e49; }
+
+/* Color scheme for code-mirror */
+
+.cm-s-solarized-light {
+  line-height: 1.45em;
+  color-profile: sRGB;
+  rendering-intent: auto;
+  background-color: #fdf6e3;
+  color: #657b83;
+  text-shadow: #eee8d5 0 1px;
+}
+
+
+.cm-s-solarized-light .CodeMirror-widget {
+  text-shadow: none;
+}
+
+
+.cm-s-solarized-light .cm-keyword { color: #cb4b16 }
+.cm-s-solarized-light .cm-atom { color: #d33682; }
+.cm-s-solarized-light .cm-number { color: #bc222f; }
+.cm-s-solarized-light .cm-def { color: #2aa198; }
+
+.cm-s-solarized-light .cm-variable { color: #999999; }
+.cm-s-solarized-light .cm-variable-2 { color: #b58900; }
+.cm-s-solarized-light .cm-variable-3 { color: #6c71c4; }
+
+.cm-s-solarized-light .cm-property { color: #2aa198; }
+.cm-s-solarized-light .cm-operator {color: #6c71c4;}
+
+.cm-s-solarized-light .cm-comment { color: #586e75; font-style:italic; }
+
+.cm-s-solarized-light .cm-string { color: #859900; }
+.cm-s-solarized-light .cm-string-2 { color: #b58900; }
+
+.cm-s-solarized-light .cm-meta { color: #859900; }
+.cm-s-solarized-light .cm-qualifier { color: #b58900; }
+.cm-s-solarized-light .cm-builtin { color: #268bd2; }
+.cm-s-solarized-light .cm-bracket { color: #cb4b16; }
+.cm-s-solarized-light .CodeMirror-matchingbracket { color: #859900; }
+.cm-s-solarized-light .CodeMirror-nonmatchingbracket { color: #dc322f; }
+.cm-s-solarized-light .cm-tag { color: #93a1a1 }
+.cm-s-solarized-light .cm-attribute {  color: #2aa198; }
+.cm-s-solarized-light .cm-header { color: #586e75; }
+.cm-s-solarized-light .cm-quote { color: #93a1a1; }
+.cm-s-solarized-light .cm-hr {
+  color: transparent;
+  border-top: 1px solid #586e75;
+  display: block;
+}
+.cm-s-solarized-light .cm-link { color: #93a1a1; cursor: pointer; }
+.cm-s-solarized-light .cm-special { color: #6c71c4; }
+.cm-s-solarized-light .cm-em {
+  color: #999;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+.cm-s-solarized-light .cm-strong { color: #eee; }
+.cm-s-solarized-light .cm-tab:before {
+  content: "";   /*visualize tab character*/
+  color: #586e75;
+  position:absolute;
+}
+.cm-s-solarized-light .cm-error,
+.cm-s-solarized-light .cm-invalidchar {
+  color: #586e75;
+  border-bottom: 1px dotted #dc322f;
+}
+
+.cm-s-solarized-light .CodeMirror-selected {
+  background: #eee8d5;
+}
+
+/* Gutter border and some shadow from it  */
+.cm-s-solarized-light .CodeMirror-gutters {
+  border-right-width: 0px;
+}
+
+/* Gutter colors and line number styling based of color scheme (dark / light) */
+
+/* Light */
+.cm-s-solarized-light .CodeMirror-gutters {
+  background-color: #fdf6e3;
+  /*border-color: #eee8d5;*/
+}
+
+/* Common */
+.cm-s-solarized-light .CodeMirror-linenumber {
+  color: #586e75;
+  padding: 0 5px;
+}
+
+.cm-s-solarized-light .CodeMirror-gutter .CodeMirror-gutter-text {
+  color: #586e75;
+}
+
+.cm-s-solarized-light .CodeMirror-lines .CodeMirror-cursor {
+  border-left: 1px solid #819090;
+}
+
+/*
+Active line. Negative margin compensates left padding of the text in the
+view-port
+*/
+
+.cm-s-solarized-light .CodeMirror-activeline-background {
+  background: rgba(0, 0, 0, 0.10);
+}

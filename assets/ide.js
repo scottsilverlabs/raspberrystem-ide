@@ -25,13 +25,26 @@ window.onload = function main() {
 		lineNumbers: true,
 		indentUnit: 4,
 		matchBrackets: true,
-		theme: "solarized dark",
+		theme: "solarized-dark",
 		textWrapping: true,
 	});
 	themes = editor.options.theme.split(" ");
 	for (var i in themes) {
 		output.classList.add("cm-s-"+themes[i]);
 	}
+};
+
+String.prototype.capitalize = function() {
+	var arr = this.split(" ");
+	var toRet = "";
+	for (var i in arr) {
+		toRet += " "+arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
+	}
+    return toRet.substring(1);
+};
+
+String.prototype.lower = function() {
+    return this.toLowerCase();
 };
 
 function GET(url) {  
@@ -198,6 +211,7 @@ function newFile() {
 	var title = document.createElement("h1");
 	popup.appendChild(title);
 	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
 	title.innerHTML = "New File";
 
 	text = document.createElement("input");
@@ -241,6 +255,7 @@ function openFile() {
 	var title = document.createElement("h1");
 	popup.appendChild(title);
 	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
 	title.innerHTML = "Open File";
 
 	var fileholder = document.createElement("div");
@@ -257,6 +272,7 @@ function openFile() {
 			fileholder.appendChild(filediv);
 			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.py/g, "");
 			filediv.classList.add("filediv");
+			filediv.classList.add("maincolor");
 			filediv.onclick = new Function("loadFile(this)");
 		}
 	}
@@ -265,11 +281,67 @@ function openFile() {
 	popup.appendChild(cancel);
 	cancel.innerHTML = "Cancel";
 	cancel.classList.add("foldercancel");
+	cancel.classList.add("maincolor");
 	cancel.onclick = removePopup;
 
 	var newfile = document.createElement("div");
 	popup.appendChild(newfile);
 	newfile.innerHTML = "New";
 	newfile.classList.add("foldernew");
+	newfile.classList.add("maincolor");
 	newfile.onclick = newFile;
+}
+
+function setTheme(obj) {
+	name = obj.innerHTML.lower().replace(/ /g, "-");
+	document.getElementById("theme").href = "/themes/"+name+".css";
+	old = editor.getOption("theme");
+	editor.setOption("theme", name);
+	output.classList.remove("cm-s-"+old);
+	output.classList.add("cm-s-"+name);
+	removePopup();
+}
+
+function changeTheme() {
+	back = document.createElement("div");
+	document.body.appendChild(back);
+	back.classList.add("holder");
+
+	popup = document.createElement("div");
+	document.body.appendChild(popup);
+	popup.classList.add("folderpopup");
+	popup.classList.add("popup");
+	back.onclick = removePopup;
+
+	var title = document.createElement("h1");
+	popup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.innerHTML = "Select Theme";
+
+	var fileholder = document.createElement("div");
+	popup.appendChild(fileholder);
+	fileholder.classList.add("fileholder");
+
+	//Files
+	files = GET("/api/listthemes").split("\n");
+	if (files[0] === "") {
+		//TODO No Files Found Error
+	} else {
+		for (var i in files) {
+			var filediv = document.createElement("div");
+			fileholder.appendChild(filediv);
+			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "").capitalize();
+			filediv.classList.add("filediv");
+			filediv.classList.add("maincolor");
+			filediv.onclick = new Function("setTheme(this)");
+		}
+	}
+
+	var cancel = document.createElement("div");
+	popup.appendChild(cancel);
+	cancel.innerHTML = "Cancel";
+	cancel.classList.add("foldercancel");
+	cancel.classList.add("maincolor");
+	cancel.onclick = removePopup;
 }
