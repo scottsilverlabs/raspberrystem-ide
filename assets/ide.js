@@ -151,7 +151,7 @@ function socket() {
 			messageActual = message.substring(7).replace(/</g, "&lt;").replace(/>/g, "&gt;");
 			outputtext.innerHTML += "<span style=\"color:red;\">SERVER ERROR:";
 			outputtext.innerHTML += messageActual;
-			outputtext.innerHTML += "</span>";
+			outputtext.innerHTML += "</span>\n";
 			output.scrollTop = output.scrollHeight;
 		}
 	};

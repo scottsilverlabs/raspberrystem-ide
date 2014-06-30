@@ -55,6 +55,7 @@ func main() {
 	http.HandleFunc("/api/listthemes", listThemes)
 	http.HandleFunc("/api/readfile", readFile)
 	http.HandleFunc("/api/savefile", saveFile)
+	http.HandleFunc("/api/hostname", hostnameOut)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("/etc/ide/assets/images"))))
 	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir("/etc/ide/assets/themes"))))
@@ -140,6 +141,13 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	ioutil.WriteFile(config["projectdir"]+name, []byte(content), 0744)
 }
 
+//Potential issue here because POST requests tend to have size limits
+func hostnameOut(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	io.WriteString(w, string(hostname))
+}
+
 //Called as a goroutine to wait for the close command and kill the process.
 func watchClose(s *websocket.Conn, p *os.Process) {
 	data := make([]byte, 512)
@@ -157,6 +165,8 @@ func socketServer(s *websocket.Conn) {
 	pt, err := pty.Start(com)
 	if err != nil {
 		s.Write([]byte("error: " + err.Error()))
+		s.Close()
+		return
 	}
 	go watchClose(s, com.Process)
 	for {
