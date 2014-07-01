@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 require "open-uri"
-#require "URI"
 require "json"
 baseurl = "http://dev.raspberrystem.com/wphidden42/?page_id=5"
 @localbase = "/root/Desktop/website/"
@@ -20,9 +19,6 @@ def formatUrl(url)
 	if url[0, 2] == "//"
 		url = "http:"+url
 	end
-	if url["googleapis"]
-		puts url
-	end
 	url = URI.join(@basedomain, URI.unescape(url.gsub("&#038;", ""))).to_s.gsub("www.", "")
 	return url
 end
@@ -33,10 +29,11 @@ def tolocal(url)
 	@urlhashes[url] = url.hash.to_s(16).gsub("-", "0")
 	return @urlhashes[url] #.to_s(16) to convert to hex
 end
+
 def crawl(url)
 	@scanned[url] = true
 	url = formatUrl(url)
-	puts "#{url} -> "+tolocal url
+	puts url+" -> "+tolocal(url)
 	page = nil
 	begin
 		page = open url
@@ -71,18 +68,9 @@ def crawl(url)
 		f = nil
 		f = File.open "./website/"+tolocal(url), "w"
 		f.write body
-	elsif type[/image/]
-		puts "Image " + url
-		f = File.open "./website/"+tolocal(url), "w"
-		f.write body
-	elsif type == "application/javascript"
-		f = File.open "./website/"+tolocal(url), "w"
-		f.write body
-	elsif type == "text/css"
-		f = File.open "./website/"+tolocal(url), "w"
-		f.write body
 	else
-		puts "Unsupported type:" + type.to_s
+		f = File.open "./website/"+tolocal(url), "w"
+		f.write body
 	end
 end
 @queue.push baseurl
