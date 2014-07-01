@@ -17,36 +17,17 @@ end
 @urlhashes = {}
 
 def formatUrl(url)
-	puts "Orig orig: "+url
-	if !url[0, 5] == "http:"
-		url = "http://"+url[/[a-zA-Z0-9].+/]
+	if url[0, 2] == "//"
+		url = "http:"+url
 	end
-	puts "Orig: "+url
-	url = URI.join(@basedomain, url).to_s.gsub("www.", "")
-	puts "New: "+url
+	if url["googleapis"]
+		puts url
+	end
+	url = URI.join(@basedomain, URI.unescape(url.gsub("&#038;", ""))).to_s.gsub("www.", "")
 	return url
 end
 
 def tolocal(url)
-=begin
-	puts url
-	name = url[/\/[a-zA-Z\d\-\.]+\/$/]
-	if url[/page_id=\d+$/]
-		name = url[/\d+$/]
-	elsif name == nil
-		name = url[/[a-zA-Z\d\-\.]+$/]
-	end
-	puts name
-	path = "pages/"
-	if name[/(css|js)/]
-		path = "src/"
-	elsif name[/(\.jpeg|\.jpg|\.png|\.gif)/]
-		path = "images/"
-	elsif name[/(\.mp4|\.mjpg|\.mjpeg|\.mpeg|\.avi)/]
-		path = "videos/"
-	end
-	puts path+name
-=end
 	url = formatUrl(url)
 	return @urlhashes[url] if @urlhashes[url]
 	@urlhashes[url] = url.hash.to_s(16).gsub("-", "0")
@@ -55,7 +36,7 @@ end
 def crawl(url)
 	@scanned[url] = true
 	url = formatUrl(url)
-	puts "Scanning "+url
+	puts "#{url} -> "+tolocal url
 	page = nil
 	begin
 		page = open url
@@ -67,6 +48,14 @@ def crawl(url)
 	body = page.read
 	if type == "text/html"
 		return if !url.include? @basedomain
+		youtubes = body.scan /<iframe [^>]+src=\"http:\/\/www.youtube\S+\"[^<]+<\/iframe>/
+		for i in youtubes
+			puts i
+			width = i[/width=\"[0-9]+\"/]
+			height = i[/height=\"[0-9]+\"/]
+			id = i[/src=\"http:\/\/www.youtube\S+\"/][34..-1].split("?")[0]
+			body = body.gsub i, "<img #{width} #{height} src=\"http://img.youtube.com/vi/#{id}/0.jpg\"></img>"
+		end
 		links = body.scan /href="[^ #]+"/
 		links.concat body.scan /href='\S+'/ #\S because the open sans URL has # in it
 		links.concat body.scan /src="[^ #]+"/
