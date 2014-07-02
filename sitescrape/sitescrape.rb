@@ -18,6 +18,7 @@ end
 @urlhashes = {}
 
 def formatUrl(url)
+	url = url.gsub "?p=", "?page_id="
 	if url[0, 2] == "//"
 		url = "http:"+url
 	end
@@ -28,8 +29,8 @@ end
 def tolocal(url)
 	url = formatUrl(url)
 	return @urlhashes[url] if @urlhashes[url]
-	@urlhashes[url] = url.hash.to_s(16).gsub("-", "0")
-	return @urlhashes[url] #.to_s(16) to convert to hex
+	@urlhashes[url] = url.split("/").last.delete("/,:=").gsub(/^\?/, "").gsub(/\?.+$/, "")
+	return @urlhashes[url]
 end
 
 def crawl(url)
@@ -87,7 +88,6 @@ def crawl(url)
 						@queue.push formatUrl(@basedomain+"wphidden42/cellicons/"+v.downcase().gsub(" ", "-"))
 					end
 				end
-				puts s.to_s
 			end
 			@repscript = @repscript.gsub "cellimageurls = {}", "cellimageurls = "+JSON.generate(cellimageurls)
 			@repscript = @repscript.gsub "posts = []", "posts = "+JSON.generate(localposts)
@@ -112,7 +112,6 @@ def crawl(url)
 			end
 			body = body.gsub trimmed, "\""+tolocal(trimmed[1..-2])+"\""
 		end
-		f = nil
 		f = File.open "./website/"+tolocal(url), "w"
 		f.write body
 	else
@@ -120,7 +119,6 @@ def crawl(url)
 		f.write body
 	end
 end
-#crawl @baseurl
 @queue.push @baseurl
 for i in @posts
 	@queue.push @basedomain+"wphidden42/?page_id="+i["id"].to_s
@@ -143,3 +141,5 @@ while alive
 	end
 	sleep 1
 end
+f = File.open "./website/index.html", "w"
+f.write(open("./website/"+@urlhashes[formatUrl(@baseurl)]).read)

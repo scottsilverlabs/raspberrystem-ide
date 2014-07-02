@@ -13,6 +13,9 @@ window.onload = function main() {
 	outputtext = document.getElementById("output").firstChild;
 	ide = document.getElementById("ide");
 	web = document.getElementById("webview");
+	if (document.location.host != "127.0.0.1" && document.location.host != "localhost") {
+		document.getElementById("browser").parentNode.removeChild(document.getElementById("browser"));
+	}
 	playButton = document.getElementById("play");
 	titleHolder = document.getElementById("title");
 	editor = CodeMirror(document.getElementById("codewrapper"), {

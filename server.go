@@ -57,6 +57,7 @@ func main() {
 	http.HandleFunc("/api/savefile", saveFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
+	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir("/etc/ide/website"))))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("/etc/ide/assets/images"))))
 	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir("/etc/ide/assets/themes"))))
 	err = http.ListenAndServe(":"+config["port"], nil)
