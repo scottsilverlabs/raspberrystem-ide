@@ -284,14 +284,12 @@ function openFile() {
 	popup.appendChild(cancel);
 	cancel.innerHTML = "Cancel";
 	cancel.classList.add("foldercancel");
-	cancel.classList.add("maincolor");
 	cancel.onclick = removePopup;
 
 	var newfile = document.createElement("div");
 	popup.appendChild(newfile);
 	newfile.innerHTML = "New";
 	newfile.classList.add("foldernew");
-	newfile.classList.add("maincolor");
 	newfile.onclick = newFile;
 }
 
@@ -345,6 +343,5 @@ function changeTheme() {
 	popup.appendChild(cancel);
 	cancel.innerHTML = "Cancel";
 	cancel.classList.add("foldercancel");
-	cancel.classList.add("maincolor");
 	cancel.onclick = removePopup;
 }

@@ -35,29 +35,21 @@ var advsearch = document.getElementById("advsearch");
 var headers = document.getElementsByClassName("entry-title");
 headers[headers.length-1].style.display = "inline"; //In reality there should only be one element in the array
 //Setup posts array and searching arrays
-var lids = {};
-var cells = {};
-var difficulty = [];
-var rating = [];
 for (var i in posts) {
 	var ele = posts[i];
-	if (!posts[i].rating) {
-		posts[i].rating = 1;
+	if (!ele.rating) {
+		ele.rating = 1;
 	}
 	var cstring = ele.cells;
-	ele.cellcount = 0;
 	ele.cells = {};
-	var allsplit = cstring.substring(2, cstring.length-2).split("] [");
+	var allsplit = cstring.substring(1, cstring.length-1).split("] [");
 	for (var j in allsplit) {
 		num = allsplit[j].split(" ")[0];
 		name = allsplit[j].substring(num.length+1);
-		cells[name] = true;
 		num = parseInt(num);
 		ele.cells[name] = num;
 		ele.cellcount += num;
 	}
-	ele.lid = ele.lid.substring(1, ele.lid.length-1);
-	lids[ele.lid] = true;
 }
 
 
@@ -130,6 +122,7 @@ function search(str) {
 	entryTable.innerHTML = "";
 	var found = 0;
 	for (var i in posts) {
+		var num = parseInt(str);
 		if (posts[i].name.toLowerCase().indexOf(str.toLowerCase()) != -1) {
 			found++;
 			generateEntry(posts[i]);
