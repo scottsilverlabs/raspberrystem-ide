@@ -6,14 +6,14 @@
 //Setup pi image to boot into X with midori -e Fullscreen -a http://127.0.0.1?
 var codewrapper, output, ide, editor, web, titleHolder, playButton;
 //The URL is needed for the web socket connection
-var url = document.baseURI.match(/\/\/[a-zA-Z0-9\.]+/)[0].substring(2);
+var url = document.location.host;
 window.onload = function main() {
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
 	outputtext = document.getElementById("output").firstChild;
 	ide = document.getElementById("ide");
 	web = document.getElementById("webview");
-	if (document.location.host != "127.0.0.1" && document.location.host != "localhost") {
+	if (url != "127.0.0.1" && url != "localhost") {
 		document.getElementById("browser").parentNode.removeChild(document.getElementById("browser"));
 	}
 	playButton = document.getElementById("play");
@@ -26,10 +26,16 @@ window.onload = function main() {
 		},
 		autofocus: true,
 		lineNumbers: true,
+		undoDepth: 20, //Default: 40
 		indentUnit: 4,
+		indentWithTabs: true,
 		matchBrackets: true,
 		theme: "solarized-dark",
 		textWrapping: true,
+		pollInterval: 300,
+		workDelay: 400, //Default: 300
+		viewportMargin: 5, //Default: 5
+		autofocus: true,
 	});
 	themes = editor.options.theme.split(" ");
 	for (var i in themes) {
