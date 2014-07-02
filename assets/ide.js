@@ -34,7 +34,7 @@ window.onload = function main() {
 		textWrapping: true,
 		pollInterval: 300,
 		workDelay: 400, //Default: 300
-		viewportMargin: 5, //Default: 5
+		viewportMargin: 3, //Default: 10
 		autofocus: true,
 	});
 	themes = editor.options.theme.split(" ");

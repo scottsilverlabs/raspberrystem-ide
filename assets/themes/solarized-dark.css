@@ -7,7 +7,6 @@ http://ethanschoonover.com/solarized-dark
 solarized-dark color pallet
 http://ethanschoonover.com/solarized-dark/img/solarized-dark-palette.png
 */
-.maincolor { background-color: #657777; }
 .solarized-dark.base03 { color: #002b36; }
 .solarized-dark.base02 { color: #073642; }
 .solarized-dark.base01 { color: #586e75; }
@@ -24,6 +23,12 @@ http://ethanschoonover.com/solarized-dark/img/solarized-dark-palette.png
 .solarized-dark.solar-blue { color: #268bd2; }
 .solarized-dark.solar-cyan { color: #2aa198; }
 .solarized-dark.solar-green { color: #859900; }
+.maincolor { background-color: #657777; }
+#output {
+  border-top-color: #657777;
+  border-top-width: 2px;
+  border-top-style: dashed;
+}
 
 /* Color scheme for code-mirror */
 
