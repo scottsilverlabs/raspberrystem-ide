@@ -4,7 +4,7 @@
 //Optimize CM
 //Custom colors and themes?
 //Setup pi image to boot into X with midori -e Fullscreen -a http://127.0.0.1?
-var codewrapper, output, ide, editor, web, titleHolder, playButton, save;
+var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, filename;
 //The URL is needed for the web socket connection
 var url = document.location.host;
 window.onload = function main() {
@@ -47,6 +47,23 @@ window.onbeforeunload = function (event) {
 	console.log(event);
 	save();
 };
+
+setInterval(function() {
+	var users = GET("/api/listusers");
+	var list = users.split("\n");
+	var count = 0;
+	for (var i in list) {
+		var spl = list[i].split(":");
+		if (spl[1] == filename) {
+			count++;
+		}
+	}
+	if (count >= 2) {
+		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0]+"("+count+" Users In this file)";
+	} else {
+		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0];
+	}
+}, 10000);
 
 String.prototype.capitalize = function() {
 	var arr = this.split(" ");

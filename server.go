@@ -17,6 +17,7 @@ import (
 var ide *template.Template
 var api *template.Template
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
+var users = make(map[string]string)
 var config = map[string]string{"port": "80", "projectdir": "/projects/", "WebviewUrl": "/website/"}
 
 func main() {
@@ -52,6 +53,7 @@ func main() {
 	http.HandleFunc("/mode.js", mode)
 	http.HandleFunc("/api/", apiDoc)
 	http.HandleFunc("/api/listfiles", listFiles)
+	http.HandleFunc("/api/listusers", listUsers)
 	http.HandleFunc("/api/listthemes", listThemes)
 	http.HandleFunc("/api/readfile", readFile)
 	http.HandleFunc("/api/savefile", saveFile)
@@ -95,6 +97,17 @@ func mode(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/assets/cmirror/python.js")
 }
 
+func listUsers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	var towrite string
+	for i, v := range users {
+		towrite += "\n" + i + ":" + v
+	}
+	if len(towrite) > 0 {
+		io.WriteString(w, towrite[1:])
+	}
+}
+
 func listFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	files, _ := ioutil.ReadDir(config["projectdir"])
@@ -124,6 +137,7 @@ func listThemes(w http.ResponseWriter, r *http.Request) {
 }
 
 func readFile(w http.ResponseWriter, r *http.Request) {
+	println(strings.Split(r.RemoteAddr, ":")[0])
 	w.Header().Set("Content-Type", "text/plain")
 	opts := r.URL.Query()
 	fname := strings.Trim(opts.Get("file"), " ./")
@@ -132,6 +146,7 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "error")
 		return
 	}
+	users[strings.Split(r.RemoteAddr, ":")[0]] = fname
 	io.WriteString(w, string(contents))
 }
 
