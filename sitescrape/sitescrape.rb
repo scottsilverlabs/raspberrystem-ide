@@ -127,8 +127,10 @@ end
 threads = []
 for i in 1..8
 	threads.push(Thread.new {
-		while @queue.size > 0
-			crawl @queue.pop
+		while true
+			if @queue.size > 0
+				crawl @queue.pop
+			end
 		end
 	}).last.run
 	sleep(0.1)
