@@ -48,7 +48,7 @@ window.onbeforeunload = function (event) {
 	save();
 };
 
-setInterval(function() {
+function usercheck() {
 	var users = GET("/api/listusers");
 	var list = users.split("\n");
 	var count = 0;
@@ -59,11 +59,13 @@ setInterval(function() {
 		}
 	}
 	if (count >= 2) {
-		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0]+"("+count+" Users In this file)";
+		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0]+"("+count+" Users In This File)";
 	} else {
 		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0];
 	}
-}, 10000);
+}
+
+setInterval(usercheck, 10000);
 
 String.prototype.capitalize = function() {
 	var arr = this.split(" ");
@@ -272,6 +274,7 @@ function loadFile(div) {
 	contents = GET("/api/readfile?file="+filename);
 	editor.setValue(contents);
 	removePopup();
+	usercheck();
 }
 
 function openFile() {
