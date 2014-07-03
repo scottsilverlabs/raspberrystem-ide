@@ -4,7 +4,7 @@
 //Optimize CM
 //Custom colors and themes?
 //Setup pi image to boot into X with midori -e Fullscreen -a http://127.0.0.1?
-var codewrapper, output, ide, editor, web, titleHolder, playButton;
+var codewrapper, output, ide, editor, web, titleHolder, playButton, save;
 //The URL is needed for the web socket connection
 var url = document.location.host;
 window.onload = function main() {
@@ -41,6 +41,11 @@ window.onload = function main() {
 	for (var i in themes) {
 		output.classList.add("cm-s-"+themes[i]);
 	}
+};
+
+window.onbeforeunload = function (event) {
+	console.log(event);
+	save();
 };
 
 String.prototype.capitalize = function() {
@@ -242,6 +247,9 @@ function newFile() {
 }
 
 function loadFile(div) {
+	if (filename != "Untitled.py" && div.innerHTML != "Untitled") {
+		save();
+	}
 	filename = div.innerHTML.replace(/ /g, "-")+".py";
 	titleHolder.innerHTML = div.innerHTML;
 	contents = GET("/api/readfile?file="+filename);
@@ -250,7 +258,6 @@ function loadFile(div) {
 }
 
 function openFile() {
-	save();
 	back = document.createElement("div");
 	document.body.appendChild(back);
 	back.classList.add("holder");

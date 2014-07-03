@@ -6,7 +6,7 @@ cwd = File.dirname __FILE__
 @baseurl = "http://dev.raspberrystem.com/wphidden42/?page_id=5"
 @localbase = cwd+"/website/"
 @basedomain = @baseurl[/http:\/\/.+\.com\//]
-xcon = open(@baseurl)
+con = open(@baseurl)
 html = con.read
 json = html[/posts = \[.+\]/][8..-1]
 @posts = JSON.parse json
