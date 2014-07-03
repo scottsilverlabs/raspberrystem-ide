@@ -37,6 +37,7 @@ window.onload = function main() {
 	for (var i in themes) {
 		output.classList.add("cm-s-"+themes[i]);
 	}
+	editor.setValue("#!/usr/bin/env python3\n");
 };
 
 window.onbeforeunload = function (event) {
@@ -215,6 +216,7 @@ function removePopup() {
 function fileButton() {
 	titleHolder.innerHTML = text.value;
 	filename = text.value.replace(/ /g, "-").replace(/\.py/g, "") + ".py";
+	editor.setValue("#!/usr/bin/env python3\n");
 	removePopup();
 }
 

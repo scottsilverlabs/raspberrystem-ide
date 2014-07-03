@@ -186,7 +186,7 @@ func watchClose(s *websocket.Conn, p *os.Process) {
 func socketServer(s *websocket.Conn) {
 	data := make([]byte, 512)
 	n, _ := s.Read(data)
-	com := exec.Command("python3", config["projectdir"]+string(data[:n])) //[:n] to cut out padding
+	com := exec.Command(config["projectdir"] + string(data[:n])) //[:n] to cut out padding
 	pt, err := pty.Start(com)
 	if err != nil {
 		s.Write([]byte("error: " + err.Error()))
