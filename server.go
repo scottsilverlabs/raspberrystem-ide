@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -53,8 +54,9 @@ func main() {
 	http.HandleFunc("/mode.js", mode)
 	http.HandleFunc("/api/", apiDoc)
 	http.HandleFunc("/api/listfiles", listFiles)
-	http.HandleFunc("/api/listusers", listUsers)
 	http.HandleFunc("/api/listthemes", listThemes)
+	http.HandleFunc("/api/usernumber", userNumber)
+	http.HandleFunc("/api/userleave", userLeave)
 	http.HandleFunc("/api/readfile", readFile)
 	http.HandleFunc("/api/savefile", saveFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
@@ -97,15 +99,22 @@ func mode(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/assets/cmirror/python.js")
 }
 
-func listUsers(w http.ResponseWriter, r *http.Request) {
+func userNumber(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	var towrite string
-	for i, v := range users {
-		towrite += "\n" + i + ":" + v
+	opts := r.URL.Query()
+	fname := strings.Trim(opts.Get("file"), " ./")
+	count := 0
+	for _, v := range users {
+		if v == fname {
+			count++
+		}
 	}
-	if len(towrite) > 0 {
-		io.WriteString(w, towrite[1:])
-	}
+	io.WriteString(w, strconv.Itoa(count))
+}
+
+func userLeave(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	users[strings.Split(r.RemoteAddr, ":")[0]] = "exited"
 }
 
 func listFiles(w http.ResponseWriter, r *http.Request) {
@@ -137,7 +146,6 @@ func listThemes(w http.ResponseWriter, r *http.Request) {
 }
 
 func readFile(w http.ResponseWriter, r *http.Request) {
-	println(strings.Split(r.RemoteAddr, ":")[0])
 	w.Header().Set("Content-Type", "text/plain")
 	opts := r.URL.Query()
 	fname := strings.Trim(opts.Get("file"), " ./")

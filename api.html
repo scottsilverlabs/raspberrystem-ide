@@ -68,6 +68,11 @@
 			<h6>file</h6> : Name of the file in /projects to read<br>
 			Outputs the content of the file denoted by the file arguement
 		</div>
+		<h5>/api/usernumber</h5>
+		<div class="holder">
+			<h6>file</h6> : Name of the file in /projects<br>
+			Outputs the number of users editting the file
+		</div>
 		<h5>/api/hostname</h5>
 		<div class="holder">
 			Outputs the Pi's hostname
@@ -75,9 +80,13 @@
 		<h4>POST</h4>
 		<h5>/api/savefile</h5>
 		<div class="holder">
-			<h6>file</h6> : Name of the file in /projects to read<br>
+			<h6>file</h6> : Name of the file in /projects<br>
 			<h6>content</h6> : The data to write to the file<br>
 			Outputs the content of the file denoted by the file arguement	
+		</div>
+		<h5>/api/userleave</h5>
+		<div class="holder">
+			Removes user from the user map
 		</div>	
 		<h4>Web Socket</h4>
 		<h5>/api/socket</h5>

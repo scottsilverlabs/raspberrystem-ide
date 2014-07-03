@@ -1,10 +1,6 @@
 //TODO:
-//Improve the UI and UX
 //Linting?
-//Optimize CM
-//Custom colors and themes?
-//Setup pi image to boot into X with midori -e Fullscreen -a http://127.0.0.1?
-var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, filename;
+var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename;
 //The URL is needed for the web socket connection
 var url = document.location.host;
 window.onload = function main() {
@@ -45,21 +41,14 @@ window.onload = function main() {
 
 window.onbeforeunload = function (event) {
 	console.log(event);
+	POST("/api/userleave");
 	save();
 };
 
 function usercheck() {
-	var users = GET("/api/listusers");
-	var list = users.split("\n");
-	var count = 0;
-	for (var i in list) {
-		var spl = list[i].split(":");
-		if (spl[1] == filename) {
-			count++;
-		}
-	}
-	if (count >= 2) {
-		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0]+"("+count+" Users In This File)";
+	var users = GET("/api/usernumber?file="+filename);
+	if (parseInt(users) >= 2) {
+		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0]+"("+users+" Users In This File)";
 	} else {
 		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0];
 	}
