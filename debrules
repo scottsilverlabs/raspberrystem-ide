@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+clean:
+	# Do nothing
+
+export DH_VERBOSE=1
+export DH_OPTIONS
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	mkdir -p debian/raspberrystemide/usr/bin
+	cp server debian/raspberrystemide/usr/bin/ideserver
+	mkdir -p debian/raspberrystemide/etc/ide
+	cp *.html debian/raspberrystemide/etc/ide
+	cp settings.conf debian/raspberrystemide/etc/ide
+	cp -R assets debian/raspberrystemide/etc/ide
+	cp -R sitescrape/website debian/raspberrystemide/etc/ide
