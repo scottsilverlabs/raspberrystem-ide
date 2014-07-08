@@ -29,7 +29,10 @@ end
 def tolocal(url)
 	url = formatUrl(url)
 	return @urlhashes[url] if @urlhashes[url]
-	@urlhashes[url] = url.split("/").last.delete("/,:=").gsub(/^\?/, "").gsub(/\?.+$/, "")
+	newurl = url.split("/").last.delete("/,:=").gsub(/^\?/, "").gsub(/\?.+$/, "")
+	if newurl == "0.jpg"
+		newurl = (0...8).map { (65 + rand(26)).chr }.join.hash.to_s(16) + ".jpg"
+	end
 	return @urlhashes[url]
 end
 
