@@ -70,7 +70,7 @@ func main() {
 	}
 }
 
-//Returns requests to /
+//Called by requests to / and 404s
 func index(w http.ResponseWriter, r *http.Request) {
 	data := map[string]string{
 		"title":   "RStem IDE@" + string(hostname),
@@ -99,6 +99,7 @@ func mode(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/assets/cmirror/python.js")
 }
 
+//Returns the number of users using a particular file
 func userNumber(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	opts := r.URL.Query()
@@ -117,6 +118,7 @@ func userLeave(w http.ResponseWriter, r *http.Request) {
 	users[strings.Split(r.RemoteAddr, ":")[0]] = "exited"
 }
 
+//Lists all files in the projects directory
 func listFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	files, _ := ioutil.ReadDir(config["projectdir"])
@@ -131,6 +133,7 @@ func listFiles(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//Lists the availible themes
 func listThemes(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	files, _ := ioutil.ReadDir("/etc/ide/assets/themes/")
@@ -145,6 +148,7 @@ func listThemes(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//Outputs the contents of the requested file
 func readFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	opts := r.URL.Query()
@@ -166,7 +170,6 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	ioutil.WriteFile(config["projectdir"]+name, []byte(content), 0744)
 }
 
-//Potential issue here because POST requests tend to have size limits
 func hostnameOut(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -183,6 +186,7 @@ func watchClose(s *websocket.Conn, p *os.Process) {
 	}
 }
 
+//Receives socket connections to /api/socket and creates a PTY to run the process
 func socketServer(s *websocket.Conn) {
 	data := make([]byte, 512)
 	n, _ := s.Read(data)

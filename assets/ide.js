@@ -1,5 +1,3 @@
-//TODO:
-//Linting?
 var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename;
 //The URL is needed for the web socket connection
 var url = document.location.host;
@@ -97,6 +95,8 @@ function save() {
 	}
 }
 
+//Called when the script stops running on the server side
+
 var errs = [];
 var errRegex = new RegExp(/[ ]+File "\/projects\/.+", line \d+\n.+\n.+\^\n.+: .+/g);
 var traceRegex = new RegExp(/[ ]+File "\/projects\/.+", line \d+, in.+\n.+\n.+: .+/g);
@@ -146,6 +146,7 @@ function errorHighlight() {
 	console.log(errs);
 }
 
+//Creates socket connection to the server and sends the filename
 var ws = null;
 function socket() {
 	ws = new WebSocket("ws://"+url+"/api/socket");
@@ -180,6 +181,7 @@ function socket() {
 	};
 }
 
+//Called by the run button
 function run() {
 	if (ws === null){
 		save();
@@ -190,6 +192,7 @@ function run() {
 	}
 }
 
+//Called by the web button
 var webShowing = false;
 function toggleWeb() {
 	webShowing = !webShowing;
@@ -206,6 +209,7 @@ function toggleWeb() {
 	}
 }
 
+//Removes popups
 var back, popup, text;
 function removePopup() {
 	back.parentNode.removeChild(back);
@@ -220,6 +224,7 @@ function fileButton() {
 	removePopup();
 }
 
+//Caled by the new file button in the open file popup
 function newFile() {
 	removePopup();
 	back = document.createElement("div");
@@ -256,6 +261,7 @@ function newFile() {
 	cancel.onclick = removePopup;
 }
 
+//Called when a file div is clicked in the open file popup
 function loadFile(div) {
 	if (filename != "Untitled.py" && div.innerHTML != "Untitled") {
 		save();
@@ -268,6 +274,7 @@ function loadFile(div) {
 	usercheck();
 }
 
+//Called by the open file button
 function openFile() {
 	back = document.createElement("div");
 	document.body.appendChild(back);
@@ -317,6 +324,7 @@ function openFile() {
 	newfile.onclick = newFile;
 }
 
+//Called when a div is clicked in the change theme function
 function setTheme(obj) {
 	name = obj.innerHTML.lower().replace(/ /g, "-");
 	document.getElementById("theme").href = "/themes/"+name+".css";
@@ -327,6 +335,7 @@ function setTheme(obj) {
 	removePopup();
 }
 
+//Called by the change theme button
 function changeTheme() {
 	back = document.createElement("div");
 	document.body.appendChild(back);
