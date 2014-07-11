@@ -29,7 +29,7 @@ tar -xzf ../raspberrystem-ide-1.0.0.tar.gz; \
 dh_make -e stephan@raspberrystem.com --s -y -c apache -f ../raspberrystem-ide-1.0.0.tar.gz; \
 cp debrules debian/rules; \
 cp debcontrol debian/control; \
-dpkg-buildpackage; \
+dpkg-buildpackage;
 endef
 
 deb:

@@ -1,4 +1,4 @@
-var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename;
+var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename, type, sprColor;
 //The URL is needed for the web socket connection
 var url = document.location.host;
 window.onload = function main() {
@@ -29,13 +29,13 @@ window.onload = function main() {
 		pollInterval: 300,
 		workDelay: 400, //Default: 300
 		viewportMargin: 3, //Default: 10
-		autofocus: true,
 	});
 	themes = editor.options.theme.split(" ");
 	for (var i in themes) {
 		output.classList.add("cm-s-"+themes[i]);
 	}
 	editor.setValue("#!/usr/bin/env python3\n");
+	editor.on("change", sprColor);
 };
 
 window.onbeforeunload = function (event) {
@@ -146,6 +146,59 @@ function errorHighlight() {
 	console.log(errs);
 }
 
+function sprColorAll() {
+	for (var i = 0; i < editor.lineCount(); i++) {
+		var line = editor.getLine(i);
+		for (var j = 0; j < line.length; j++) {
+			var ch = line.substring(j, j+1).toLowerCase();
+			var code = ch.charCodeAt(0);
+			var start = {"line": i, "ch": j};
+			var end = {"line": i, "ch": j+1};
+			if ((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) {
+				editor.markText(start, end, {
+					className: "spr"+ch,
+				});
+			} else if (ch != "-" && ch != " " && ch != "0") {
+				editor.markText(start, end, {
+					className: "sprerr",
+				});
+			}
+		}
+	}
+}
+
+function sprColor(cm, change) {
+	if (type == "spr") {
+		var baseline = change.from.line;
+		var ldiff = change.to.line - change.from.line;
+		for (var i = 0; i <= ldiff; i++) {
+			var line = editor.getLine(baseline+i);
+			var schar = 0;
+			var echar = line.length;
+			if (i === 0) {
+				schar = change.from.ch;
+			} else if (i == ldiff) {
+				echar = change.to.ch;
+			}
+			for (var j = schar; j < echar; j++) {
+				var ch = line.substring(j, j+1).toLowerCase();
+				var code = ch.charCodeAt(0);
+				var start = {"line": baseline+i, "ch": j};
+				var end = {"line": baseline+i, "ch": j+1};
+				if ((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) {
+					editor.markText(start, end, {
+						className: "spr"+ch,
+					});
+				} else if (ch != "-" && ch != " " && ch != "0") {
+					editor.markText(start, end, {
+						className: "sprerr",
+					});
+				}
+			}
+		}
+	}
+}
+
 //Creates socket connection to the server and sends the filename
 var ws = null;
 function socket() {
@@ -186,7 +239,9 @@ function run() {
 	if (ws === null){
 		save();
 		outputtext.innerHTML = "";
-		socket();
+		if (type != "spr") {
+			socket();
+		}
 	} else {
 		ws.send("close");
 	}
@@ -210,7 +265,7 @@ function toggleWeb() {
 }
 
 //Removes popups
-var back, popup, text;
+var back, popup, text, menu;
 function removePopup() {
 	back.parentNode.removeChild(back);
 	popup.parentNode.removeChild(popup);
@@ -218,9 +273,24 @@ function removePopup() {
 
 //Called when the newFile okay button is pressed
 function fileButton() {
-	titleHolder.innerHTML = text.value;
-	filename = text.value.replace(/ /g, "-").replace(/\.py/g, "") + ".py";
-	editor.setValue("#!/usr/bin/env python3\n");
+	type = menu.value;
+	titleHolder.innerHTML = text.value + "." + type;
+	filename = titleHolder.innerHTML.replace(/ /g, "-");
+	if (type === "py") {
+		editor.setOption("mode", {
+			name: "python",
+			version: 3,
+			singleLineStringErrors: false
+		});
+		editor.setValue("#!/usr/bin/env python3\n");
+	} else if (type === "spr") {
+		var val = "\n- - - - - - - -";
+		for (var i = 0; i < 3; i++) {
+			val = val+val;
+		}
+		editor.setValue(val.substring(1));
+		editor.setOption("mode", null);
+	}
 	removePopup();
 }
 
@@ -248,6 +318,12 @@ function newFile() {
 	text.classList.add("filetext");
 	text.type = "text";
 
+	menu = document.createElement("select");
+	popup.appendChild(menu);
+	menu.classList.add("filetype");
+	menu.innerHTML = '<option value="py">.py</option>';
+	menu.innerHTML += '<option value="spr">.spr</option>';
+
 	var okay = document.createElement("div");
 	popup.appendChild(okay);
 	okay.classList.add("fileokay");
@@ -263,13 +339,25 @@ function newFile() {
 
 //Called when a file div is clicked in the open file popup
 function loadFile(div) {
-	if (filename != "Untitled.py" && div.innerHTML != "Untitled") {
+	if (filename != div.innerHTML) {
 		save();
 	}
-	filename = div.innerHTML.replace(/ /g, "-")+".py";
+	filename = div.innerHTML.replace(/ /g, "-");
 	titleHolder.innerHTML = div.innerHTML;
-	contents = GET("/api/readfile?file="+filename);
+	var contents = GET("/api/readfile?file="+filename);
 	editor.setValue(contents);
+	var sp = filename.split(".");
+	type = sp[sp.length-1];
+	if (type == "py") {
+		editor.setOption("mode", {
+			name: "python",
+			version: 3,
+			singleLineStringErrors: false
+		});
+	} else if (type == "spr") {
+		editor.setOption("mode", null);
+		sprColorAll();
+	}
 	removePopup();
 	usercheck();
 }
@@ -304,7 +392,7 @@ function openFile() {
 		for (var i in files) {
 			var filediv = document.createElement("div");
 			fileholder.appendChild(filediv);
-			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.py/g, "");
+			filediv.innerHTML = files[i].replace(/-/g, " ");
 			filediv.classList.add("filediv");
 			filediv.classList.add("maincolor");
 			filediv.onclick = new Function("loadFile(this)");
