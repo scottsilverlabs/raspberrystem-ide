@@ -290,6 +290,9 @@ function fileButton() {
 		}
 		editor.setValue(val.substring(1));
 		editor.setOption("mode", null);
+	} else if (type === "sh") {
+		editor.setValue("#!/bin/bash\n");
+		editor.setOption("mode", "shell");
 	}
 	removePopup();
 }
@@ -323,6 +326,7 @@ function newFile() {
 	menu.classList.add("filetype");
 	menu.innerHTML = '<option value="py">.py</option>';
 	menu.innerHTML += '<option value="spr">.spr</option>';
+	menu.innerHTML += '<option value="sh">.sh</option>';
 
 	var okay = document.createElement("div");
 	popup.appendChild(okay);
@@ -351,6 +355,9 @@ function loadFile(div) {
 			version: 3,
 			singleLineStringErrors: false
 		});
+	}
+	if (type == "sh") {
+		editor.setOption("mode", "shell");
 	}
 	titleHolder.innerHTML = div.innerHTML;
 	var contents = GET("/api/readfile?file="+filename);

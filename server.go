@@ -51,7 +51,8 @@ func main() {
 	http.HandleFunc("/ide.js", ideJs)
 	http.HandleFunc("/cm.js", cmJs)
 	http.HandleFunc("/cm.css", cmCss)
-	http.HandleFunc("/mode.js", mode)
+	http.HandleFunc("/python.js", pythonMode)
+	http.HandleFunc("/shell.js", shellMode)
 	http.HandleFunc("/api/", apiDoc)
 	http.HandleFunc("/api/listfiles", listFiles)
 	http.HandleFunc("/api/listthemes", listThemes)
@@ -95,8 +96,12 @@ func cmCss(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/assets/cmirror/codemirror.css")
 }
 
-func mode(w http.ResponseWriter, r *http.Request) {
+func pythonMode(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/assets/cmirror/python.js")
+}
+
+func shellMode(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "/etc/ide/assets/cmirror/shell.js")
 }
 
 //Returns the number of users using a particular file
