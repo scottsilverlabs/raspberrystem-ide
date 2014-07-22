@@ -343,9 +343,6 @@ function loadFile(div) {
 		save();
 	}
 	filename = div.innerHTML.replace(/ /g, "-");
-	titleHolder.innerHTML = div.innerHTML;
-	var contents = GET("/api/readfile?file="+filename);
-	editor.setValue(contents);
 	var sp = filename.split(".");
 	type = sp[sp.length-1];
 	if (type == "py") {
@@ -358,6 +355,9 @@ function loadFile(div) {
 		editor.setOption("mode", null);
 		sprColorAll();
 	}
+	titleHolder.innerHTML = div.innerHTML;
+	var contents = GET("/api/readfile?file="+filename);
+	editor.setValue(contents);
 	removePopup();
 	usercheck();
 }
