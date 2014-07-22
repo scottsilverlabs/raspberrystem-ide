@@ -202,7 +202,7 @@ func socketServer(s *websocket.Conn) {
 		out := make([]byte, 1024)
 		n, err := pt.Read(out)
 		if err != nil {
-			if err.Error() == "read /dev/ptmx: input/output error" {
+			if err.Error() == "read /dev/ptmx: input/output error" || err.Error() == "EOF" {
 				break
 			}
 			s.Write([]byte("error: " + err.Error()))
