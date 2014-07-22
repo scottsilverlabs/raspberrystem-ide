@@ -1,15 +1,32 @@
+#
+# Requires:
+#	- go (golang.org)
+#	- To use "go get", first setup (optional):
+#		mkdir ~/.go
+#		export GOPATH=~/.go
+#	- Mercurial (hg) required by "go get":
+#		- http://mercurial.selenic.com/wiki/Download:
+#			sudo port install mercurial
+#	- go imports:
+#		go get github.com/kr/pty
+#		
 PI=pi@raspberrypi
 
-.PHONV: all clean install pi-install deb
+.PHONY: all clean install pi-install deb is_go_installed
+
+all: install
 
 clean:
-	- rm server
-	- rm payload.tar.gz
+	rm -f server
+	rm -f payload.tar.gz
 
-install:
+is_go_installed:
+	@which go > /dev/null
+
+install: is_go_installed
 	go build ./server.go
 	cp ./server /usr/bin/ideserver
-	- mkdir /etc/ide
+	mkdir -p /etc/ide
 	- cp -R sitescrape/website /etc/ide
 	cp -R assets /etc/ide/
 	cp *.html /etc/ide/
