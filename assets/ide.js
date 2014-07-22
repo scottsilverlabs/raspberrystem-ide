@@ -351,13 +351,14 @@ function loadFile(div) {
 			version: 3,
 			singleLineStringErrors: false
 		});
-	} else if (type == "spr") {
-		editor.setOption("mode", null);
-		sprColorAll();
 	}
 	titleHolder.innerHTML = div.innerHTML;
 	var contents = GET("/api/readfile?file="+filename);
 	editor.setValue(contents);
+	if (type == "spr") {
+		editor.setOption("mode", null);
+		sprColorAll();
+	}
 	removePopup();
 	usercheck();
 }
