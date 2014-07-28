@@ -44,6 +44,7 @@ window.onbeforeunload = function (event) {
 	save();
 };
 
+//Called every ten seconds
 function usercheck() {
 	var users = GET("/api/usernumber?file="+filename);
 	if (parseInt(users) >= 2) {
@@ -234,6 +235,31 @@ function socket() {
 	};
 }
 
+//Outputs graphical version of sprite file
+var good = new RegExp(/[0-9a-fA-F\-]/);
+function runSpr() {
+	var val = editor.getValue();
+	var lines = val.split("\n");
+	var valhtml = "";
+	for (var i in lines) {
+		var line = lines[i].split(" ");
+		valhtml += "<div>";
+		for (var j in line) {
+			if (line[j].match(good) === null) {
+				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(i+1)+": invalid character "+line[j];
+				return;
+			} else {
+				if (line[j] == "-") {
+					line[j] = "0";
+				}
+				valhtml += "<span style=\"color:#"+line[j]+line[j]+"0000;margin-right:0.2em;\">●</span>";
+			}
+		}
+		valhtml += "</div>";
+	}
+	outputtext.innerHTML += valhtml;
+}
+
 //Called by the run button
 function run() {
 	if (ws === null){
@@ -241,6 +267,8 @@ function run() {
 		outputtext.innerHTML = "";
 		if (type != "spr") {
 			socket();
+		} else {
+			runSpr();
 		}
 	} else {
 		ws.send("close");
