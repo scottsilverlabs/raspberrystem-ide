@@ -246,7 +246,7 @@ function runSpr() {
 		valhtml += "<div>";
 		for (var j in line) {
 			if (line[j].match(good) === null) {
-				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(i+1)+": invalid character "+line[j];
+				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(parseInt(i)+1)+": invalid character "+line[j];
 				return;
 			} else {
 				if (line[j] == "-") {
