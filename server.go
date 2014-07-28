@@ -25,6 +25,7 @@ func main() {
 	content, err := ioutil.ReadFile("/etc/ide/ide.html") //ide.html is actually a go template
 	acontent, aerr := ioutil.ReadFile("/etc/ide/api.html")
 	settings, serr := ioutil.ReadFile("/etc/ide/settings.conf")
+
 	if err != nil {
 		panic(err)
 	}

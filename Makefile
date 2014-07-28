@@ -1,11 +1,16 @@
 PI=pi@raspberrypi
 
-.PHONV: all clean install pi-install deb
+.PHONV: all clean install pi-install deb run
 
 clean:
 	- rm server
 	- rm payload.tar.gz
 	- rm -r /tmp/idebuild
+
+run:
+	GOPATH=/tmp/idebuild go get github.com/kr/pty
+	GOPATH=/tmp/idebuild go get code.google.com/p/go.net/websocket
+	GOPATH=/tmp/idebuild go run ./server.go
 
 install:
 	GOPATH=/tmp/idebuild go get github.com/kr/pty
@@ -38,8 +43,8 @@ dpkg-buildpackage;
 endef
 
 deb:
-	#GOARCH=arm GOARM=5 go build ./server.go
-	#- mkdir ./sitescrape/website
+	GOARCH=arm GOARM=5 go build ./server.go
+	- mkdir ./sitescrape/website
 	tar -czf payload.tar.gz ./server ./assets ./debrules ./debcontrol ./ide.html ./api.html ./settings.conf ./sitescrape/website
 	ssh $(PI) "$(sshpayload)" < payload.tar.gz > raspberrystem-ide_1.0.0-1_armhf.deb
 	ssh $(PI) "cat raspberrystem-ide_1.0.0-1_armhf.deb; rm -rf raspberrystem-* &> /dev/null;"> raspberrystem-ide_1.0.0-1_armhf.deb
