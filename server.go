@@ -257,6 +257,10 @@ func changeServer(s *websocket.Conn) {
 				break
 			}
 		}
+		users := strconv.Itoa(len(changeSockets[currFile]))
+		for _, v := range changeSockets[currFile] {
+			websocket.Message.Send(v, "USERS:"+users)
+		}
 	}
 	s.Close()
 }
