@@ -39,22 +39,8 @@ window.onload = function main() {
 };
 
 window.onbeforeunload = function (event) {
-	console.log(event);
-	POST("/api/userleave");
 	save();
 };
-
-//Called every ten seconds
-function usercheck() {
-	var users = GET("/api/usernumber?file="+filename);
-	if (parseInt(users) >= 2) {
-		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0]+"("+users+" Users In This File)";
-	} else {
-		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0];
-	}
-}
-
-setInterval(usercheck, 10000);
 
 String.prototype.capitalize = function() {
 	var arr = this.split(" ");
@@ -199,16 +185,25 @@ function sprColor(change) {
 }
 
 var changeSocket = null;
+var last = null;
 function changeHandle(cm, change) {
 	if (type == "spr") {
 		sprColor(change);
 	}
-	if (changeSocket !== null) {
-		var baseline = change.from.line;
-		var ldiff = change.to.line - change.from.line;
-		for (var i = change.from.line; i <= change.to.line; i++) {
-			changeSocket.send(i+","+editor.getLine(i));
+	console.log(change);
+	if (changeSocket !== null && last === null && change.origin != "cut" && change.origin != "undo" && change.origin != "redo") {
+		if (change.from.line == change.to.line) {
+			var text = "";
+			for (var i in change.text) {
+				text += "\n"+change.text[i];
+			}
+			changeSocket.send("CIF:"+change.from.line+","+change.from.ch+","+change.to.line+","+change.to.ch+","+text.substring(1));
 		}
+	} else if (change.origin == "cut" || change.origin == "undo" || change.origin == "redo") {
+		console.log("SEND FILE");
+		changeSocket.send("FILE:"+editor.getValue());
+	} else {
+		last = null;
 	}
 }
 
@@ -247,7 +242,7 @@ function socket() {
 	};
 }
 
-function changeSocket() {
+function changeSocketInit() {
 	changeSocket = new WebSocket("ws://"+url+"/api/change");
 	changeSocket.onopen = function (event) {
 		changeSocket.send("COF:"+filename);
@@ -261,7 +256,33 @@ function changeSocket() {
 	};
 	changeSocket.onmessage = function (event) {
 		message = event.data;
-		arr = message.split(",");
+		console.log(message);
+		if (message == "FILE") {
+			var pos = editor.getCursor();
+			changeSocket.send("FILE:"+editor.getValue());
+			editor.setCursor(pos);
+		} else if (message.substring(0, 5) == "FILE:") {
+			editor.setValue(message.substring(5));
+		} else if (message.substring(0, 6) == "USERS:") {
+			var num = parseInt(message.substring(6));
+			if (num > 1) {
+				titleHolder.innerHTML = filename.replace(/\-/g, " ") + " - " + num + " Users";
+			} else {
+				titleHolder.innerHTML = filename.replace(/\-/g, " ");
+			}
+		} else {
+			console.log(content);
+			var arr = message.split(",");
+			var content = message.substring((arr[0]+arr[1]+arr[2]+arr[3]).length+4);
+			last = content;
+			for (var i = 0; i < 4; i++) {
+				arr[i] = parseInt(arr[i]);
+			}
+			if (editor.lastLine() < parseInt(arr[0])) {
+				editor.setValue(editor.getValue()+"\n");
+			}
+			editor.replaceRange(content, {line:arr[0],ch:arr[1]}, {line:arr[2],ch:arr[3]});
+		}
 	};
 }
 
@@ -431,7 +452,6 @@ function loadFile(div) {
 		changeSocket.send("COF:"+filename);
 	}
 	removePopup();
-	usercheck();
 }
 
 //Called by the open file button
@@ -538,3 +558,4 @@ function changeTheme() {
 	cancel.classList.add("foldercancel");
 	cancel.onclick = removePopup;
 }
+changeSocketInit();

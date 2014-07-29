@@ -57,13 +57,11 @@ func main() {
 	http.HandleFunc("/api/", apiDoc)
 	http.HandleFunc("/api/listfiles", listFiles)
 	http.HandleFunc("/api/listthemes", listThemes)
-	http.HandleFunc("/api/usernumber", userNumber)
-	http.HandleFunc("/api/userleave", userLeave)
 	http.HandleFunc("/api/readfile", readFile)
 	http.HandleFunc("/api/savefile", saveFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
-	http.Handle("/api/changes", websocket.Handler(changeServer))
+	http.Handle("/api/change", websocket.Handler(changeServer))
 	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir("/etc/ide/website"))))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("/etc/ide/assets/images"))))
 	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir("/etc/ide/assets/themes"))))
@@ -106,25 +104,6 @@ func shellMode(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/assets/cmirror/shell.js")
 }
 
-//Returns the number of users using a particular file
-func userNumber(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
-	opts := r.URL.Query()
-	fname := strings.Trim(opts.Get("file"), " ./")
-	count := 0
-	for _, v := range users {
-		if v == fname {
-			count++
-		}
-	}
-	io.WriteString(w, strconv.Itoa(count))
-}
-
-func userLeave(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
-	users[strings.Split(r.RemoteAddr, ":")[0]] = "exited"
-}
-
 //Lists all files in the projects directory
 func listFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
@@ -165,7 +144,6 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "error")
 		return
 	}
-	users[strings.Split(r.RemoteAddr, ":")[0]] = fname
 	io.WriteString(w, string(contents))
 }
 
@@ -222,8 +200,9 @@ func socketServer(s *websocket.Conn) {
 }
 
 var changeSockets = make(map[string][]*websocket.Conn)
+var lastSocket *websocket.Conn
 
-//Receives socket connections to /api/change and creates a PTY to run the process
+//Receives /api/change socket connections and manages concurrent editing
 func changeServer(s *websocket.Conn) {
 	var currFile string
 	for {
@@ -234,12 +213,49 @@ func changeServer(s *websocket.Conn) {
 			return
 		}
 		//Change of file
-		if data[:3] == "COF:" {
-			currFile = data[3:]
+		if data[:4] == "COF:" {
+			if currFile != "" {
+				for i, v := range changeSockets[currFile] {
+					if v == s {
+						changeSockets[currFile] = append(changeSockets[currFile][:i], changeSockets[currFile][i+1:]...)
+						break
+					}
+				}
+				users := strconv.Itoa(len(changeSockets[currFile]) + 1)
+				for _, v := range changeSockets[currFile] {
+					websocket.Message.Send(v, "USERS:"+users)
+				}
+			}
+			currFile = data[4:]
+			if len(changeSockets[currFile]) > 0 {
+				lastSocket = s
+				websocket.Message.Send(changeSockets[currFile][0], "FILE")
+			}
 			changeSockets[currFile] = append(changeSockets[currFile], s)
-		} else if data[:3] == "CIF:" { //Change in file
+			users := strconv.Itoa(len(changeSockets[currFile]))
 			for _, v := range changeSockets[currFile] {
-				websocket.Message.Send(v, data[:3])
+				websocket.Message.Send(v, "USERS:"+users)
+			}
+		} else if data[:4] == "CIF:" { //Change in file
+			for _, v := range changeSockets[currFile] {
+				if v != s {
+					websocket.Message.Send(v, data[4:])
+				}
+			}
+		} else if data[:5] == "FILE:" {
+			for _, v := range changeSockets[currFile] {
+				if v != s {
+					websocket.Message.Send(v, data)
+				}
+			}
+			lastSocket = nil
+		}
+	}
+	if currFile != "" {
+		for i, v := range changeSockets[currFile] {
+			if v == s {
+				changeSockets[currFile] = append(changeSockets[currFile][:i], changeSockets[currFile][i+1:]...)
+				break
 			}
 		}
 	}
