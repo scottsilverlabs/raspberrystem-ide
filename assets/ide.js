@@ -1,4 +1,4 @@
-var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename, type, changeHandle;
+var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename, type, changeHandle, changeSocket;
 //The URL is needed for the web socket connection
 var url = document.location.host;
 window.onload = function main() {
@@ -40,6 +40,7 @@ window.onload = function main() {
 
 window.onbeforeunload = function (event) {
 	save();
+	changeSocket.close();
 };
 
 String.prototype.capitalize = function() {
@@ -184,7 +185,6 @@ function sprColor(change) {
 	}
 }
 
-var changeSocket = null;
 var last = null;
 function changeHandle(cm, change) {
 	if (type == "spr") {
