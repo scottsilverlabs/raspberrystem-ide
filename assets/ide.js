@@ -235,6 +235,25 @@ function socket() {
 	};
 }
 
+var changeSocket = null;
+function changeSocket() {
+	changeSocket = new WebSocket("ws://"+url+"/api/change");
+	changeSocket.onopen = function (event) {
+		changeSocket.send("COF:"+filename);
+	};
+	changeSocket.onclose = function (event) {
+		changeSocket = null;
+		setTimeout(changeSocket, 5000);
+	};
+	changeSocket.onerror = function (event) {
+		setTimeout(changeSocket, 5000);		
+	};
+	changeSocket.onmessage = function (event) {
+		message = event.data;
+		arr = message.split(",");
+	};
+}
+
 //Outputs graphical version of sprite file
 var good = new RegExp(/[0-9a-fA-F\-]/);
 function runSpr() {
@@ -322,6 +341,9 @@ function fileButton() {
 		editor.setValue("#!/bin/bash\n");
 		editor.setOption("mode", "shell");
 	}
+	if (changeSocket !== null) {
+		changeSocket.send("COF:"+filename);
+	}
 	removePopup();
 }
 
@@ -393,6 +415,9 @@ function loadFile(div) {
 	if (type == "spr") {
 		editor.setOption("mode", null);
 		sprColorAll();
+	}
+	if (changeSocket !== null) {
+		changeSocket.send("COF:"+filename);
 	}
 	removePopup();
 	usercheck();
