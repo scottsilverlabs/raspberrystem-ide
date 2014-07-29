@@ -1,4 +1,4 @@
-var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename, type, sprColor;
+var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename, type, changeHandle;
 //The URL is needed for the web socket connection
 var url = document.location.host;
 window.onload = function main() {
@@ -35,7 +35,7 @@ window.onload = function main() {
 		output.classList.add("cm-s-"+themes[i]);
 	}
 	editor.setValue("#!/usr/bin/env python3\n");
-	editor.on("change", sprColor);
+	editor.on("change", changeHandle);
 };
 
 window.onbeforeunload = function (event) {
@@ -168,34 +168,46 @@ function sprColorAll() {
 	}
 }
 
-function sprColor(cm, change) {
+function sprColor(change) {
+	var baseline = change.from.line;
+	var ldiff = change.to.line - change.from.line;
+	for (var i = 0; i <= ldiff; i++) {
+		var line = editor.getLine(baseline+i);
+		var schar = 0;
+		var echar = line.length;
+		if (i === 0) {
+			schar = change.from.ch;
+		} else if (i == ldiff) {
+			echar = change.to.ch;
+		}
+		for (var j = schar; j < echar; j++) {
+			var ch = line.substring(j, j+1).toLowerCase();
+			var code = ch.charCodeAt(0);
+			var start = {"line": baseline+i, "ch": j};
+			var end = {"line": baseline+i, "ch": j+1};
+			if ((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) {
+				editor.markText(start, end, {
+					className: "spr"+ch,
+				});
+			} else if (ch != "-" && ch != " " && ch != "0") {
+				editor.markText(start, end, {
+					className: "sprerr",
+				});
+			}
+		}
+	}
+}
+
+var changeSocket = null;
+function changeHandle(cm, change) {
 	if (type == "spr") {
+		sprColor(change);
+	}
+	if (changeSocket !== null) {
 		var baseline = change.from.line;
 		var ldiff = change.to.line - change.from.line;
-		for (var i = 0; i <= ldiff; i++) {
-			var line = editor.getLine(baseline+i);
-			var schar = 0;
-			var echar = line.length;
-			if (i === 0) {
-				schar = change.from.ch;
-			} else if (i == ldiff) {
-				echar = change.to.ch;
-			}
-			for (var j = schar; j < echar; j++) {
-				var ch = line.substring(j, j+1).toLowerCase();
-				var code = ch.charCodeAt(0);
-				var start = {"line": baseline+i, "ch": j};
-				var end = {"line": baseline+i, "ch": j+1};
-				if ((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) {
-					editor.markText(start, end, {
-						className: "spr"+ch,
-					});
-				} else if (ch != "-" && ch != " " && ch != "0") {
-					editor.markText(start, end, {
-						className: "sprerr",
-					});
-				}
-			}
+		for (var i = change.from.line; i <= change.to.line; i++) {
+			changeSocket.send(i+","+editor.getLine(i));
 		}
 	}
 }
@@ -235,7 +247,6 @@ function socket() {
 	};
 }
 
-var changeSocket = null;
 function changeSocket() {
 	changeSocket = new WebSocket("ws://"+url+"/api/change");
 	changeSocket.onopen = function (event) {
