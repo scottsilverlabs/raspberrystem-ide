@@ -63,6 +63,7 @@ func main() {
 	http.HandleFunc("/api/savefile", saveFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
+	http.Handle("/api/changes", websocket.Handler(changeServer))
 	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir("/etc/ide/website"))))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("/etc/ide/assets/images"))))
 	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir("/etc/ide/assets/themes"))))
@@ -216,6 +217,31 @@ func socketServer(s *websocket.Conn) {
 			s.Write([]byte("output: " + string(out[:n])))
 		}
 		time.Sleep(time.Millisecond * 100) //For minimal CPU impact
+	}
+	s.Close()
+}
+
+var changeSockets = make(map[string][]*websocket.Conn)
+
+//Receives socket connections to /api/change and creates a PTY to run the process
+func changeServer(s *websocket.Conn) {
+	var currFile string
+	for {
+		var data string
+		err := websocket.Message.Receive(s, &data)
+		if err != nil {
+			s.Close()
+			return
+		}
+		//Change of file
+		if data[:3] == "COF:" {
+			currFile = data[3:]
+			changeSockets[currFile] = append(changeSockets[currFile], s)
+		} else if data[:3] == "CIF:" { //Change in file
+			for _, v := range changeSockets[currFile] {
+				websocket.Message.Send(v, data[:3])
+			}
+		}
 	}
 	s.Close()
 }
