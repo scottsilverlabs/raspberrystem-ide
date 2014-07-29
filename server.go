@@ -209,8 +209,7 @@ func changeServer(s *websocket.Conn) {
 		var data string
 		err := websocket.Message.Receive(s, &data)
 		if err != nil {
-			s.Close()
-			return
+			break
 		}
 		//Change of file
 		if data[:4] == "COF:" {

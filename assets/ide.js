@@ -190,18 +190,12 @@ function changeHandle(cm, change) {
 	if (type == "spr") {
 		sprColor(change);
 	}
-	console.log(change);
-	if (changeSocket !== null && last === null && change.origin != "cut" && change.origin != "undo" && change.origin != "redo") {
-		if (change.from.line == change.to.line) {
-			var text = "";
-			for (var i in change.text) {
-				text += "\n"+change.text[i];
-			}
-			changeSocket.send("CIF:"+change.from.line+","+change.from.ch+","+change.to.line+","+change.to.ch+","+text.substring(1));
+	if (changeSocket !== null && last === null && change.origin != "setValue") {
+		var text = "";
+		for (var i in change.text) {
+			text += "\n"+change.text[i];
 		}
-	} else if (change.origin == "cut" || change.origin == "undo" || change.origin == "redo") {
-		console.log("SEND FILE");
-		changeSocket.send("FILE:"+editor.getValue());
+		changeSocket.send("CIF:"+change.from.line+","+change.from.ch+","+change.to.line+","+change.to.ch+","+text.substring(1));
 	} else {
 		last = null;
 	}
