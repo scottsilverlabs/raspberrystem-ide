@@ -290,10 +290,10 @@ function runSpr() {
 		var line = lines[i].split(" ");
 		valhtml += "<div>";
 		for (var j in line) {
-			if (line[j].match(good) === null) {
-				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(parseInt(i)+1)+": invalid character "+line[j];
+			if (line[j] != "" && (line[j].match(good) === null || line[j].match(good)[0] != line[j])) {
+				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(parseInt(i)+1)+": invalid color \""+line[j]+"\"";
 				return;
-			} else {
+			} else if (line[j] != "") {
 				if (line[j] == "-") {
 					line[j] = "0";
 				}
