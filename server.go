@@ -25,6 +25,7 @@ func main() {
 	content, err := ioutil.ReadFile("/etc/ide/ide.html") //ide.html is actually a go template
 	acontent, aerr := ioutil.ReadFile("/etc/ide/api.html")
 	settings, serr := ioutil.ReadFile("/etc/ide/settings.conf")
+
 	if err != nil {
 		panic(err)
 	}
@@ -51,16 +52,16 @@ func main() {
 	http.HandleFunc("/ide.js", ideJs)
 	http.HandleFunc("/cm.js", cmJs)
 	http.HandleFunc("/cm.css", cmCss)
-	http.HandleFunc("/mode.js", mode)
+	http.HandleFunc("/python.js", pythonMode)
+	http.HandleFunc("/shell.js", shellMode)
 	http.HandleFunc("/api/", apiDoc)
 	http.HandleFunc("/api/listfiles", listFiles)
 	http.HandleFunc("/api/listthemes", listThemes)
-	http.HandleFunc("/api/usernumber", userNumber)
-	http.HandleFunc("/api/userleave", userLeave)
 	http.HandleFunc("/api/readfile", readFile)
 	http.HandleFunc("/api/savefile", saveFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
+	http.Handle("/api/change", websocket.Handler(changeServer))
 	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir("/etc/ide/website"))))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("/etc/ide/assets/images"))))
 	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir("/etc/ide/assets/themes"))))
@@ -95,27 +96,12 @@ func cmCss(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/assets/cmirror/codemirror.css")
 }
 
-func mode(w http.ResponseWriter, r *http.Request) {
+func pythonMode(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/assets/cmirror/python.js")
 }
 
-//Returns the number of users using a particular file
-func userNumber(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
-	opts := r.URL.Query()
-	fname := strings.Trim(opts.Get("file"), " ./")
-	count := 0
-	for _, v := range users {
-		if v == fname {
-			count++
-		}
-	}
-	io.WriteString(w, strconv.Itoa(count))
-}
-
-func userLeave(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
-	users[strings.Split(r.RemoteAddr, ":")[0]] = "exited"
+func shellMode(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "/etc/ide/assets/cmirror/shell.js")
 }
 
 //Lists all files in the projects directory
@@ -158,7 +144,6 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "error")
 		return
 	}
-	users[strings.Split(r.RemoteAddr, ":")[0]] = fname
 	io.WriteString(w, string(contents))
 }
 
@@ -202,7 +187,7 @@ func socketServer(s *websocket.Conn) {
 		out := make([]byte, 1024)
 		n, err := pt.Read(out)
 		if err != nil {
-			if err.Error() == "read /dev/ptmx: input/output error" {
+			if err.Error() == "read /dev/ptmx: input/output error" || err.Error() == "EOF" {
 				break
 			}
 			s.Write([]byte("error: " + err.Error()))
@@ -210,6 +195,72 @@ func socketServer(s *websocket.Conn) {
 			s.Write([]byte("output: " + string(out[:n])))
 		}
 		time.Sleep(time.Millisecond * 100) //For minimal CPU impact
+	}
+	s.Close()
+}
+
+var changeSockets = make(map[string][]*websocket.Conn)
+var lastSocket *websocket.Conn
+
+//Receives /api/change socket connections and manages concurrent editing
+func changeServer(s *websocket.Conn) {
+	var currFile string
+	for {
+		var data string
+		err := websocket.Message.Receive(s, &data)
+		if err != nil {
+			break
+		}
+		//Change of file
+		if data[:4] == "COF:" {
+			if currFile != "" {
+				for i, v := range changeSockets[currFile] {
+					if v == s {
+						changeSockets[currFile] = append(changeSockets[currFile][:i], changeSockets[currFile][i+1:]...)
+						break
+					}
+				}
+				users := strconv.Itoa(len(changeSockets[currFile]))
+				for _, v := range changeSockets[currFile] {
+					websocket.Message.Send(v, "USERS:"+users)
+				}
+			}
+			currFile = data[4:]
+			if len(changeSockets[currFile]) > 0 {
+				lastSocket = s
+				websocket.Message.Send(changeSockets[currFile][0], "FILE")
+			}
+			changeSockets[currFile] = append(changeSockets[currFile], s)
+			users := strconv.Itoa(len(changeSockets[currFile]))
+			for _, v := range changeSockets[currFile] {
+				websocket.Message.Send(v, "USERS:"+users)
+			}
+		} else if data[:4] == "CIF:" { //Change in file
+			for _, v := range changeSockets[currFile] {
+				if v != s {
+					websocket.Message.Send(v, data[4:])
+				}
+			}
+		} else if data[:5] == "FILE:" {
+			for _, v := range changeSockets[currFile] {
+				if v != s {
+					websocket.Message.Send(v, data)
+				}
+			}
+			lastSocket = nil
+		}
+	}
+	if currFile != "" {
+		for i, v := range changeSockets[currFile] {
+			if v == s {
+				changeSockets[currFile] = append(changeSockets[currFile][:i], changeSockets[currFile][i+1:]...)
+				break
+			}
+		}
+		users := strconv.Itoa(len(changeSockets[currFile]))
+		for _, v := range changeSockets[currFile] {
+			websocket.Message.Send(v, "USERS:"+users)
+		}
 	}
 	s.Close()
 }

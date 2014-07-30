@@ -1,4 +1,4 @@
-var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename, type, sprColor;
+var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename, type, changeHandle, changeSocket;
 //The URL is needed for the web socket connection
 var url = document.location.host;
 window.onload = function main() {
@@ -35,25 +35,13 @@ window.onload = function main() {
 		output.classList.add("cm-s-"+themes[i]);
 	}
 	editor.setValue("#!/usr/bin/env python3\n");
-	editor.on("change", sprColor);
+	editor.on("change", changeHandle);
 };
 
 window.onbeforeunload = function (event) {
-	console.log(event);
-	POST("/api/userleave");
 	save();
+	changeSocket.close();
 };
-
-function usercheck() {
-	var users = GET("/api/usernumber?file="+filename);
-	if (parseInt(users) >= 2) {
-		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0]+"("+users+" Users In This File)";
-	} else {
-		titleHolder.innerHTML = titleHolder.innerHTML.split("(")[0];
-	}
-}
-
-setInterval(usercheck, 10000);
 
 String.prototype.capitalize = function() {
 	var arr = this.split(" ");
@@ -167,35 +155,49 @@ function sprColorAll() {
 	}
 }
 
-function sprColor(cm, change) {
-	if (type == "spr") {
-		var baseline = change.from.line;
-		var ldiff = change.to.line - change.from.line;
-		for (var i = 0; i <= ldiff; i++) {
-			var line = editor.getLine(baseline+i);
-			var schar = 0;
-			var echar = line.length;
-			if (i === 0) {
-				schar = change.from.ch;
-			} else if (i == ldiff) {
-				echar = change.to.ch;
-			}
-			for (var j = schar; j < echar; j++) {
-				var ch = line.substring(j, j+1).toLowerCase();
-				var code = ch.charCodeAt(0);
-				var start = {"line": baseline+i, "ch": j};
-				var end = {"line": baseline+i, "ch": j+1};
-				if ((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) {
-					editor.markText(start, end, {
-						className: "spr"+ch,
-					});
-				} else if (ch != "-" && ch != " " && ch != "0") {
-					editor.markText(start, end, {
-						className: "sprerr",
-					});
-				}
+function sprColor(change) {
+	var baseline = change.from.line;
+	var ldiff = change.to.line - change.from.line;
+	for (var i = 0; i <= ldiff; i++) {
+		var line = editor.getLine(baseline+i);
+		var schar = 0;
+		var echar = line.length;
+		if (i === 0) {
+			schar = change.from.ch;
+		} else if (i == ldiff) {
+			echar = change.to.ch;
+		}
+		for (var j = schar; j < echar; j++) {
+			var ch = line.substring(j, j+1).toLowerCase();
+			var code = ch.charCodeAt(0);
+			var start = {"line": baseline+i, "ch": j};
+			var end = {"line": baseline+i, "ch": j+1};
+			if ((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) {
+				editor.markText(start, end, {
+					className: "spr"+ch,
+				});
+			} else if (ch != "-" && ch != " " && ch != "0") {
+				editor.markText(start, end, {
+					className: "sprerr",
+				});
 			}
 		}
+	}
+}
+
+var last = null;
+function changeHandle(cm, change) {
+	if (type == "spr") {
+		sprColor(change);
+	}
+	if (changeSocket !== null && last === null && change.origin != "setValue") {
+		var text = "";
+		for (var i in change.text) {
+			text += "\n"+change.text[i];
+		}
+		changeSocket.send("CIF:"+change.from.line+","+change.from.ch+","+change.to.line+","+change.to.ch+","+text.substring(1));
+	} else {
+		last = null;
 	}
 }
 
@@ -234,6 +236,75 @@ function socket() {
 	};
 }
 
+function changeSocketInit() {
+	changeSocket = new WebSocket("ws://"+url+"/api/change");
+	changeSocket.onopen = function (event) {
+		changeSocket.send("COF:"+filename);
+	};
+	changeSocket.onclose = function (event) {
+		changeSocket = null;
+		setTimeout(changeSocket, 5000);
+	};
+	changeSocket.onerror = function (event) {
+		setTimeout(changeSocket, 5000);		
+	};
+	changeSocket.onmessage = function (event) {
+		message = event.data;
+		console.log(message);
+		if (message == "FILE") {
+			var pos = editor.getCursor();
+			changeSocket.send("FILE:"+editor.getValue());
+			editor.setCursor(pos);
+		} else if (message.substring(0, 5) == "FILE:") {
+			editor.setValue(message.substring(5));
+		} else if (message.substring(0, 6) == "USERS:") {
+			var num = parseInt(message.substring(6));
+			if (num > 1) {
+				titleHolder.innerHTML = filename.replace(/\-/g, " ") + " - " + num + " Users";
+			} else {
+				titleHolder.innerHTML = filename.replace(/\-/g, " ");
+			}
+		} else {
+			console.log(content);
+			var arr = message.split(",");
+			var content = message.substring((arr[0]+arr[1]+arr[2]+arr[3]).length+4);
+			last = content;
+			for (var i = 0; i < 4; i++) {
+				arr[i] = parseInt(arr[i]);
+			}
+			if (editor.lastLine() < parseInt(arr[0])) {
+				editor.setValue(editor.getValue()+"\n");
+			}
+			editor.replaceRange(content, {line:arr[0],ch:arr[1]}, {line:arr[2],ch:arr[3]});
+		}
+	};
+}
+
+//Outputs graphical version of sprite file
+var good = new RegExp(/[0-9a-fA-F\-]/);
+function runSpr() {
+	var val = editor.getValue();
+	var lines = val.split("\n");
+	var valhtml = "";
+	for (var i in lines) {
+		var line = lines[i].split(" ");
+		valhtml += "<div>";
+		for (var j in line) {
+			if (line[j] != "" && (line[j].match(good) === null || line[j].match(good)[0] != line[j])) {
+				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(parseInt(i)+1)+": invalid color \""+line[j]+"\"";
+				return;
+			} else if (line[j] != "") {
+				if (line[j] == "-") {
+					line[j] = "0";
+				}
+				valhtml += "<span style=\"color:#"+line[j]+line[j]+"0000;margin-right:0.2em;\">●</span>";
+			}
+		}
+		valhtml += "</div>";
+	}
+	outputtext.innerHTML += valhtml;
+}
+
 //Called by the run button
 function run() {
 	if (ws === null){
@@ -241,6 +312,8 @@ function run() {
 		outputtext.innerHTML = "";
 		if (type != "spr") {
 			socket();
+		} else {
+			runSpr();
 		}
 	} else {
 		ws.send("close");
@@ -290,6 +363,12 @@ function fileButton() {
 		}
 		editor.setValue(val.substring(1));
 		editor.setOption("mode", null);
+	} else if (type === "sh") {
+		editor.setValue("#!/bin/bash\n");
+		editor.setOption("mode", "shell");
+	}
+	if (changeSocket !== null) {
+		changeSocket.send("COF:"+filename);
 	}
 	removePopup();
 }
@@ -323,6 +402,7 @@ function newFile() {
 	menu.classList.add("filetype");
 	menu.innerHTML = '<option value="py">.py</option>';
 	menu.innerHTML += '<option value="spr">.spr</option>';
+	menu.innerHTML += '<option value="sh">.sh</option>';
 
 	var okay = document.createElement("div");
 	popup.appendChild(okay);
@@ -343,9 +423,6 @@ function loadFile(div) {
 		save();
 	}
 	filename = div.innerHTML.replace(/ /g, "-");
-	titleHolder.innerHTML = div.innerHTML;
-	var contents = GET("/api/readfile?file="+filename);
-	editor.setValue(contents);
 	var sp = filename.split(".");
 	type = sp[sp.length-1];
 	if (type == "py") {
@@ -354,12 +431,21 @@ function loadFile(div) {
 			version: 3,
 			singleLineStringErrors: false
 		});
-	} else if (type == "spr") {
+	}
+	if (type == "sh") {
+		editor.setOption("mode", "shell");
+	}
+	titleHolder.innerHTML = div.innerHTML;
+	var contents = GET("/api/readfile?file="+filename);
+	editor.setValue(contents);
+	if (type == "spr") {
 		editor.setOption("mode", null);
 		sprColorAll();
 	}
+	if (changeSocket !== null) {
+		changeSocket.send("COF:"+filename);
+	}
 	removePopup();
-	usercheck();
 }
 
 //Called by the open file button
@@ -466,3 +552,4 @@ function changeTheme() {
 	cancel.classList.add("foldercancel");
 	cancel.onclick = removePopup;
 }
+changeSocketInit();
