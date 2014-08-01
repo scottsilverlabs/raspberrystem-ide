@@ -1,52 +1,69 @@
 #
 # Requires:
-#	- go (golang.org)
-#	- To use "go get", first setup (optional):
-#		mkdir ~/.go
-#		export GOPATH=~/.go
+#	- go (golang.org) (required on host to build/run, required on target to run)
+#		- To add Go support on the Pi, in Raspbian:
+#			sudo apt-get install golang
 #	- Mercurial (hg) required by "go get":
-#		- http://mercurial.selenic.com/wiki/Download:
+#		- http://mercurial.selenic.com/wiki/Download, for Mac:
 #			sudo port install mercurial
-#	- go imports:
-#		go get github.com/kr/pty
+#	- Rebuild in linux/arm support for cross-compiling to the Pi.  On the Mac, this works:
+#		cd /usr/local/go/src
+#		sudo GOOS=linux GOARCH=arm ./make.bash
 #		
 PI=pi@raspberrypi
 
-.PHONY: all clean install pi-install deb is_go_installed
+PACKAGES=github.com/kr/pty code.google.com/p/go.net/websocket
 
-all: install
+export GOPATH=$(HOME)/tmp/idebuild
+
+.PHONY: all clean deb
+.PHONY: is_go_installed $(PACKAGES)
+.PHONY: host run install pi pi-install
+
+all: host
 
 clean:
 	rm -f server
 	rm -f payload.tar.gz
-	rm -rf /tmp/idebuild
+	rm -rf $(GOPATH)
 
 is_go_installed:
 	@which go > /dev/null
 
-run:
-	GOPATH=/tmp/idebuild go get github.com/kr/pty
-	GOPATH=/tmp/idebuild go get code.google.com/p/go.net/websocket
-	GOPATH=/tmp/idebuild go run ./server.go
+$(PACKAGES):
+	@if [ ! -d $(GOPATH)/src/$@ ]; then \
+		echo go get $@; \
+		go get $@; \
+	fi
 
-install: is_go_installed
-	GOPATH=/tmp/idebuild go get github.com/kr/pty
-	GOPATH=/tmp/idebuild go get code.google.com/p/go.net/websocket
-	GOPATH=/tmp/idebuild go build ./server.go
+run:
+	go run ./server.go
+
+host: is_go_installed $(PACKAGES)
+	go build ./server.go
+
+pi: is_go_installed $(PACKAGES)
+	GOARCH=arm GOARM=5 GOOS=linux go build ./server.go
+
+install:
 	cp ./server /usr/bin/ideserver
-	mkdir -p /etc/ide
-	- cp -R sitescrape/website /etc/ide
+	sudo mkdir -p /etc/ide
+	sudo chmod 777 /etc/ide
+	cp -R sitescrape/website /etc/ide
 	cp -R assets /etc/ide/
 	cp *.html /etc/ide/
 	cp settings.conf /etc/ide/
 
 pi-install:
-	GOPATH=/tmp/idebuild go get github.com/kr/pty
-	GOPATH=/tmp/idebuild go get code.google.com/p/go.net/websocket
-	GOPATH=/tmp/idebuild GOARCH=arm GOARM=5 go build ./server.go
 	- mkdir ./sitescrape/website
-	tar -czf payload.tar.gz ./server ./assets ./ide.html ./api.html ./settings.conf ./sitescrape/website
-	ssh $(PI) "mkdir /etc/ide/; cd /etc/ide; tar -xzf -; mv ./server /usr/bin/ideserver" < ./payload.tar.gz
+	tar -czf payload.tar.gz \
+		./server ./assets ./ide.html ./api.html ./settings.conf ./sitescrape/website
+	ssh $(PI) "\
+		sudo mkdir -p /etc/ide/; \
+		sudo chmod 777 /etc/ide; \
+		cd /etc/ide; tar -xzf -; \
+		sudo mv ./server /usr/bin/ideserver \
+		" < ./payload.tar.gz
 
 define sshpayload
 cat - > ./raspberrystem-ide-1.0.0.tar.gz; \
@@ -59,8 +76,7 @@ cp debcontrol debian/control; \
 dpkg-buildpackage;
 endef
 
-deb:
-	GOARCH=arm GOARM=5 go build ./server.go
+deb: pi
 	- mkdir ./sitescrape/website
 	tar -czf payload.tar.gz ./server ./assets ./debrules ./debcontrol ./ide.html ./api.html ./settings.conf ./sitescrape/website
 	ssh $(PI) "$(sshpayload)" < payload.tar.gz > raspberrystem-ide_1.0.0-1_armhf.deb
