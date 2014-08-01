@@ -19,7 +19,7 @@ var ide *template.Template
 var api *template.Template
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
 var users = make(map[string]string)
-var config = map[string]string{"port": "80", "projectdir": "/projects/", "WebviewUrl": "/website/"}
+var config = map[string]string{"port": "80", "projectdir": "/projects/"}
 
 func main() {
 	content, err := ioutil.ReadFile("/etc/ide/ide.html") //ide.html is actually a go template
@@ -74,8 +74,7 @@ func main() {
 //Called by requests to / and 404s
 func index(w http.ResponseWriter, r *http.Request) {
 	data := map[string]string{
-		"title":   "RStem IDE@" + string(hostname),
-		"baseurl": config["WebviewUrl"],
+		"title": "RStem IDE@" + string(hostname),
 	}
 	ide.ExecuteTemplate(w, "page", data)
 }

@@ -9,8 +9,10 @@ window.onload = function main() {
 	web = document.getElementById("webview");
 	if (url != "127.0.0.1" && url != "localhost") {
 		document.getElementById("browser").parentNode.removeChild(document.getElementById("browser"));
+		document.getElementById("webview").parentNode.removeChild(document.getElementById("webview"));
 	}
-	playButton = document.getElementById("play");
+	if (navigator.userAgent.search("Firefox")) {
+	}
 	titleHolder = document.getElementById("title");
 	editor = CodeMirror(document.getElementById("codewrapper"), {
 		mode: {
