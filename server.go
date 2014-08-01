@@ -74,7 +74,7 @@ func main() {
 //Called by requests to / and 404s
 func index(w http.ResponseWriter, r *http.Request) {
 	data := map[string]string{
-		"title": "RStem IDE@" + string(hostname),
+		"title": "RaspberrySTEM@" + string(hostname),
 	}
 	ide.ExecuteTemplate(w, "page", data)
 }

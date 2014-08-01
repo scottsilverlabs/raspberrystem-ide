@@ -11,8 +11,6 @@ window.onload = function main() {
 		document.getElementById("browser").parentNode.removeChild(document.getElementById("browser"));
 		document.getElementById("webview").parentNode.removeChild(document.getElementById("webview"));
 	}
-	if (navigator.userAgent.search("Firefox")) {
-	}
 	titleHolder = document.getElementById("title");
 	editor = CodeMirror(document.getElementById("codewrapper"), {
 		mode: {
