@@ -1,6 +1,6 @@
 var save, GET, POST, filename, type, changeHandle, changeSocket;
-//The URL is needed for the web socket connection
-var url = document.location.host;
+var url = document.location.host; //The URL is needed for the web socket connection
+
 window.onload = function main() {
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
@@ -142,11 +142,11 @@ function sprColorAll() {
 			var code = ch.charCodeAt(0);
 			var start = {"line": i, "ch": j};
 			var end = {"line": i, "ch": j+1};
-			if ((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) {
+			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) && (j == 0 || line.substring(j-1, j) == " ")) {
 				editor.markText(start, end, {
 					className: "spr"+ch,
 				});
-			} else if (ch != "-" && ch != " " && ch != "0") {
+			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j != 0 && line.substring(j-1, j) != " ")) {
 				editor.markText(start, end, {
 					className: "sprerr",
 				});
@@ -158,6 +158,26 @@ function sprColorAll() {
 function sprColor(change) {
 	var baseline = change.from.line;
 	var ldiff = change.to.line - change.from.line;
+	console.log(change);
+	if (ldiff == 0 && change.text.length == 2) {
+		var marks = editor.findMarksAt({line: baseline+1, ch: 0});
+		for (var i = 0; i < marks.length; i++) {
+			marks[i].clear();
+		}
+		var ch = editor.getLine(baseline+1).substring(0, 1).toLowerCase();
+		var code = ch.charCodeAt(0);
+		var start = {"line": baseline+1, "ch": 0};
+		var end = {"line": baseline+1, "ch": 1};
+		if ((parseInt(ch) && ch !== 0) || (code < 103 && code > 96)) {
+			editor.markText(start, end, {
+				className: "spr"+ch,
+			});
+		} else if (ch != "-" && ch != " " && ch != "0") {
+			editor.markText(start, end, {
+				className: "sprerr",
+			});
+		} 
+	}
 	for (var i = 0; i <= ldiff; i++) {
 		var line = editor.getLine(baseline+i);
 		var schar = 0;
@@ -172,11 +192,11 @@ function sprColor(change) {
 			var code = ch.charCodeAt(0);
 			var start = {"line": baseline+i, "ch": j};
 			var end = {"line": baseline+i, "ch": j+1};
-			if ((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) {
+			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96))  && (j == 0 || line.substring(j-1, j) == " ")) {
 				editor.markText(start, end, {
 					className: "spr"+ch,
 				});
-			} else if (ch != "-" && ch != " " && ch != "0") {
+			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j != 0 && line.substring(j-1, j) != " ")) {
 				editor.markText(start, end, {
 					className: "sprerr",
 				});
