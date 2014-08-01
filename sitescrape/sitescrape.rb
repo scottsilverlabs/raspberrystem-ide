@@ -1,17 +1,17 @@
 #!/usr/bin/env ruby
 require "open-uri"
 require "json"
-cwd = File.dirname __FILE__
-@repscript = open("#{cwd}/projectspage.js").read
+@cwd = File.dirname __FILE__
+@repscript = open("#{@cwd}/projectspage.js").read
 @baseurl = "http://dev.raspberrystem.com/wphidden42/?page_id=5"
-@localbase = cwd+"/website/"
+@localbase = @cwd+"/website/"
 @basedomain = @baseurl[/http:\/\/.+\.com\//]
 con = open(@baseurl)
 html = con.read
 json = html[/posts = \[.+\]/][8..-1]
 @posts = JSON.parse json
-if !Dir.exists? "./website"
-	Dir.mkdir "./website"
+if !Dir.exists? @cwd+"/website"
+	Dir.mkdir @cwd+"/website"
 end
 @queue = []
 @scanned = {}
@@ -33,13 +33,13 @@ def tolocal(url)
 	if newurl == "0.jpg"
 		newurl = (0...8).map { (65 + rand(26)).chr }.join.hash.to_s(16) + ".jpg"
 	end
-	return @urlhashes[url]
+	@urlhashes[url] = newurl
+	return newurl
 end
 
 def crawl(url)
 	@scanned[url] = true
 	url = formatUrl(url)
-	puts url+" -> "+tolocal(url)
 	page = nil
 	begin
 		page = open url
@@ -49,6 +49,7 @@ def crawl(url)
 	end
 	type = page.content_type
 	body = page.read
+
 	if type == "text/html"
 		return if !url.include? @basedomain
 		jqs = body.scan /<script[^>]+jquery[^>]+><\/script>/
@@ -115,10 +116,10 @@ def crawl(url)
 			end
 			body = body.gsub trimmed, "\""+tolocal(trimmed[1..-2])+"\""
 		end
-		f = File.open "./website/"+tolocal(url), "w"
+		f = File.open @cwd+"/website/"+tolocal(url), "w"
 		f.write body
 	else
-		f = File.open "./website/"+tolocal(url), "w"
+		f = File.open @cwd+"/website/"+tolocal(url), "w"
 		f.write body
 	end
 end
@@ -133,6 +134,8 @@ for i in 1..8
 		while true
 			if @queue.size > 0
 				crawl @queue.pop
+			else
+				break
 			end
 		end
 	}).last.run
@@ -146,5 +149,5 @@ while alive
 	end
 	sleep 1
 end
-f = File.open "./website/index.html", "w"
-f.write(open("./website/"+@urlhashes[formatUrl(@baseurl)]).read)
+f = File.open @cwd+"/website/index.html", "w"
+f.write(open(@cwd+"/website/"+@urlhashes[formatUrl(@baseurl)]).read)
