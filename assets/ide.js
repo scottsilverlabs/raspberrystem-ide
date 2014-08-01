@@ -1,4 +1,4 @@
-var codewrapper, output, ide, editor, web, titleHolder, playButton, save, GET, POST, filename, type, changeHandle, changeSocket;
+var save, GET, POST, filename, type, changeHandle, changeSocket;
 //The URL is needed for the web socket connection
 var url = document.location.host;
 window.onload = function main() {
