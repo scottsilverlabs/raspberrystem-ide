@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"strconv"
 	"strings"
 	"syscall"
@@ -19,7 +20,7 @@ var ide *template.Template
 var api *template.Template
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
 var users = make(map[string]string)
-var config = map[string]string{"port": "80", "projectdir": "/projects/"}
+var config = map[string]string{"port": "80", "projectdir": "~/raspberrystem_projects/"}
 
 func main() {
 	content, err := ioutil.ReadFile("/etc/ide/ide.html") //ide.html is actually a go template
@@ -42,6 +43,9 @@ func main() {
 			}
 		}
 	}
+	currUser, _ := user.Current()
+	println(currUser.HomeDir)
+	config["projectdir"] = strings.Replace(config["projectdir"], "~", currUser.HomeDir, 1)
 	os.Mkdir(config["projectdir"], 0775)
 	ide, err = template.New("page").Parse(string(content))
 	api, err = template.New("page").Parse(string(acontent))
