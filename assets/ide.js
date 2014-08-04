@@ -1,4 +1,4 @@
-var save, GET, POST, filename, type, changeHandle, changeSocket, openFile; //Function prototypes
+var save, GET, POST, filename, type, changeHandle, changeSocket, openFile, removePopup; //Function prototypes
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
@@ -50,12 +50,18 @@ String.prototype.capitalize = function() {
 	for (var i in arr) {
 		toRet += " "+arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
 	}
-    return toRet.substring(1);
+	return toRet.substring(1);
 };
 
 String.prototype.lower = function() {
-    return this.toLowerCase();
+	return this.toLowerCase();
 };
+
+function key(k) {
+	if (k.keyCode == 27) {
+		removePopup();
+	}
+}
 
 function GET(url) {  
 	var req = new XMLHttpRequest();
