@@ -44,8 +44,8 @@ func main() {
 		}
 	}
 	currUser, _ := user.Current()
-	println(currUser.HomeDir)
 	config["projectdir"] = strings.Replace(config["projectdir"], "~", currUser.HomeDir, 1)
+	println(config["projectdir"])
 	os.Mkdir(config["projectdir"], 0775)
 	ide, err = template.New("page").Parse(string(content))
 	api, err = template.New("page").Parse(string(acontent))
