@@ -392,6 +392,7 @@ function fileButton() {
 		changeSocket.send("COF:"+filename);
 	}
 	removePopup();
+	save();
 }
 
 function deleteFile(fname, yes) {
