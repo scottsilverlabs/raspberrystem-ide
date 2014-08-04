@@ -534,7 +534,7 @@ function openFile() {
 	popup.appendChild(title);
 	title.classList.add("popuptitle");
 	title.classList.add("maincolor");
-	title.innerHTML = "Open File";
+	title.innerHTML = "Select File";
 
 	var fileholder = document.createElement("div");
 	popup.appendChild(fileholder);
