@@ -1,10 +1,11 @@
-var save, GET, POST, filename, type, changeHandle, changeSocket;
+var save, GET, POST, filename, type, changeHandle, changeSocket, openFile; //Function prototypes
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
 	outputtext = document.getElementById("output").firstChild;
+	playButton = document.getElementById("play");
 	ide = document.getElementById("ide");
 	web = document.getElementById("webview");
 	if (url != "127.0.0.1" && url != "localhost") {
@@ -393,6 +394,54 @@ function fileButton() {
 	removePopup();
 }
 
+function deleteFile(fname, yes) {
+	if (yes) {
+		POST("/api/deletefile", {"file": fname});
+	}
+	removePopup();
+	openFile();
+}
+
+function deletePrompt(fname) {
+	console.log("Delete "+fname);
+	removePopup();
+	
+	back = document.createElement("div");
+	document.body.appendChild(back);
+	back.classList.add("holder");
+
+	popup = document.createElement("div");
+	document.body.appendChild(popup);
+	popup.classList.add("filepopup");
+	popup.classList.add("popup");
+	back.onclick = removePopup;
+
+	var title = document.createElement("h1");
+	popup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.innerHTML = "Delete";
+
+	text = document.createElement("div");
+	popup.appendChild(text);
+	text.classList.add("deletetext");
+	text.innerHTML = "Delete "+fname+"?";
+
+	var okay = document.createElement("div");
+	popup.appendChild(okay);
+	okay.classList.add("fileokay");
+	okay.onclick = new Function("deleteFile(\""+fname+"\", true)");
+	okay.innerHTML = "Yes";
+
+	var cancel = document.createElement("div");
+	popup.appendChild(cancel);
+	cancel.innerHTML = "No";
+	cancel.classList.add("filecancel");
+	cancel.onclick = new Function("deleteFile(\""+fname+"\", false)");
+
+	//TODO, confirm popup, return to file selection
+}
+
 //Caled by the new file button in the open file popup
 function newFile() {
 	removePopup();
@@ -502,6 +551,11 @@ function openFile() {
 			filediv.classList.add("filediv");
 			filediv.classList.add("maincolor");
 			filediv.onclick = new Function("loadFile(this)");
+			var deleteDiv = document.createElement("div");
+			fileholder.appendChild(deleteDiv);
+			deleteDiv.innerHTML = "X";
+			deleteDiv.classList.add("deleteDiv");
+			deleteDiv.onclick = new Function("deletePrompt(\""+files[i]+"\")");
 		}
 	}
 

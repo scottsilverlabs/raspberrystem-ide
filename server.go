@@ -23,15 +23,8 @@ var users = make(map[string]string)
 var config = map[string]string{"port": "80", "projectdir": "~/raspberrystem_projects/"}
 
 func main() {
-	settings, serr := ioutil.ReadFile("/etc/ide/settings.conf")
-
-	if err != nil {
-		panic(err)
-	}
-	if aerr != nil {
-		panic(aerr)
-	}
-	if serr == nil {
+	settings, err := ioutil.ReadFile("/etc/ide/settings.conf")
+	if err == nil {
 		set := strings.Split(string(settings), "\n")
 		for _, line := range set {
 			if len(line) > 0 && line[0:1] != "#" {
@@ -44,8 +37,6 @@ func main() {
 	currUser, _ := user.Current()
 	config["projectdir"] = strings.Replace(config["projectdir"], "~", currUser.HomeDir, 1)
 	os.Mkdir(config["projectdir"], 0775)
-	ide, err = template.New("page").Parse(string(content))
-	api, err = template.New("page").Parse(string(acontent))
 	if err != nil {
 		panic(err)
 	}
@@ -59,6 +50,7 @@ func main() {
 	http.HandleFunc("/api/listthemes", listThemes)
 	http.HandleFunc("/api/readfile", readFile)
 	http.HandleFunc("/api/savefile", saveFile)
+	http.HandleFunc("/api/deletefile", deleteFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
@@ -145,6 +137,12 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	name := strings.Trim(r.Form.Get("file"), " ./")
 	content := r.Form.Get("content")
 	ioutil.WriteFile(config["projectdir"]+name, []byte(content), 0744)
+}
+
+func deleteFile(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	fname := strings.Trim(r.Form.Get("file"), " ./")
+	os.Remove(config["projectdir"] + fname)
 }
 
 func hostnameOut(w http.ResponseWriter, r *http.Request) {
