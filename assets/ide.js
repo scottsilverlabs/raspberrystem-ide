@@ -100,14 +100,14 @@ function save() {
 //Called when the script stops running on the server side
 
 var errs = [];
-var errRegex = new RegExp(/\s+File ".+", line \d+\n.+\n.+\^\n.+: .+/g);
+var errRegex = new RegExp(/\s+File ".+", line \d+.*\n.+\n.+\^\n.+: .+/g);
 var traceRegex = new RegExp(/Traceback \(most recent call last\):\n(\s+File ".+", line \d+.*\n.*\n)+.+: .+/g);
 var stripRegex = new RegExp(/(^\s+|\s+$)/g);
 function errorHighlight() {
 	var errString = outputtext.innerHTML;
 	var lines = errString.split("\n");
 	var errors = errString.match(errRegex);
-	for (var i in errors) {
+	for (var i = 0; errors && i < errors.length; i++) {
 		var err = errors[i];
 		var errLines = err.split("\n");
 		var errLinePos = errLines[0].split(", ")[1].substring(5);
@@ -132,27 +132,33 @@ function errorHighlight() {
 		for (var i = 1; i < split.length-1; i++) {
 			var line = split[i];
 			if (i%2 !== 0) {
-				console.log("File:"+line);
 				var end = 0;
 				for (var k = 8; k < line.length; k++) {
 					if (line.substr(k, 1) == "\"") {
 						end = k;
 					}
 				}
-				console.log(end);
 				message += "\n"+line.substring(0, 8)+"<span style=\"color:white;\">"+line.substring(8, end)+"</span>";
 				var nextend = end+8;
-				while (parseInt(line.substr(++nextend, 1)) || line.substr(++nextend, 1) == "0");
+				while (parseInt(line.substr(nextend, 1)) || line.substr(nextend, 1) == "0") nextend++;
 				message += line.substring(end, end+8)+"<span style=\"color:white;\">"+line.substring(end+8, nextend)+"</span>"+line.substring(nextend);
-
+				if (line.substring(end-filename.length, end) == filename) {
+					var lnum = parseInt(line.substring(end+8, nextend))-1;
+					var start = {"line": lnum, "ch": 0};
+					var end = {"line": lnum, "ch": editor.getLine(lnum).length};
+					errs.push(editor.markText(start, end, {
+						className: "cm-error",
+						clearOnEnter: true,
+						title: "Traceback",
+					}));
+					editor.scrollTo(0, lnum);
+				}
 			} else {
-				console.log("Code "+i+" "+line);
 				message += "\n"+"<span style=\"color:white;\">"+line+"</span>";
 			}
 		}
 		outputtext.innerHTML = outputtext.innerHTML.replace(traces[j], "<span style=\"color:red;\">"+message+"</span>");
 	}
-	console.log(errs);
 }
 
 function sprColorAll() {
@@ -179,7 +185,6 @@ function sprColorAll() {
 function sprColor(change) {
 	var baseline = change.from.line;
 	var ldiff = change.to.line - change.from.line;
-	console.log(change);
 	if (ldiff == 0 && change.text.length == 2) {
 		var marks = editor.findMarksAt({line: baseline+1, ch: 0});
 		for (var i = 0; i < marks.length; i++) {
@@ -248,14 +253,12 @@ function socket() {
 	ws = new WebSocket("ws://"+url+"/api/socket");
 	ws.onopen = function (event) {
 		while ((a = errs.pop()) !== undefined) {
-			console.log(a);
 			a.clear();
 		}
 		ws.send(filename);
 		playButton.src = "/images/stop.png";
 	};
 	ws.onclose = function (event) {
-		console.log("Close");
 		ws = null;
 		errorHighlight();
 		playButton.src = "/images/play.png";
