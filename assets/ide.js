@@ -41,7 +41,7 @@ window.onload = function main() {
 	editor.setValue("#!/usr/bin/env python3\n");
 	editor.on("change", changeHandle);
 	filename = "Untitled.py";
-	if (GET("/api/listfiles").split("\n")[0] == "") {
+	if (GET("/api/listfiles").split("\n")[0] === "") {
 		save(); //Create untitled document
 	}
 	changeSocketInit();
@@ -138,10 +138,10 @@ function errorHighlight() {
 						end = k;
 					}
 				}
-				message += "\n"+line.substring(0, 8)+"<span style=\"color:white;\">"+line.substring(8, end)+"</span>";
+				message += "\n"+line.substring(0, 8)+"<span class=\"cm-variable\">"+line.substring(8, end)+"</span>";
 				var nextend = end+8;
 				while (parseInt(line.substr(nextend, 1)) || line.substr(nextend, 1) == "0") nextend++;
-				message += line.substring(end, end+8)+"<span style=\"color:white;\">"+line.substring(end+8, nextend)+"</span>"+line.substring(nextend);
+				message += line.substring(end, end+8)+"<span class=\"cm-variable\">"+line.substring(end+8, nextend)+"</span>"+line.substring(nextend);
 				if (line.substring(end-filename.length, end) == filename) {
 					var lnum = parseInt(line.substring(end+8, nextend))-1;
 					var start = {"line": lnum, "ch": 0};
@@ -154,7 +154,7 @@ function errorHighlight() {
 					editor.scrollTo(0, lnum);
 				}
 			} else {
-				message += "\n"+"<span style=\"color:white;\">"+line+"</span>";
+				message += "\n"+"<span class=\"cm-variable\">"+line+"</span>";
 			}
 		}
 		outputtext.innerHTML = outputtext.innerHTML.replace(traces[j], "<span style=\"color:red;\">"+message+"</span>");
@@ -169,11 +169,11 @@ function sprColorAll() {
 			var code = ch.charCodeAt(0);
 			var start = {"line": i, "ch": j};
 			var end = {"line": i, "ch": j+1};
-			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) && (j == 0 || line.substring(j-1, j) == " ")) {
+			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) && (j === 0 || line.substring(j-1, j) !== " ")) {
 				editor.markText(start, end, {
 					className: "spr"+ch,
 				});
-			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j != 0 && line.substring(j-1, j) != " ")) {
+			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j !== 0 && line.substring(j-1, j) !== " ")) {
 				editor.markText(start, end, {
 					className: "sprerr",
 				});
@@ -218,11 +218,11 @@ function sprColor(change) {
 			var code = ch.charCodeAt(0);
 			var start = {"line": baseline+i, "ch": j};
 			var end = {"line": baseline+i, "ch": j+1};
-			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96))  && (j == 0 || line.substring(j-1, j) == " ")) {
+			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96))  && (j === 0 || line.substring(j-1, j) == " ")) {
 				editor.markText(start, end, {
 					className: "spr"+ch,
 				});
-			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j != 0 && line.substring(j-1, j) != " ")) {
+			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j !== 0 && line.substring(j-1, j) != " ")) {
 				editor.markText(start, end, {
 					className: "sprerr",
 				});
@@ -336,10 +336,10 @@ function runSpr() {
 		var line = lines[i].split(" ");
 		valhtml += "<div>";
 		for (var j in line) {
-			if (line[j] != "" && (line[j].match(good) === null || line[j].match(good)[0] != line[j])) {
+			if (line[j] !== "" && (line[j].match(good) === null || line[j].match(good)[0] != line[j])) {
 				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(parseInt(i)+1)+": invalid color \""+line[j]+"\"";
 				return;
-			} else if (line[j] != "") {
+			} else if (line[j] !== "") {
 				if (line[j] == "-") {
 					line[j] = "0";
 				}
