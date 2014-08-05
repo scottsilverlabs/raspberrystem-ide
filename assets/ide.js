@@ -1,4 +1,4 @@
-var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup; //Function prototypes
+var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup, changeSocketInit; //Function prototypes
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
@@ -41,6 +41,7 @@ window.onload = function main() {
 	if (GET("/api/listfiles").split("\n")[0] == "") {
 		save(); //Create untitled document
 	}
+	changeSocketInit();
 };
 
 window.onbeforeunload = function (event) {
@@ -640,4 +641,3 @@ function changeTheme() {
 	cancel.classList.add("foldercancel");
 	cancel.onclick = removePopup;
 }
-changeSocketInit();
