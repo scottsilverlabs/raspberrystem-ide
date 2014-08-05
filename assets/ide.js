@@ -1,4 +1,4 @@
-var save, GET, POST, filename, type, changeHandle, changeSocket, openFile, removePopup; //Function prototypes
+var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup; //Function prototypes
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
@@ -37,6 +37,10 @@ window.onload = function main() {
 	}
 	editor.setValue("#!/usr/bin/env python3\n");
 	editor.on("change", changeHandle);
+	filename = "Untitled.py";
+	if (GET("/api/listfiles").split("\n")[0] == "") {
+		save(); //Create untitled document
+	}
 };
 
 window.onbeforeunload = function (event) {
@@ -83,7 +87,6 @@ function POST(url, args) {
 	return req.responseText;
 }
 
-var filename = "Untitled.py";
 function save() {
 	if (filename !== "") {
 		POST("/api/savefile", {"file": filename, "content": editor.getValue()});
@@ -558,11 +561,13 @@ function openFile() {
 			filediv.classList.add("filediv");
 			filediv.classList.add("maincolor");
 			filediv.onclick = new Function("loadFile(this)");
-			var deleteDiv = document.createElement("div");
-			fileholder.appendChild(deleteDiv);
-			deleteDiv.innerHTML = "X";
-			deleteDiv.classList.add("deleteDiv");
-			deleteDiv.onclick = new Function("deletePrompt(\""+files[i]+"\")");
+			if (files[i] != "Untitled.py") {
+				var deleteDiv = document.createElement("div");
+				fileholder.appendChild(deleteDiv);
+				deleteDiv.innerHTML = "X";
+				deleteDiv.classList.add("deleteDiv");
+				deleteDiv.onclick = new Function("deletePrompt(\""+files[i]+"\")");
+			}
 		}
 	}
 
