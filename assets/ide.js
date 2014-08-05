@@ -371,7 +371,7 @@ function toggleWeb() {
 //Removes popups
 var back, popup, text, menu;
 function removePopup() {
-	if (back === null) {
+	if (back !== null) {
 		back.parentNode.removeChild(back);
 		popup.parentNode.removeChild(popup);
 	}
