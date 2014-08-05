@@ -184,7 +184,7 @@ func socketServer(s *websocket.Conn) {
 		} else if n > 0 {
 			s.Write([]byte("output: " + string(out[:n])))
 		}
-		time.Sleep(time.Millisecond * 100) //For minimal CPU impact
+		time.Sleep(time.Millisecond * 10) //For minimal CPU impact
 	}
 	s.Close()
 }

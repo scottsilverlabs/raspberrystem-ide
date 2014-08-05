@@ -100,8 +100,8 @@ function save() {
 //Called when the script stops running on the server side
 
 var errs = [];
-var errRegex = new RegExp(/[ ]+File "\/projects\/.+", line \d+\n.+\n.+\^\n.+: .+/g);
-var traceRegex = new RegExp(/[ ]+File "\/projects\/.+", line \d+, in.+\n.+\n.+: .+/g);
+var errRegex = new RegExp(/\s+File ".+", line \d+\n.+\n.+\^\n.+: .+/g);
+var traceRegex = new RegExp(/Traceback \(most recent call last\):\n(\s+File ".+", line \d+.*\n.*\n)+.+: .+/g);
 var stripRegex = new RegExp(/(^\s+|\s+$)/g);
 function errorHighlight() {
 	var errString = outputtext.innerHTML;
@@ -126,24 +126,31 @@ function errorHighlight() {
 		}
 	}
 	var traces = errString.match(traceRegex);
-	console.log(traces);
-	for (i in traces) {
-		err = traces[i];
-		errLines = err.split("\n");
-		errLinePos = errLines[0].split(", ")[1].substring(5);
-		line = editor.lineInfo(errLinePos-1);
-		stripped = errLines[1].replace(stripRegex, "");
-		match = line.text.indexOf(stripped);
-		start = {"line": errLinePos-1, "ch": match};
-		end = {"line": errLinePos-1, "ch": match+stripped.length};
-		errs.push(editor.markText(start, end, {
-			className: "cm-error",
-			clearOnEnter: true,
-			title: errLines[2],
-		}));
-		if (i == 0) {
-			editor.scrollTo(0, errLinePos);
+	for (var j = 0; j < traces.length; j++) {
+		var split = traces[j].split("\n");
+		var message = split[0];
+		for (var i = 1; i < split.length-1; i++) {
+			var line = split[i];
+			if (i%2 !== 0) {
+				console.log("File:"+line);
+				var end = 0;
+				for (var k = 8; k < line.length; k++) {
+					if (line.substr(k, 1) == "\"") {
+						end = k;
+					}
+				}
+				console.log(end);
+				message += "\n"+line.substring(0, 8)+"<span style=\"color:white;\">"+line.substring(8, end)+"</span>";
+				var nextend = end+8;
+				while (parseInt(line.substr(++nextend, 1)) || line.substr(++nextend, 1) == "0");
+				message += line.substring(end, end+8)+"<span style=\"color:white;\">"+line.substring(end+8, nextend)+"</span>"+line.substring(nextend);
+
+			} else {
+				console.log("Code "+i+" "+line);
+				message += "\n"+"<span style=\"color:white;\">"+line+"</span>";
+			}
 		}
+		outputtext.innerHTML = outputtext.innerHTML.replace(traces[j], "<span style=\"color:red;\">"+message+"</span>");
 	}
 	console.log(errs);
 }
@@ -256,9 +263,8 @@ function socket() {
 	ws.onmessage = function (event) {
 		message = event.data;
 		if (message.substring(0, 8) == "output: ") {
-			messageActual = message.substring(8).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-			outputtext.innerHTML += messageActual;
-			output.scrollTop = output.scrollHeight;
+			outputtext.innerHTML += message.substring(8).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+			output.scrollTop = output.scrollHeight;		
 			return;
 		} else if (message.substring(0, 7) == "error: ") {
 			messageActual = message.substring(7).replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -271,8 +277,7 @@ function socket() {
 }
 
 function changeSocketInit() {
-	changeSocket = new WebSocket("wss://"+url+"/api/change");
-	var good = false;
+	changeSocket = new WebSocket("ws://"+url+"/api/change");
 	changeSocket.onopen = function (event) {
 		changeSocket.send("COF:"+filename);
 		good = true;
@@ -285,7 +290,7 @@ function changeSocketInit() {
 	};
 	changeSocket.onerror = function (event) {
 		if (!good) {
-			alert("Your browser may not support web sockets\nFor the best experience use Chrome");
+			alert("Your browser may not support web sockets\nFor the best experience use Google Chrome");
 		}
 	};
 	changeSocket.onmessage = function (event) {
@@ -313,7 +318,7 @@ function changeSocketInit() {
 			if (editor.lastLine() < parseInt(arr[0])) {
 				editor.setValue(editor.getValue()+"\n");
 			}
-			editor.replaceRange(content, {line:arr[0],ch:arr[1]}, {line:arr[2],ch:arr[3]});
+			editor.replaceRange(content, {line:arr[0], ch:arr[1]}, {line:arr[2], ch:arr[3]});
 		}
 	};
 }
@@ -359,7 +364,6 @@ function run() {
 }
 
 //Called by the web button
-var webShowing = false;
 function toggleWeb() {
 	webShowing = !webShowing;
 	if (webShowing){
