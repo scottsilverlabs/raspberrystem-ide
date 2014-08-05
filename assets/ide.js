@@ -370,8 +370,10 @@ function toggleWeb() {
 //Removes popups
 var back, popup, text, menu;
 function removePopup() {
-	back.parentNode.removeChild(back);
-	popup.parentNode.removeChild(popup);
+	if (back === null) {
+		back.parentNode.removeChild(back);
+		popup.parentNode.removeChild(popup);
+	}
 }
 
 //Called when the newFile okay button is pressed
