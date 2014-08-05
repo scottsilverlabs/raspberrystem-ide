@@ -2,6 +2,9 @@ var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup, ch
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
+	if (window.MozWebSocket) {
+		window.WebSocket = window.MozWebSocket;
+	}
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
 	outputtext = document.getElementById("output").firstChild;
@@ -268,16 +271,22 @@ function socket() {
 }
 
 function changeSocketInit() {
-	changeSocket = new WebSocket("ws://"+url+"/api/change");
+	changeSocket = new WebSocket("wss://"+url+"/api/change");
+	var good = false;
 	changeSocket.onopen = function (event) {
 		changeSocket.send("COF:"+filename);
+		good = true;
 	};
 	changeSocket.onclose = function (event) {
 		changeSocket = null;
-		setTimeout(changeSocket, 5000);
+		if (good) {
+			setTimeout(changeSocketInit, 5000);
+		}
 	};
 	changeSocket.onerror = function (event) {
-		setTimeout(changeSocket, 5000);		
+		if (!good) {
+			alert("Your browser may not support web sockets\nFor the best experience use Chrome");
+		}
 	};
 	changeSocket.onmessage = function (event) {
 		message = event.data;
