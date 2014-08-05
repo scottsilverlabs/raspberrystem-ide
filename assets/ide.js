@@ -161,27 +161,6 @@ function errorHighlight() {
 	}
 }
 
-function sprColorAll() {
-	for (var i = 0; i < editor.lineCount(); i++) {
-		var line = editor.getLine(i);
-		for (var j = 0; j < line.length; j++) {
-			var ch = line.substring(j, j+1).toLowerCase();
-			var code = ch.charCodeAt(0);
-			var start = {"line": i, "ch": j};
-			var end = {"line": i, "ch": j+1};
-			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) && (j === 0 || line.substring(j-1, j) !== " ")) {
-				editor.markText(start, end, {
-					className: "spr"+ch,
-				});
-			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j !== 0 && line.substring(j-1, j) !== " ")) {
-				editor.markText(start, end, {
-					className: "sprerr",
-				});
-			}
-		}
-	}
-}
-
 function sprColor(change) {
 	var baseline = change.from.line;
 	var ldiff = change.to.line - change.from.line;
@@ -343,7 +322,7 @@ function runSpr() {
 				if (line[j] == "-") {
 					line[j] = "0";
 				}
-				valhtml += "<span style=\"color:#"+line[j]+line[j]+"0000;margin-right:0.2em;\">⬤</span>";
+				valhtml += "<span style=\"color:#"+line[j]+line[j]+"0000;\">⬤</span>";
 			}
 		}
 		valhtml += "</div>";
@@ -464,8 +443,6 @@ function deletePrompt(fname) {
 	cancel.innerHTML = "No";
 	cancel.classList.add("filecancel");
 	cancel.onclick = new Function("deleteFile(\""+fname+"\", false)");
-
-	//TODO, confirm popup, return to file selection
 }
 
 //Caled by the new file button in the open file popup
@@ -535,7 +512,12 @@ function loadFile(div) {
 	editor.setValue(contents);
 	if (type == "spr") {
 		editor.setOption("mode", null);
-		sprColorAll();
+		var lines = editor.lineCount();
+		sprColor({
+			from: {line: 0, ch: 0},
+			to: {line: lines-1, ch: editor.getLine(lines-1).length},
+			text: "abcd",
+		});
 	}
 	if (changeSocket !== null) {
 		changeSocket.send("COF:"+filename);
@@ -583,6 +565,8 @@ function openFile() {
 				deleteDiv.innerHTML = "X";
 				deleteDiv.classList.add("deleteDiv");
 				deleteDiv.onclick = new Function("deletePrompt(\""+files[i]+"\")");
+			} else {
+				filediv.classList.add("untitleddiv");
 			}
 		}
 	}
