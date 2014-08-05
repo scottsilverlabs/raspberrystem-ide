@@ -324,7 +324,7 @@ function runSpr() {
 				if (line[j] == "-") {
 					line[j] = "0";
 				}
-				valhtml += "<span style=\"color:#"+line[j]+line[j]+"0000;margin-right:0.2em;\">●</span>";
+				valhtml += "<span style=\"color:#"+line[j]+line[j]+"0000;margin-right:0.2em;\">⬤</span>";
 			}
 		}
 		valhtml += "</div>";
