@@ -281,7 +281,6 @@ function changeSocketInit() {
 	};
 	changeSocket.onmessage = function (event) {
 		message = event.data;
-		console.log(message);
 		if (message == "FILE") {
 			var pos = editor.getCursor();
 			changeSocket.send("FILE:"+editor.getValue());
@@ -296,7 +295,6 @@ function changeSocketInit() {
 				titleHolder.innerHTML = filename.replace(/\-/g, " ");
 			}
 		} else {
-			console.log(content);
 			var arr = message.split(",");
 			var content = message.substring((arr[0]+arr[1]+arr[2]+arr[3]).length+4);
 			last = content;
@@ -416,7 +414,6 @@ function deleteFile(fname, yes) {
 }
 
 function deletePrompt(fname) {
-	console.log("Delete "+fname);
 	removePopup();
 	
 	back = document.createElement("div");
