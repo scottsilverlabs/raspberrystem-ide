@@ -327,7 +327,7 @@ function changeSocketInit() {
 }
 
 //Outputs graphical version of sprite file
-var good = new RegExp(/[0-9a-fA-F\-]/);
+var sprColorRegex = new RegExp(/[0-9a-fA-F\-]/);
 function runSpr() {
 	var val = editor.getValue();
 	var lines = val.split("\n");
@@ -336,7 +336,7 @@ function runSpr() {
 		var line = lines[i].split(" ");
 		valhtml += "<div>";
 		for (var j in line) {
-			if (line[j] !== "" && (line[j].match(good) === null || line[j].match(good)[0] != line[j])) {
+			if (line[j] !== "" && (line[j].match(sprColorRegex) === null || line[j].match(sprColorRegex)[0] != line[j])) {
 				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(parseInt(i)+1)+": invalid color \""+line[j]+"\"";
 				return;
 			} else if (line[j] !== "") {
