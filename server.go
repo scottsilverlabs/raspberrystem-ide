@@ -3,7 +3,6 @@ package main
 import (
 	"code.google.com/p/go.net/websocket"
 	"github.com/kr/pty"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -16,8 +15,6 @@ import (
 	"time"
 )
 
-var ide *template.Template
-var api *template.Template
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
 var users = make(map[string]string)
 var config = map[string]string{"port": "80", "projectdir": "~/raspberrystem_projects/"}
