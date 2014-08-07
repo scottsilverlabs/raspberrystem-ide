@@ -52,19 +52,6 @@ window.onbeforeunload = function (event) {
 	changeSocket.close();
 };
 
-String.prototype.capitalize = function() {
-	var arr = this.split(" ");
-	var toRet = "";
-	for (var i in arr) {
-		toRet += " "+arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
-	}
-	return toRet.substring(1);
-};
-
-String.prototype.lower = function() {
-	return this.toLowerCase();
-};
-
 function key(k) {
 	if (k.keyCode == 27) {
 		removePopup();
@@ -346,6 +333,7 @@ function run() {
 }
 
 //Called by the web button
+var webShowing = false;
 function toggleWeb() {
 	webShowing = !webShowing;
 	if (webShowing){
@@ -586,7 +574,7 @@ function openFile() {
 
 //Called when a div is clicked in the change theme function
 function setTheme(obj) {
-	name = obj.innerHTML.lower().replace(/ /g, "-");
+	name = obj.innerHTML.toLowerCase().replace(/ /g, "-");
 	document.getElementById("theme").href = "/themes/"+name+".css";
 	old = editor.getOption("theme");
 	editor.setOption("theme", name);
@@ -625,7 +613,7 @@ function changeTheme() {
 		for (var i in files) {
 			var filediv = document.createElement("div");
 			fileholder.appendChild(filediv);
-			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "").capitalize();
+			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "");
 			filediv.classList.add("filediv");
 			filediv.classList.add("maincolor");
 			filediv.onclick = new Function("setTheme(this)");
