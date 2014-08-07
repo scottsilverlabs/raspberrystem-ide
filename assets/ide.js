@@ -300,7 +300,7 @@ function runSpr() {
 	var valhtml = "";
 	for (var i in lines) {
 		var line = lines[i].split(" ");
-		valhtml += "<div>";
+		valhtml += "<div style=\"margin-bottom:0.2em;\">";
 		for (var j in line) {
 			if (line[j] !== "" && (line[j].match(sprColorRegex) === null || line[j].match(sprColorRegex)[0] != line[j])) {
 				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(parseInt(i)+1)+": invalid color \""+line[j]+"\"";
