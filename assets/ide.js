@@ -14,6 +14,7 @@ window.onload = function main() {
 	if (url != "127.0.0.1" && url != "localhost") {
 		document.getElementById("browser").parentNode.removeChild(document.getElementById("browser"));
 		document.getElementById("webview").parentNode.removeChild(document.getElementById("webview"));
+		document.getElementById("outputToggle").style.marginLeft = "-1.75em";
 	}
 	titleHolder = document.getElementById("title");
 	editor = CodeMirror(document.getElementById("codewrapper"), {
@@ -113,7 +114,7 @@ function errorHighlight() {
 		}
 	}
 	var traces = errString.match(traceRegex);
-	for (var j = 0; j < traces.length; j++) {
+	for (var j = 0; traces && j < traces.length; j++) {
 		var split = traces[j].split("\n");
 		var message = split[0];
 		for (var i = 1; i < split.length-1; i++) {
