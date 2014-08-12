@@ -224,10 +224,10 @@
 				font-family: monospace;
 			}
 
-			#output {
+			.outputOpen {
 				overflow-y: auto;
 				position: absolute;
-				top: 80%;
+				top: calc(80% - 2em);
 				bottom: 0;
 				left: 0;
 				margin-top: 2em;
@@ -238,6 +238,28 @@
 				font-family: monospace;
 				line-height: 1em;
 				z-index: 3;
+			}
+
+			.outputClosed {
+				overflow-y: auto;
+				position: absolute;
+				top: 100%;
+				left: 0;
+				width: 100%;
+				border-top-color: #00232c;
+				border-top-style: solid;
+				border-top-width: 1px;
+				font-family: monospace;
+				line-height: 1em;
+				z-index: 3;
+			}
+
+			.codeShort {
+				height: 80%;
+			}
+
+			.codeLong {
+				height: 100%;
 			}
 
 			#webview {
@@ -331,9 +353,9 @@
 			<h4 id="title">Untitled</h4>
 			<img id="browser" style="position:absolute;left:100%;margin-left:-1.75em;" class="headerbutton" src="/images/browser.png" onclick="toggleWeb()"></img>
 			</header>
-			<div id="ide" style="width:100%">
-				<div style="height:80%;width:100%;" id="codewrapper"></div>
-				<div id="output"><pre style="margin:0;tab-size:4;"></pre></div>
+			<div id="ide" style="width:100%;height:calc(100% - 2em);">
+				<div id="codewrapper" class="codeShort" style="width:100%;"></div>
+				<div id="output" class="outputOpen"><pre style="margin:0;tab-size:4;"></pre></div>
 			</div>
 			<iframe id="webview" src="/website/">
 			</iframe>

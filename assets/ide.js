@@ -626,3 +626,19 @@ function changeTheme() {
 	cancel.classList.add("foldercancel");
 	cancel.onclick = removePopup;
 }
+
+var open = true;
+function toggleOutput() {
+	if (open) {
+		output.classList.remove("outputOpen");
+		output.classList.add("outputClosed");
+		codewrapper.classList.remove("codeShort");
+		codewrapper.classList.add("codeLong");
+	} else {
+		output.classList.remove("outputClosed");
+		output.classList.add("outputOpen");
+		codewrapper.classList.remove("codeLong");
+		codewrapper.classList.add("codeShort");
+	}
+	open = !open;
+}
