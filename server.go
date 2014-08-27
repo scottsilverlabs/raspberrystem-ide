@@ -3,7 +3,6 @@ package main
 import (
 	"code.google.com/p/go.net/websocket"
 	"github.com/kr/pty"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -15,24 +14,13 @@ import (
 	"time"
 )
 
-var ide *template.Template
-var api *template.Template
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
 var users = make(map[string]string)
-var config = map[string]string{"port": "80", "projectdir": "/projects/"}
+var config = map[string]string{"port": "80", "projectdir": "~/raspberrystem_projects/"}
 
 func main() {
-	content, err := ioutil.ReadFile("/etc/ide/ide.html") //ide.html is actually a go template
-	acontent, aerr := ioutil.ReadFile("/etc/ide/api.html")
-	settings, serr := ioutil.ReadFile("/etc/ide/settings.conf")
-
-	if err != nil {
-		panic(err)
-	}
-	if aerr != nil {
-		panic(aerr)
-	}
-	if serr == nil {
+	settings, err := ioutil.ReadFile("/etc/ide/settings.conf")
+	if err == nil {
 		set := strings.Split(string(settings), "\n")
 		for _, line := range set {
 			if len(line) > 0 && line[0:1] != "#" {
@@ -42,9 +30,8 @@ func main() {
 			}
 		}
 	}
+	config["projectdir"] = strings.Replace(config["projectdir"], "~", os.Getenv("HOME"), 1)
 	os.Mkdir(config["projectdir"], 0775)
-	ide, err = template.New("page").Parse(string(content))
-	api, err = template.New("page").Parse(string(acontent))
 	if err != nil {
 		panic(err)
 	}
@@ -54,11 +41,11 @@ func main() {
 	http.HandleFunc("/cm.css", cmCss)
 	http.HandleFunc("/python.js", pythonMode)
 	http.HandleFunc("/shell.js", shellMode)
-	http.HandleFunc("/api/", apiDoc)
 	http.HandleFunc("/api/listfiles", listFiles)
 	http.HandleFunc("/api/listthemes", listThemes)
 	http.HandleFunc("/api/readfile", readFile)
 	http.HandleFunc("/api/savefile", saveFile)
+	http.HandleFunc("/api/deletefile", deleteFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
@@ -73,14 +60,7 @@ func main() {
 
 //Called by requests to / and 404s
 func index(w http.ResponseWriter, r *http.Request) {
-	data := map[string]string{
-		"title": "RStem IDE@" + string(hostname),
-	}
-	ide.ExecuteTemplate(w, "page", data)
-}
-
-func apiDoc(w http.ResponseWriter, r *http.Request) {
-	api.ExecuteTemplate(w, "page", nil)
+	http.ServeFile(w, r, "/etc/ide/ide.html")
 }
 
 func ideJs(w http.ResponseWriter, r *http.Request) {
@@ -154,6 +134,12 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	ioutil.WriteFile(config["projectdir"]+name, []byte(content), 0744)
 }
 
+func deleteFile(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	fname := strings.Trim(r.Form.Get("file"), " ./")
+	os.Remove(config["projectdir"] + fname)
+}
+
 func hostnameOut(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -193,7 +179,7 @@ func socketServer(s *websocket.Conn) {
 		} else if n > 0 {
 			s.Write([]byte("output: " + string(out[:n])))
 		}
-		time.Sleep(time.Millisecond * 100) //For minimal CPU impact
+		time.Sleep(time.Millisecond * 10) //For minimal CPU impact
 	}
 	s.Close()
 }

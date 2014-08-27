@@ -57,7 +57,7 @@ install:
 pi-install:
 	- mkdir ./sitescrape/website
 	tar -czf payload.tar.gz \
-		./server ./assets ./ide.html ./api.html ./settings.conf ./sitescrape/website
+		./server ./assets ./ide.html ./settings.conf ./sitescrape/website
 	ssh $(PI) "\
 		sudo mkdir -p /etc/ide/; \
 		sudo chmod 777 /etc/ide; \
@@ -78,6 +78,6 @@ endef
 
 deb: pi
 	- mkdir ./sitescrape/website
-	tar -czf payload.tar.gz ./server ./assets ./debrules ./debcontrol ./ide.html ./api.html ./settings.conf ./sitescrape/website
+	tar -czf payload.tar.gz ./server ./assets ./debrules ./debcontrol ./ide.html ./settings.conf ./sitescrape/website
 	ssh $(PI) "$(sshpayload)" < payload.tar.gz > raspberrystem-ide_1.0.0-1_armhf.deb
 	ssh $(PI) "cat raspberrystem-ide_1.0.0-1_armhf.deb; rm -rf raspberrystem-* &> /dev/null;"> raspberrystem-ide_1.0.0-1_armhf.deb

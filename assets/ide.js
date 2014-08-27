@@ -1,17 +1,20 @@
-var save, GET, POST, filename, type, changeHandle, changeSocket;
+var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup, changeSocketInit; //Function prototypes
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
+	if (window.MozWebSocket) {
+		window.WebSocket = window.MozWebSocket;
+	}
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
 	outputtext = document.getElementById("output").firstChild;
+	playButton = document.getElementById("play");
 	ide = document.getElementById("ide");
 	web = document.getElementById("webview");
 	if (url != "127.0.0.1" && url != "localhost") {
 		document.getElementById("browser").parentNode.removeChild(document.getElementById("browser"));
 		document.getElementById("webview").parentNode.removeChild(document.getElementById("webview"));
-	}
-	if (navigator.userAgent.search("Firefox")) {
+		document.getElementById("outputToggle").style.marginLeft = "-1.75em";
 	}
 	titleHolder = document.getElementById("title");
 	editor = CodeMirror(document.getElementById("codewrapper"), {
@@ -38,6 +41,11 @@ window.onload = function main() {
 	}
 	editor.setValue("#!/usr/bin/env python3\n");
 	editor.on("change", changeHandle);
+	filename = "Untitled.py";
+	if (GET("/api/listfiles").split("\n")[0] === "") {
+		save(); //Create untitled document
+	}
+	changeSocketInit();
 };
 
 window.onbeforeunload = function (event) {
@@ -45,18 +53,11 @@ window.onbeforeunload = function (event) {
 	changeSocket.close();
 };
 
-String.prototype.capitalize = function() {
-	var arr = this.split(" ");
-	var toRet = "";
-	for (var i in arr) {
-		toRet += " "+arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
+function key(k) {
+	if (k.keyCode == 27) {
+		removePopup();
 	}
-    return toRet.substring(1);
-};
-
-String.prototype.lower = function() {
-    return this.toLowerCase();
-};
+}
 
 function GET(url) {  
 	var req = new XMLHttpRequest();
@@ -78,7 +79,6 @@ function POST(url, args) {
 	return req.responseText;
 }
 
-var filename = "Untitled.py";
 function save() {
 	if (filename !== "") {
 		POST("/api/savefile", {"file": filename, "content": editor.getValue()});
@@ -88,14 +88,14 @@ function save() {
 //Called when the script stops running on the server side
 
 var errs = [];
-var errRegex = new RegExp(/[ ]+File "\/projects\/.+", line \d+\n.+\n.+\^\n.+: .+/g);
-var traceRegex = new RegExp(/[ ]+File "\/projects\/.+", line \d+, in.+\n.+\n.+: .+/g);
+var errRegex = new RegExp(/\s+File ".+", line \d+.*\n.+\n.+\^\n.+: .+/g);
+var traceRegex = new RegExp(/Traceback \(most recent call last\):\n(\s+File ".+", line \d+.*\n.*\n)+.+: .+/g);
 var stripRegex = new RegExp(/(^\s+|\s+$)/g);
 function errorHighlight() {
 	var errString = outputtext.innerHTML;
 	var lines = errString.split("\n");
 	var errors = errString.match(errRegex);
-	for (var i in errors) {
+	for (var i = 0; errors && i < errors.length; i++) {
 		var err = errors[i];
 		var errLines = err.split("\n");
 		var errLinePos = errLines[0].split(", ")[1].substring(5);
@@ -114,53 +114,44 @@ function errorHighlight() {
 		}
 	}
 	var traces = errString.match(traceRegex);
-	console.log(traces);
-	for (i in traces) {
-		err = traces[i];
-		errLines = err.split("\n");
-		errLinePos = errLines[0].split(", ")[1].substring(5);
-		line = editor.lineInfo(errLinePos-1);
-		stripped = errLines[1].replace(stripRegex, "");
-		match = line.text.indexOf(stripped);
-		start = {"line": errLinePos-1, "ch": match};
-		end = {"line": errLinePos-1, "ch": match+stripped.length};
-		errs.push(editor.markText(start, end, {
-			className: "cm-error",
-			clearOnEnter: true,
-			title: errLines[2],
-		}));
-		if (i == 0) {
-			editor.scrollTo(0, errLinePos);
-		}
-	}
-	console.log(errs);
-}
-
-function sprColorAll() {
-	for (var i = 0; i < editor.lineCount(); i++) {
-		var line = editor.getLine(i);
-		for (var j = 0; j < line.length; j++) {
-			var ch = line.substring(j, j+1).toLowerCase();
-			var code = ch.charCodeAt(0);
-			var start = {"line": i, "ch": j};
-			var end = {"line": i, "ch": j+1};
-			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) && (j == 0 || line.substring(j-1, j) == " ")) {
-				editor.markText(start, end, {
-					className: "spr"+ch,
-				});
-			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j != 0 && line.substring(j-1, j) != " ")) {
-				editor.markText(start, end, {
-					className: "sprerr",
-				});
+	for (var j = 0; traces && j < traces.length; j++) {
+		var split = traces[j].split("\n");
+		var message = split[0];
+		for (var i = 1; i < split.length-1; i++) {
+			var line = split[i];
+			if (i%2 !== 0) {
+				var end = 0;
+				for (var k = 8; k < line.length; k++) {
+					if (line.substr(k, 1) == "\"") {
+						end = k;
+					}
+				}
+				message += "\n"+line.substring(0, 8)+"<span class=\"cm-variable\">"+line.substring(8, end)+"</span>";
+				var nextend = end+8;
+				while (parseInt(line.substr(nextend, 1)) || line.substr(nextend, 1) == "0") nextend++;
+				message += line.substring(end, end+8)+"<span class=\"cm-variable\">"+line.substring(end+8, nextend)+"</span>"+line.substring(nextend);
+				if (line.substring(end-filename.length, end) == filename) {
+					var lnum = parseInt(line.substring(end+8, nextend))-1;
+					var start = {"line": lnum, "ch": 0};
+					var end = {"line": lnum, "ch": editor.getLine(lnum).length};
+					errs.push(editor.markText(start, end, {
+						className: "cm-error",
+						clearOnEnter: true,
+						title: "Traceback",
+					}));
+					editor.scrollTo(0, lnum);
+				}
+			} else {
+				message += "\n"+"<span class=\"cm-variable\">"+line+"</span>";
 			}
 		}
+		outputtext.innerHTML = outputtext.innerHTML.replace(traces[j], "<span style=\"color:red;\">"+message+"</span>");
 	}
 }
 
 function sprColor(change) {
 	var baseline = change.from.line;
 	var ldiff = change.to.line - change.from.line;
-	console.log(change);
 	if (ldiff == 0 && change.text.length == 2) {
 		var marks = editor.findMarksAt({line: baseline+1, ch: 0});
 		for (var i = 0; i < marks.length; i++) {
@@ -194,11 +185,11 @@ function sprColor(change) {
 			var code = ch.charCodeAt(0);
 			var start = {"line": baseline+i, "ch": j};
 			var end = {"line": baseline+i, "ch": j+1};
-			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96))  && (j == 0 || line.substring(j-1, j) == " ")) {
+			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96))  && (j === 0 || line.substring(j-1, j) == " ")) {
 				editor.markText(start, end, {
 					className: "spr"+ch,
 				});
-			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j != 0 && line.substring(j-1, j) != " ")) {
+			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j !== 0 && line.substring(j-1, j) != " ")) {
 				editor.markText(start, end, {
 					className: "sprerr",
 				});
@@ -229,14 +220,12 @@ function socket() {
 	ws = new WebSocket("ws://"+url+"/api/socket");
 	ws.onopen = function (event) {
 		while ((a = errs.pop()) !== undefined) {
-			console.log(a);
 			a.clear();
 		}
 		ws.send(filename);
 		playButton.src = "/images/stop.png";
 	};
 	ws.onclose = function (event) {
-		console.log("Close");
 		ws = null;
 		errorHighlight();
 		playButton.src = "/images/play.png";
@@ -244,9 +233,8 @@ function socket() {
 	ws.onmessage = function (event) {
 		message = event.data;
 		if (message.substring(0, 8) == "output: ") {
-			messageActual = message.substring(8).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-			outputtext.innerHTML += messageActual;
-			output.scrollTop = output.scrollHeight;
+			outputtext.innerHTML += message.substring(8).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+			output.scrollTop = output.scrollHeight;		
 			return;
 		} else if (message.substring(0, 7) == "error: ") {
 			messageActual = message.substring(7).replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -262,17 +250,21 @@ function changeSocketInit() {
 	changeSocket = new WebSocket("ws://"+url+"/api/change");
 	changeSocket.onopen = function (event) {
 		changeSocket.send("COF:"+filename);
+		good = true;
 	};
 	changeSocket.onclose = function (event) {
 		changeSocket = null;
-		setTimeout(changeSocket, 5000);
+		if (good) {
+			setTimeout(changeSocketInit, 5000);
+		}
 	};
 	changeSocket.onerror = function (event) {
-		setTimeout(changeSocket, 5000);		
+		if (!good) {
+			alert("Your browser may not support web sockets\nFor the best experience use Google Chrome");
+		}
 	};
 	changeSocket.onmessage = function (event) {
 		message = event.data;
-		console.log(message);
 		if (message == "FILE") {
 			var pos = editor.getCursor();
 			changeSocket.send("FILE:"+editor.getValue());
@@ -287,7 +279,6 @@ function changeSocketInit() {
 				titleHolder.innerHTML = filename.replace(/\-/g, " ");
 			}
 		} else {
-			console.log(content);
 			var arr = message.split(",");
 			var content = message.substring((arr[0]+arr[1]+arr[2]+arr[3]).length+4);
 			last = content;
@@ -297,29 +288,29 @@ function changeSocketInit() {
 			if (editor.lastLine() < parseInt(arr[0])) {
 				editor.setValue(editor.getValue()+"\n");
 			}
-			editor.replaceRange(content, {line:arr[0],ch:arr[1]}, {line:arr[2],ch:arr[3]});
+			editor.replaceRange(content, {line:arr[0], ch:arr[1]}, {line:arr[2], ch:arr[3]});
 		}
 	};
 }
 
 //Outputs graphical version of sprite file
-var good = new RegExp(/[0-9a-fA-F\-]/);
+var sprColorRegex = new RegExp(/[0-9a-fA-F\-]/);
 function runSpr() {
 	var val = editor.getValue();
 	var lines = val.split("\n");
 	var valhtml = "";
 	for (var i in lines) {
 		var line = lines[i].split(" ");
-		valhtml += "<div>";
+		valhtml += "<div style=\"margin-bottom:0.2em;\">";
 		for (var j in line) {
-			if (line[j] != "" && (line[j].match(good) === null || line[j].match(good)[0] != line[j])) {
+			if (line[j] !== "" && (line[j].match(sprColorRegex) === null || line[j].match(sprColorRegex)[0] != line[j])) {
 				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(parseInt(i)+1)+": invalid color \""+line[j]+"\"";
 				return;
-			} else if (line[j] != "") {
+			} else if (line[j] !== "") {
 				if (line[j] == "-") {
 					line[j] = "0";
 				}
-				valhtml += "<span style=\"color:#"+line[j]+line[j]+"0000;margin-right:0.2em;\">●</span>";
+				valhtml += "<span style=\"color:#"+line[j]+line[j]+"0000;\">⬤</span>";
 			}
 		}
 		valhtml += "</div>";
@@ -362,8 +353,10 @@ function toggleWeb() {
 //Removes popups
 var back, popup, text, menu;
 function removePopup() {
-	back.parentNode.removeChild(back);
-	popup.parentNode.removeChild(popup);
+	if (back !== null) {
+		back.parentNode.removeChild(back);
+		popup.parentNode.removeChild(popup);
+	}
 }
 
 //Called when the newFile okay button is pressed
@@ -393,6 +386,52 @@ function fileButton() {
 		changeSocket.send("COF:"+filename);
 	}
 	removePopup();
+	save();
+}
+
+function deleteFile(fname, yes) {
+	if (yes) {
+		POST("/api/deletefile", {"file": fname});
+	}
+	removePopup();
+	openFile();
+}
+
+function deletePrompt(fname) {
+	removePopup();
+	
+	back = document.createElement("div");
+	document.body.appendChild(back);
+	back.classList.add("holder");
+
+	popup = document.createElement("div");
+	document.body.appendChild(popup);
+	popup.classList.add("filepopup");
+	popup.classList.add("popup");
+	back.onclick = removePopup;
+
+	var title = document.createElement("h1");
+	popup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.innerHTML = "Delete";
+
+	text = document.createElement("div");
+	popup.appendChild(text);
+	text.classList.add("deletetext");
+	text.innerHTML = "Delete "+fname+"?";
+
+	var okay = document.createElement("div");
+	popup.appendChild(okay);
+	okay.classList.add("fileokay");
+	okay.onclick = new Function("deleteFile(\""+fname+"\", true)");
+	okay.innerHTML = "Yes";
+
+	var cancel = document.createElement("div");
+	popup.appendChild(cancel);
+	cancel.innerHTML = "No";
+	cancel.classList.add("filecancel");
+	cancel.onclick = new Function("deleteFile(\""+fname+"\", false)");
 }
 
 //Caled by the new file button in the open file popup
@@ -462,7 +501,12 @@ function loadFile(div) {
 	editor.setValue(contents);
 	if (type == "spr") {
 		editor.setOption("mode", null);
-		sprColorAll();
+		var lines = editor.lineCount();
+		sprColor({
+			from: {line: 0, ch: 0},
+			to: {line: lines-1, ch: editor.getLine(lines-1).length},
+			text: "abcd",
+		});
 	}
 	if (changeSocket !== null) {
 		changeSocket.send("COF:"+filename);
@@ -486,7 +530,7 @@ function openFile() {
 	popup.appendChild(title);
 	title.classList.add("popuptitle");
 	title.classList.add("maincolor");
-	title.innerHTML = "Open File";
+	title.innerHTML = "Select File";
 
 	var fileholder = document.createElement("div");
 	popup.appendChild(fileholder);
@@ -504,6 +548,15 @@ function openFile() {
 			filediv.classList.add("filediv");
 			filediv.classList.add("maincolor");
 			filediv.onclick = new Function("loadFile(this)");
+			if (files[i] != "Untitled.py") {
+				var deleteDiv = document.createElement("div");
+				fileholder.appendChild(deleteDiv);
+				deleteDiv.innerHTML = "X";
+				deleteDiv.classList.add("deleteDiv");
+				deleteDiv.onclick = new Function("deletePrompt(\""+files[i]+"\")");
+			} else {
+				filediv.classList.add("untitleddiv");
+			}
 		}
 	}
 
@@ -522,7 +575,7 @@ function openFile() {
 
 //Called when a div is clicked in the change theme function
 function setTheme(obj) {
-	name = obj.innerHTML.lower().replace(/ /g, "-");
+	name = obj.innerHTML.toLowerCase().replace(/ /g, "-");
 	document.getElementById("theme").href = "/themes/"+name+".css";
 	old = editor.getOption("theme");
 	editor.setOption("theme", name);
@@ -561,7 +614,7 @@ function changeTheme() {
 		for (var i in files) {
 			var filediv = document.createElement("div");
 			fileholder.appendChild(filediv);
-			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "").capitalize();
+			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "");
 			filediv.classList.add("filediv");
 			filediv.classList.add("maincolor");
 			filediv.onclick = new Function("setTheme(this)");
@@ -574,4 +627,19 @@ function changeTheme() {
 	cancel.classList.add("foldercancel");
 	cancel.onclick = removePopup;
 }
-changeSocketInit();
+
+var open = true;
+function toggleOutput() {
+	if (open) {
+		output.classList.remove("outputOpen");
+		output.classList.add("outputClosed");
+		codewrapper.classList.remove("codeShort");
+		codewrapper.classList.add("codeLong");
+	} else {
+		output.classList.remove("outputClosed");
+		output.classList.add("outputOpen");
+		codewrapper.classList.remove("codeLong");
+		codewrapper.classList.add("codeShort");
+	}
+	open = !open;
+}
