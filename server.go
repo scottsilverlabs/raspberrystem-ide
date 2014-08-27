@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"os/user"
 	"strconv"
 	"strings"
 	"syscall"
@@ -31,8 +30,7 @@ func main() {
 			}
 		}
 	}
-	currUser, _ := user.Current()
-	config["projectdir"] = strings.Replace(config["projectdir"], "~", currUser.HomeDir, 1)
+	config["projectdir"] = strings.Replace(config["projectdir"], "~", os.Getenv("HOME"), 1)
 	os.Mkdir(config["projectdir"], 0775)
 	if err != nil {
 		panic(err)
