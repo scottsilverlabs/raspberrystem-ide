@@ -66,18 +66,25 @@ pi-install:
 		" < ./payload.tar.gz
 
 define sshpayload
-cat - > ./raspberrystem-ide-1.0.0.tar.gz; \
-mkdir raspberrystem-ide-1.0.0; \
-cd raspberrystem-ide-1.0.0; \
-tar -xzf ../raspberrystem-ide-1.0.0.tar.gz; \
-dh_make -e stephan@raspberrystem.com --s -y -c apache -f ../raspberrystem-ide-1.0.0.tar.gz; \
-cp debrules debian/rules; \
-cp debcontrol debian/control; \
-dpkg-buildpackage;
+mkdir /tmp/builddir; \
+cd /tmp/builddir; \
+cat - > raspberrystem.tar.gz; \
+mkdir -p debian/DEBIAN; \
+mkdir -p debian/usr/bin; \
+mkdir -p debian/etc/ide; \
+tar -xzf raspberrystem.tar.gz; \
+mv debcontrol debian/DEBIAN/control; \
+mv server debian/usr/bin/ideserver; \
+mv assets debian/etc/ide; \
+mv sitescrape/website debian/etc/ide/; \
+mv settings.conf debian/etc/ide; \
+mv ide.html debian/etc/ide; \
+sudo dpkg-deb --build debian > /dev/null; \
+cat debian.deb;
 endef
 
 deb: pi
 	- mkdir ./sitescrape/website
-	tar -czf payload.tar.gz ./server ./assets ./debrules ./debcontrol ./ide.html ./settings.conf ./sitescrape/website
-	ssh $(PI) "$(sshpayload)" < payload.tar.gz > raspberrystem-ide_1.0.0-1_armhf.deb
-	ssh $(PI) "cat raspberrystem-ide_1.0.0-1_armhf.deb; rm -rf raspberrystem-* &> /dev/null;"> raspberrystem-ide_1.0.0-1_armhf.deb
+	tar -czf payload.tar.gz ./server ./assets ./debcontrol ./ide.html ./settings.conf ./sitescrape/website
+	ssh $(PI) "$(sshpayload)" < payload.tar.gz > raspberrystem.deb
+	ssh $(PI) "sudo sudo rm -r /tmp/builddir"

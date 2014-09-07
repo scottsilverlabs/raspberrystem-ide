@@ -1,12 +1,10 @@
 Source: raspberrystem-ide
-Section: Web Servers
+Package: raspberrystem-ide
+Version: 1.0.0
+Section: programming
 Priority: extra
 Maintainer: Scott Silver Labs <todo@raspberrystem.com>
-Build-Depends: debhelper (>= 8.0.0)
-Standards-Version: 3.9.3
 Homepage: http://raspberrystem.com
-
-Package: raspberrystem-ide
 Architecture: armhf
 Depends:
 Description: A web based Python editor for the Raspberry Pi
