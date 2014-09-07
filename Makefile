@@ -18,9 +18,9 @@ export GOPATH=$(HOME)/tmp/idebuild
 
 .PHONY: all clean deb
 .PHONY: is_go_installed $(PACKAGES)
-.PHONY: host run install pi pi-install
+.PHONY: local run install pi pi-install
 
-all: host
+all: pi
 
 clean:
 	rm -f server
@@ -39,13 +39,13 @@ $(PACKAGES):
 run:
 	go run ./server.go
 
-host: is_go_installed $(PACKAGES)
+local: is_go_installed $(PACKAGES)
 	go build ./server.go
 
 pi: is_go_installed $(PACKAGES)
 	GOARCH=arm GOARM=5 GOOS=linux go build ./server.go
 
-install:
+local-install:
 	cp ./server /usr/bin/ideserver
 	sudo mkdir -p /etc/ide
 	sudo chmod 777 /etc/ide
@@ -54,7 +54,7 @@ install:
 	cp *.html /etc/ide/
 	cp settings.conf /etc/ide/
 
-pi-install:
+install:
 	- mkdir ./sitescrape/website
 	tar -czf payload.tar.gz \
 		./server ./assets ./ide.html ./settings.conf ./sitescrape/website
