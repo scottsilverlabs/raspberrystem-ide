@@ -258,9 +258,9 @@
 				left: 0;
 				margin-top: 2em;
 				width: 100%;
-				/*border-top-color: #00232c;
-				border-top-style: solid;
-				border-top-width: 1px;*/
+				-moz-user-select: none;
+				-webkit-user-select: none;
+				user-select:none;
 				font-family: monospace;
 				line-height: 1em;
 				z-index: 3;
@@ -281,6 +281,7 @@
 				top: 1.5em;
 				height: calc(100% - 1.5em);
 				height: -webkit-calc(100% - 1.5em);
+				line-height: 1;
 			}
 
 			.codeShort {
@@ -375,7 +376,7 @@
 	</head>
 	<body onkeyup="key(event)">
 		<div id="mainholder" style="width:100%;height:100%;position:absolute;z-index:0;">
-			<header class="maincolor">
+			<header class="maincolor" onclick="editor.focus()">
 			<img id="play" class="headerbutton" src="/images/play.png" onclick="run()"></img>
 			<img id="open" class="headerbutton" src="/images/folder.png" onclick="openFile()"></img>
 			<img id="themeb" class="headerbutton" src="/images/theme.png" onclick="changeTheme()"></img>
@@ -385,8 +386,8 @@
 			</header>
 			<div id="ide" style="width:100%;height:calc(100% - 2em);height:-webkit-calc(100% - 2em);">
 				<div id="codewrapper" class="codeShort" style="width:100%;"></div>
-					<div id="output" class="outputOpen" style="overflow:hidden;">
-						<div id="outputLabel" style="top:0%;-moz-user-select: none;-webkit-user-select: none;user-select:none;">Program Output<div onclick="toggleOutput()" style="float:right;margin-right:0.3em;color:#dc322f;cursor:pointer;">X</div>
+					<div id="output" class="outputOpen" style="overflow:hidden;" onclick="editor.focus()">
+						<div id="outputLabel" style="top:0%;">Program Output<div onclick="toggleOutput()" style="float:right;margin-right:0.3em;color:#dc322f;cursor:pointer;">X</div>
 					</div>
 					<pre id="outputActual" style="margin:0;tab-size:4;overflow-y:auto;"></pre>
 				</div>

@@ -343,6 +343,7 @@ function run() {
 	} else {
 		ws.send("close");
 	}
+	editor.focus();
 }
 
 //Called by the web button
@@ -360,6 +361,7 @@ function toggleWeb() {
 		web.style.width = "0";
 		web.style.left = "100%";
 	}
+	editor.focus();
 }
 
 //Removes popups
@@ -369,6 +371,7 @@ function removePopup() {
 		back.parentNode.removeChild(back);
 		popup.parentNode.removeChild(popup);
 	}
+	editor.focus();
 }
 
 //Called when the newFile okay button is pressed
@@ -661,4 +664,5 @@ function toggleOutput() {
 		codewrapper.classList.add("codeShort");
 	}
 	outputOpen = !outputOpen;
+	editor.focus();
 }
