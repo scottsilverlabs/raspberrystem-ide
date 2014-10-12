@@ -1,4 +1,5 @@
-var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup, changeSocketInit; //Function prototypes
+var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup,
+	changeSocketInit; //Function prototypes
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
@@ -12,8 +13,10 @@ window.onload = function main() {
 	ide = document.getElementById("ide");
 	web = document.getElementById("webview");
 	if (url != "127.0.0.1" && url != "localhost") {
-		document.getElementById("browser").parentNode.removeChild(document.getElementById("browser"));
-		document.getElementById("webview").parentNode.removeChild(document.getElementById("webview"));
+		document.getElementById("browser").parentNode.removeChild(document
+			.getElementById("browser"));
+		document.getElementById("webview").parentNode.removeChild(document
+			.getElementById("webview"));
 		document.getElementById("outputToggle").style.marginLeft = "-1.75em";
 	}
 	titleHolder = document.getElementById("title");
@@ -39,7 +42,6 @@ window.onload = function main() {
 	for (var i in themes) {
 		output.classList.add("cm-s-"+themes[i]);
 	}
-	editor.setValue("#!/usr/bin/env python3\n");
 	editor.on("change", changeHandle);
 	filename = "Untitled.py";
 	if (GET("/api/listfiles").split("\n")[0] === "") {
@@ -126,10 +128,13 @@ function errorHighlight() {
 						end = k;
 					}
 				}
-				message += "\n"+line.substring(0, 8)+"<span class=\"cm-variable\">"+line.substring(8, end)+"</span>";
+				message += "\n"+line.substring(0, 8)+"<span class=\"cm-variable\">"
+					+line.substring(8, end)+"</span>";
 				var nextend = end+8;
-				while (parseInt(line.substr(nextend, 1)) || line.substr(nextend, 1) == "0") nextend++;
-				message += line.substring(end, end+8)+"<span class=\"cm-variable\">"+line.substring(end+8, nextend)+"</span>"+line.substring(nextend);
+				while (parseInt(line.substr(nextend, 1)) || line.substr(nextend, 1) == "0")
+					nextend++;
+				message += line.substring(end, end+8) + "<span class=\"cm-variable\">"
+					+ line.substring(end+8, nextend) + "</span>" + line.substring(nextend);
 				if (line.substring(end-filename.length, end) == filename) {
 					var lnum = parseInt(line.substring(end+8, nextend))-1;
 					var start = {"line": lnum, "ch": 0};
@@ -145,7 +150,8 @@ function errorHighlight() {
 				message += "\n"+"<span class=\"cm-variable\">"+line+"</span>";
 			}
 		}
-		outputtext.innerHTML = outputtext.innerHTML.replace(traces[j], "<span style=\"color:red;\">"+message+"</span>");
+		outputtext.innerHTML = outputtext.innerHTML.replace(traces[j], 
+			"<span style=\"color:red;\">"+message+"</span>");
 	}
 }
 
@@ -185,11 +191,13 @@ function sprColor(change) {
 			var code = ch.charCodeAt(0);
 			var start = {"line": baseline+i, "ch": j};
 			var end = {"line": baseline+i, "ch": j+1};
-			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96))  && (j === 0 || line.substring(j-1, j) == " ")) {
+			if (((parseInt(ch) && ch !== 0 ) || (code < 103 && code > 96)) 
+				&& (j === 0 || line.substring(j-1, j) == " ")) {
 				editor.markText(start, end, {
 					className: "spr"+ch,
 				});
-			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " && j !== 0 && line.substring(j-1, j) != " ")) {
+			} else if (ch != "-" && ch != " " && ch != "0" || (ch != " " 
+				&& j !== 0 && line.substring(j-1, j) != " ")) {
 				editor.markText(start, end, {
 					className: "sprerr",
 				});
@@ -208,7 +216,8 @@ function changeHandle(cm, change) {
 		for (var i in change.text) {
 			text += "\n"+change.text[i];
 		}
-		changeSocket.send("CIF:"+change.from.line+","+change.from.ch+","+change.to.line+","+change.to.ch+","+text.substring(1));
+		changeSocket.send("CIF:" + change.from.line + "," + change.from.ch + ","
+			+ change.to.line + "," + change.to.ch + "," + text.substring(1));
 	} else {
 		last = null;
 	}
@@ -233,11 +242,13 @@ function socket() {
 	ws.onmessage = function (event) {
 		message = event.data;
 		if (message.substring(0, 8) == "output: ") {
-			outputtext.innerHTML += message.substring(8).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+			outputtext.innerHTML += message.substring(8).replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;");
 			output.scrollTop = output.scrollHeight;		
 			return;
 		} else if (message.substring(0, 7) == "error: ") {
-			messageActual = message.substring(7).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+			messageActual = message.substring(7).replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;");
 			outputtext.innerHTML += "<span style=\"color:red;\">SERVER ERROR:";
 			outputtext.innerHTML += messageActual;
 			outputtext.innerHTML += "</span>\n";
@@ -274,7 +285,8 @@ function changeSocketInit() {
 		} else if (message.substring(0, 6) == "USERS:") {
 			var num = parseInt(message.substring(6));
 			if (num > 1) {
-				titleHolder.innerHTML = filename.replace(/\-/g, " ") + " - " + num + " Users";
+				titleHolder.innerHTML = filename.replace(/\-/g, " ") + " - "
+					+ num + " Users";
 			} else {
 				titleHolder.innerHTML = filename.replace(/\-/g, " ");
 			}
@@ -288,7 +300,8 @@ function changeSocketInit() {
 			if (editor.lastLine() < parseInt(arr[0])) {
 				editor.setValue(editor.getValue()+"\n");
 			}
-			editor.replaceRange(content, {line:arr[0], ch:arr[1]}, {line:arr[2], ch:arr[3]});
+			editor.replaceRange(content, {line:arr[0], ch:arr[1]}, {line:arr[2]
+				, ch:arr[3]});
 		}
 	};
 }
@@ -303,13 +316,14 @@ function runSpr() {
 		var line = lines[i].split(" ");
 		valhtml += "<div style=\"margin-bottom:0.2em;\">";
 		for (var j in line) {
-			if (line[j] !== "" && (line[j].match(sprColorRegex) === null || line[j].match(sprColorRegex)[0] != line[j])) {
-				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "+(parseInt(i)+1)+": invalid color \""+line[j]+"\"";
+			if (line[j] !== "" && (line[j].match(sprColorRegex) === null
+				|| line[j].match(sprColorRegex)[0] != line[j])) {
+				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "
+					 + (parseInt(i)+1)+": invalid color \""+line[j]+"\"";
 				return;
 			} else if (line[j] !== "") {
-				if (line[j] == "-") {
+				if (line[j] == "-")
 					line[j] = "0";
-				}
 				valhtml += "<span style=\"color:#"+line[j]+line[j]+"0000;\">⬤</span>";
 			}
 		}
@@ -370,7 +384,7 @@ function fileButton() {
 			version: 3,
 			singleLineStringErrors: false
 		});
-		editor.setValue("#!/usr/bin/env python3\n");
+		editor.setValue("");
 	} else if (type === "spr") {
 		var val = "\n- - - - - - - -";
 		for (var i = 0; i < 3; i++) {
@@ -379,7 +393,7 @@ function fileButton() {
 		editor.setValue(val.substring(1));
 		editor.setOption("mode", null);
 	} else if (type === "sh") {
-		editor.setValue("#!/bin/bash\n");
+		editor.setValue("");
 		editor.setOption("mode", "shell");
 	}
 	if (changeSocket !== null) {

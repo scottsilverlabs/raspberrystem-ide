@@ -16,17 +16,28 @@ import (
 
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
 var users = make(map[string]string)
-var config = map[string]string{"port": "80", "projectdir": "~/raspberrystem_projects/"}
+var config = map[string]string{
+	"port":       "80",
+	"projectdir": "~/raspberrystem_projects/",
+	"pyshebang":  "#!/usr/bin/env python3",
+}
 
 func main() {
 	settings, err := ioutil.ReadFile("/etc/ide/settings.conf")
 	if err == nil {
 		set := strings.Split(string(settings), "\n")
 		for _, line := range set {
-			if len(line) > 0 && line[0:1] != "#" {
-				line = strings.Split(line, "#")[0]
-				lsplit := strings.Split(line, " ")
-				config[strings.ToLower(lsplit[0])] = strings.TrimRight(line[len(lsplit[0])+1:], " ")
+			if len(line) > 0 && line[:1] != "#" {
+				if len(line) < 10 || line[:9] != "PyShebang" {
+					line = strings.Split(line, "#")[0]
+					lsplit := strings.Split(line, " ")
+					config[strings.ToLower(lsplit[0])] = strings.TrimRight(
+						line[len(lsplit[0])+1:], " ")
+				} else {
+					begin := strings.Index(line, "\"")
+					end := strings.Index(line[begin+1:], "\"")
+					config["pyshebang"] = line[begin+1 : begin+end+1]
+				}
 			}
 		}
 	}
@@ -58,7 +69,6 @@ func main() {
 	}
 }
 
-//Called by requests to / and 404s
 func index(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "/etc/ide/ide.html")
 }
@@ -131,6 +141,15 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	name := strings.Trim(r.Form.Get("file"), " ./")
 	content := r.Form.Get("content")
+	lines := strings.Split(content, "\n")
+	ftype := strings.Split(name, ".")[len(strings.Split(name, "."))-1]
+	if len(lines[0]) > 1 && lines[0][0:2] != "#!" {
+		if ftype == "py" {
+			content = config["pyshebang"] + "\n" + content
+		} else if ftype == "sh" {
+			content = "#!/usr/bin/env bash" + "\n" + content
+		}
+	}
 	ioutil.WriteFile(config["projectdir"]+name, []byte(content), 0744)
 }
 
@@ -140,6 +159,7 @@ func deleteFile(w http.ResponseWriter, r *http.Request) {
 	os.Remove(config["projectdir"] + fname)
 }
 
+//Outputs the hostname, cross-domain allowed for the mobile app to scan for servers
 func hostnameOut(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
