@@ -24,10 +24,13 @@ http://ethanschoonover.com/solarized-dark/img/solarized-dark-palette.png
 .solarized-dark.solar-cyan { color: #2aa198; }
 .solarized-dark.solar-green { color: #859900; }
 .maincolor { background-color: #657777; }
-#output {
+#outputLabel {
+  border-bottom-color: #657777;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
   border-top-color: #657777;
-  border-top-width: 2px;
-  border-top-style: dashed;
+  border-top-width: 1px;
+  border-top-style: solid;
 }
 
 /* Color scheme for code-mirror */

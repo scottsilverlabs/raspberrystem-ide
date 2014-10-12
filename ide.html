@@ -233,9 +233,9 @@
 				left: 0;
 				margin-top: 2em;
 				width: 100%;
-				border-top-color: #00232c;
+				/*border-top-color: #00232c;
 				border-top-style: solid;
-				border-top-width: 1px;
+				border-top-width: 1px;*/
 				font-family: monospace;
 				line-height: 1em;
 				z-index: 3;
@@ -247,12 +247,15 @@
 				top: 100%;
 				left: 0;
 				width: 100%;
-				border-top-color: #00232c;
-				border-top-style: solid;
-				border-top-width: 1px;
 				font-family: monospace;
 				line-height: 1em;
 				z-index: 3;
+			}
+
+			#outputActual {
+				top: 1.5em;
+				height: calc(100% - 1.5em);
+				height: -webkit-calc(100% - 1.5em);
 			}
 
 			.codeShort {
@@ -355,9 +358,13 @@
 			<img id="outputToggle" style="position:absolute;left:100%;margin-left:-3.75em;" class="headerbutton" src="/images/terminal.png" onclick="toggleOutput()"></img>
 			<img id="browser" style="position:absolute;left:100%;margin-left:-1.75em;" class="headerbutton" src="/images/browser.png" onclick="toggleWeb()"></img>
 			</header>
-			<div id="ide" style="width:100%;height:calc(100% - 2em);">
+			<div id="ide" style="width:100%;height:calc(100% - 2em);height:-webkit-calc(100% - 2em);">
 				<div id="codewrapper" class="codeShort" style="width:100%;"></div>
-				<div id="output" class="outputOpen"><pre style="margin:0;tab-size:4;"></pre></div>
+					<div id="output" class="outputOpen" style="overflow:hidden;">
+						<div id="outputLabel" style="top:0%">Program Output<div onclick="toggleOutput()" style="float:right;margin-right:0.3em;color:#dc322f;cursor:pointer;">X</div>
+					</div>
+					<pre id="outputActual" style="margin:0;tab-size:4;overflow-y:auto;"></pre>
+				</div>
 			</div>
 			<iframe id="webview" src="/website/">
 			</iframe>

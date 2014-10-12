@@ -1,5 +1,6 @@
 var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup,
-	changeSocketInit; //Function prototypes
+	changeSocketInit, toggleOutput; //Function prototypes
+var outputOpen;
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
@@ -8,7 +9,7 @@ window.onload = function main() {
 	}
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
-	outputtext = document.getElementById("output").firstChild;
+	outputtext = document.getElementById("outputActual");
 	playButton = document.getElementById("play");
 	ide = document.getElementById("ide");
 	web = document.getElementById("webview");
@@ -235,11 +236,15 @@ function socket() {
 	ws.onmessage = function (event) {
 		message = event.data;
 		if (message.substring(0, 8) == "output: ") {
+			if (!outputOpen)
+				toggleOutput();
 			outputtext.innerHTML += message.substring(8).replace(/</g, "&lt;")
 				.replace(/>/g, "&gt;");
 			output.scrollTop = output.scrollHeight;		
 			return;
 		} else if (message.substring(0, 7) == "error: ") {
+			if (!outputOpen)
+				toggleOutput();
 			messageActual = message.substring(7).replace(/</g, "&lt;")
 				.replace(/>/g, "&gt;");
 			outputtext.innerHTML += "<span style=\"color:red;\">SERVER ERROR:";
@@ -635,9 +640,9 @@ function changeTheme() {
 	cancel.onclick = removePopup;
 }
 
-var open = true;
+outputOpen = true;
 function toggleOutput() {
-	if (open) {
+	if (outputOpen) {
 		output.classList.remove("outputOpen");
 		output.classList.add("outputClosed");
 		codewrapper.classList.remove("codeShort");
@@ -648,5 +653,5 @@ function toggleOutput() {
 		codewrapper.classList.remove("codeLong");
 		codewrapper.classList.add("codeShort");
 	}
-	open = !open;
+	outputOpen = !outputOpen;
 }
