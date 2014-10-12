@@ -436,6 +436,7 @@ function deletePrompt(fname) {
 	var okay = document.createElement("div");
 	popup.appendChild(okay);
 	okay.classList.add("fileokay");
+	okay.classList.add("button");
 	okay.onclick = new Function("deleteFile(\""+fname+"\", true)");
 	okay.innerHTML = "Yes";
 
@@ -443,6 +444,7 @@ function deletePrompt(fname) {
 	popup.appendChild(cancel);
 	cancel.innerHTML = "No";
 	cancel.classList.add("filecancel");
+	cancel.classList.add("button");
 	cancel.onclick = new Function("deleteFile(\""+fname+"\", false)");
 }
 
@@ -576,12 +578,14 @@ function openFile() {
 	popup.appendChild(cancel);
 	cancel.innerHTML = "Cancel";
 	cancel.classList.add("foldercancel");
+	cancel.classList.add("button");
 	cancel.onclick = removePopup;
 
 	var newfile = document.createElement("div");
 	popup.appendChild(newfile);
 	newfile.innerHTML = "New";
 	newfile.classList.add("foldernew");
+	newfile.classList.add("button");
 	newfile.onclick = newFile;
 }
 
@@ -636,7 +640,8 @@ function changeTheme() {
 	var cancel = document.createElement("div");
 	popup.appendChild(cancel);
 	cancel.innerHTML = "Cancel";
-	cancel.classList.add("foldercancel");
+	cancel.classList.add("themecancel");
+	cancel.classList.add("button");
 	cancel.onclick = removePopup;
 }
 
