@@ -490,6 +490,8 @@ function newFile() {
 	cancel.innerHTML = "Cancel";
 	cancel.classList.add("filecancel");
 	cancel.onclick = removePopup;
+
+	text.focus();
 }
 
 //Called when a file div is clicked in the open file popup
