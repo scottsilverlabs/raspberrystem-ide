@@ -20,6 +20,7 @@ var config = map[string]string{
 	"port":       "80",
 	"projectdir": "~/raspberrystem_projects/",
 	"pyshebang":  "#!/usr/bin/env python3",
+	"shshebang":  "#!/usr/bin/env bash",
 }
 
 func main() {
@@ -28,7 +29,7 @@ func main() {
 		set := strings.Split(string(settings), "\n")
 		for _, line := range set {
 			if len(line) > 0 && line[:1] != "#" {
-				if len(line) < 10 || line[:9] != "PyShebang" {
+				if len(line) < 10 || line[2:9] != "Shebang" {
 					line = strings.Split(line, "#")[0]
 					lsplit := strings.Split(line, " ")
 					config[strings.ToLower(lsplit[0])] = strings.TrimRight(
@@ -36,7 +37,7 @@ func main() {
 				} else {
 					begin := strings.Index(line, "\"")
 					end := strings.Index(line[begin+1:], "\"")
-					config["pyshebang"] = line[begin+1 : begin+end+1]
+					config[strings.ToLower(line[0:9])] = line[begin+1 : begin+end+1]
 				}
 			}
 		}
@@ -138,7 +139,7 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 	lines := strings.Split(contentString, "\n")
 	if len(lines[0]) > 1 && lines[0][0:2] == "#!" {
 		if (ftype == "py" && lines[0] == config["pyshebang"]) || (ftype == "sh" &&
-			lines[0] == "#!/usr/bin/env bash") {
+			lines[0] == config["shshebang"]) {
 			contentString = contentString[len(lines[0])+1:]
 		}
 	}
@@ -152,12 +153,8 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	content := r.Form.Get("content")
 	lines := strings.Split(content, "\n")
 	ftype := strings.Split(name, ".")[len(strings.Split(name, "."))-1]
-	if len(lines[0]) > 1 && lines[0][0:2] != "#!" {
-		if ftype == "py" {
-			content = config["pyshebang"] + "\n" + content
-		} else if ftype == "sh" {
-			content = "#!/usr/bin/env bash" + "\n" + content
-		}
+	if len(lines[0]) > 1 && lines[0][0:2] != "#!" && config[ftype+"shebang"] != "" {
+		content = config[ftype+"shebang"] + "\n" + content
 	}
 	ioutil.WriteFile(config["projectdir"]+name, []byte(content), 0744)
 }
