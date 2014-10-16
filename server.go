@@ -156,7 +156,10 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	if len(lines[0]) > 1 && lines[0][0:2] != "#!" && config[ftype+"shebang"] != "" {
 		content = config[ftype+"shebang"] + "\n" + content
 	}
-	ioutil.WriteFile(config["projectdir"]+name, []byte(content), 0744)
+	file, _ := os.OpenFile(config["projectdir"]+name, os.O_CREATE|os.O_WRONLY, 0744)
+	file.WriteString(content)
+	file.Sync()
+	file.Close()
 }
 
 func deleteFile(w http.ResponseWriter, r *http.Request) {
