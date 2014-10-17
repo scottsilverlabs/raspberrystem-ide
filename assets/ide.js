@@ -1,6 +1,6 @@
 var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup,
-	changeSocketInit, toggleOutput; //Function prototypes
-var outputOpen;
+	changeSocketInit, toggleOutput, toggleWeb; //Function prototypes
+var config, outputOpen;
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
@@ -42,6 +42,10 @@ window.onload = function main() {
 		save(); //Create untitled document
 	}
 	changeSocketInit();
+	config = JSON.parse(GET("/api/configuration"));
+	if (config.webviewopen == "true") {
+		toggleWeb();
+	}
 };
 
 window.onbeforeunload = function (event) {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"encoding/json"
 	"github.com/kr/pty"
 	"io"
 	"io/ioutil"
@@ -59,6 +60,7 @@ func main() {
 	http.HandleFunc("/api/savefile", saveFile)
 	http.HandleFunc("/api/deletefile", deleteFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
+	http.HandleFunc("/api/configuration", configuration)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
 	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir("/etc/ide/website"))))
@@ -174,6 +176,12 @@ func hostnameOut(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	io.WriteString(w, string(hostname))
+}
+
+func configuration(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.Encode(config)
 }
 
 //Called as a goroutine to wait for the close command and kill the process.
