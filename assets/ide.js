@@ -90,13 +90,17 @@ var stripRegex = new RegExp(/(^\s+|\s+$)/g);
 function errorHighlight() {
 	var errString = outputtext.innerHTML;
 	var lines = errString.split("\n");
-	var errors = errString.match(errRegex);
-	for (var i = 0; errors && i < errors.length; i++) {
+	var errors = errString.match(errRegex) || [];
+	var offset = 0;
+	if (editor.lineInfo(0).text.substring(0, 2) != "#!")
+		offset = 1;
+	for (var i in errors) {
 		var err = errors[i];
 		var errLines = err.split("\n");
 		var errLinePos = errLines[0].split(", ")[1].substring(5);
-		var line = editor.lineInfo(errLinePos-1);
+		var line = editor.lineInfo(errLinePos - 1 - offset);
 		var stripped = errLines[1].replace(stripRegex, "");
+		console.log(line)
 		var match = line.text.indexOf(stripped);
 		var start = {"line": errLinePos-1, "ch": match};
 		var end = {"line": errLinePos-1, "ch": match+stripped.length};
@@ -105,9 +109,10 @@ function errorHighlight() {
 			clearOnEnter: true,
 			title: errLines[3],
 		}));
-		if (i === 0) {
+		if (i === 0)
 			editor.scrollTo(0, errLinePos);
-		}
+		outputtext.innerHTML = outputtext.innerHTML.replace(err, 
+			"<span style=\"color:red;\">" + err + "</span>");
 	}
 	var traces = errString.match(traceRegex);
 	for (var j = 0; traces && j < traces.length; j++) {
@@ -122,15 +127,15 @@ function errorHighlight() {
 						end = k;
 					}
 				}
-				message += "\n"+line.substring(0, 8)+"<span class=\"cm-variable\">"
-					+line.substring(8, end)+"</span>";
+				message += "\n"+line.substring(0, 8) + "<span class=\"cm-variable\">"
+					+line.substring(8, end) + "</span>";
 				var nextend = end+8;
 				while (parseInt(line.substr(nextend, 1)) || line.substr(nextend, 1) == "0")
 					nextend++;
 				message += line.substring(end, end+8) + "<span class=\"cm-variable\">"
 					+ line.substring(end+8, nextend) + "</span>" + line.substring(nextend);
 				if (line.substring(end-filename.length, end) == filename) {
-					var lnum = parseInt(line.substring(end+8, nextend))-1;
+					var lnum = parseInt(line.substring(end + 8, nextend)) - 1 - offset;
 					var start = {"line": lnum, "ch": 0};
 					var end = {"line": lnum, "ch": editor.getLine(lnum).length};
 					errs.push(editor.markText(start, end, {
@@ -144,8 +149,10 @@ function errorHighlight() {
 				message += "\n"+"<span class=\"cm-variable\">"+line+"</span>";
 			}
 		}
+		message += "\n"+split[split.length - 1]
+		console.log(split);
 		outputtext.innerHTML = outputtext.innerHTML.replace(traces[j], 
-			"<span style=\"color:red;\">"+message+"</span>");
+			"<span style=\"color:red;\">" + message + "</span>");
 	}
 }
 

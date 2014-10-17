@@ -157,7 +157,6 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 		content = config[ftype+"shebang"] + "\n" + content
 	}
 	file, _ := os.OpenFile(config["projectdir"]+name, os.O_CREATE|os.O_WRONLY, 0744)
-	println("Content: " + content)
 	file.Truncate(0)
 	file.WriteString(content)
 	file.Sync()
