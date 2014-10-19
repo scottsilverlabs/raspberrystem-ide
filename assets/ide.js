@@ -4,13 +4,14 @@ var config, outputOpen;
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
-	if (window.MozWebSocket) {
+	if (window.MozWebSocket)
 		window.WebSocket = window.MozWebSocket;
-	}
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
 	outputtext = document.getElementById("outputActual");
 	playButton = document.getElementById("play");
+	saveButton = document.getElementById("save");
+	saveButton.onclick = save;
 	ide = document.getElementById("ide");
 	web = document.getElementById("webview");
 	titleHolder = document.getElementById("title");
