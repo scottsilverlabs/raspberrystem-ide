@@ -34,19 +34,17 @@ window.onload = function main() {
 		viewportMargin: 3, //Default: 10
 	});
 	themes = editor.options.theme.split(" ");
-	for (var i in themes) {
+	for (var i in themes)
 		output.classList.add("cm-s-"+themes[i]);
-	}
 	editor.on("change", changeHandle);
-	filename = "Untitled.py";
-	if (GET("/api/listfiles").split("\n")[0] === "") {
+	if (GET("/api/listfiles").split("\n")[0] === "")
 		save(); //Create untitled document
-	}
 	changeSocketInit();
 	config = JSON.parse(GET("/api/configuration"));
-	if (config.webviewopen == "true") {
+	if (config.webviewopen == "true")
 		toggleWeb();
-	}
+	filename = config["lastfile"] || "Untitled.py";
+	loadFile(filename);
 };
 
 window.onbeforeunload = function (event) {
@@ -69,9 +67,8 @@ function GET(url) {
 
 function POST(url, args) {  
 	argsActual = "";
-	for (var i in args) {
+	for (var i in args)
 		argsActual += "&"+i+"="+encodeURIComponent(args[i]);
-	}
 	argsActual = argsActual.substring(1);
 	var req = new XMLHttpRequest();
 	req.open("POST", url, false);
@@ -81,9 +78,9 @@ function POST(url, args) {
 }
 
 function save() {
-	if (filename !== "") {
+	console.log("Saving "+filename);
+	if (filename !== "")
 		POST("/api/savefile", {"file": filename, "content": editor.getValue()});
-	}
 }
 
 //Called when the script stops running on the server side
@@ -127,11 +124,9 @@ function errorHighlight() {
 			var line = split[i];
 			if (i%2 !== 0) {
 				var end = 0;
-				for (var k = 8; k < line.length; k++) {
-					if (line.substr(k, 1) == "\"") {
+				for (var k = 8; k < line.length; k++)
+					if (line.substr(k, 1) == "\"")
 						end = k;
-					}
-				}
 				message += "\n"+line.substring(0, 8) + "<span class=\"cm-variable\">"
 					+line.substring(8, end) + "</span>";
 				var nextend = end+8;
@@ -166,9 +161,8 @@ function sprColor(change) {
 	var ldiff = change.to.line - change.from.line;
 	if (ldiff == 0 && change.text.length == 2) {
 		var marks = editor.findMarksAt({line: baseline+1, ch: 0});
-		for (var i = 0; i < marks.length; i++) {
+		for (var i = 0; i < marks.length; i++)
 			marks[i].clear();
-		}
 		var ch = editor.getLine(baseline+1).substring(0, 1).toLowerCase();
 		var code = ch.charCodeAt(0);
 		var start = {"line": baseline+1, "ch": 0};
@@ -187,11 +181,10 @@ function sprColor(change) {
 		var line = editor.getLine(baseline+i);
 		var schar = 0;
 		var echar = line.length;
-		if (i === 0) {
+		if (i === 0)
 			schar = change.from.ch;
-		} else if (i == ldiff) {
+		else if (i == ldiff)
 			echar = change.to.ch;
-		}
 		for (var j = schar; j < echar; j++) {
 			var ch = line.substring(j, j+1).toLowerCase();
 			var code = ch.charCodeAt(0);
@@ -214,14 +207,12 @@ function sprColor(change) {
 
 var last = null;
 function changeHandle(cm, change) {
-	if (type == "spr") {
+	if (type == "spr")
 		sprColor(change);
-	}
 	if (changeSocket !== null && last === null && change.origin != "setValue") {
 		var text = "";
-		for (var i in change.text) {
+		for (var i in change.text)
 			text += "\n"+change.text[i];
-		}
 		changeSocket.send("CIF:" + change.from.line + "," + change.from.ch + ","
 			+ change.to.line + "," + change.to.ch + "," + text.substring(1));
 	} else {
@@ -234,9 +225,8 @@ var ws = null;
 function socket() {
 	ws = new WebSocket("ws://"+url+"/api/socket");
 	ws.onopen = function (event) {
-		while ((a = errs.pop()) !== undefined) {
+		while ((a = errs.pop()) !== undefined)
 			a.clear();
-		}
 		ws.send(filename);
 		playButton.src = "/images/stop.png";
 	};
@@ -275,14 +265,12 @@ function changeSocketInit() {
 	};
 	changeSocket.onclose = function (event) {
 		changeSocket = null;
-		if (good) {
+		if (good)
 			setTimeout(changeSocketInit, 5000);
-		}
 	};
 	changeSocket.onerror = function (event) {
-		if (!good) {
+		if (!good)
 			alert("Your browser may not support web sockets\nFor the best experience use Google Chrome");
-		}
 	};
 	changeSocket.onmessage = function (event) {
 		message = event.data;
@@ -344,7 +332,7 @@ function runSpr() {
 
 //Called by the run button
 function run() {
-	if (ws === null){
+	if (ws === null) {
 		save();
 		outputtext.innerHTML = "";
 		if (type != "spr") {
@@ -362,7 +350,7 @@ function run() {
 var webShowing = false;
 function toggleWeb() {
 	webShowing = !webShowing;
-	if (webShowing){
+	if (webShowing) {
 		codewrapper.style.width = "50%";
 		output.style.width = "50%";
 		web.style.width = "50%";
@@ -379,7 +367,7 @@ function toggleWeb() {
 //Removes popups
 var back, popup, text, menu;
 function removePopup() {
-	if (back !== null) {
+	if (back != null) {
 		back.parentNode.removeChild(back);
 		popup.parentNode.removeChild(popup);
 	}
@@ -400,32 +388,22 @@ function fileButton() {
 		editor.setValue("");
 	} else if (type === "spr") {
 		var val = "\n- - - - - - - -";
-		for (var i = 0; i < 3; i++) {
+		for (var i = 0; i < 3; i++)
 			val = val+val;
-		}
 		editor.setValue(val.substring(1));
 		editor.setOption("mode", null);
 	} else if (type === "sh") {
 		editor.setValue("");
 		editor.setOption("mode", "shell");
 	}
-	if (changeSocket !== null) {
-		changeSocket.send("COF:"+filename);
-	}
+	if (changeSocket !== null)
+		changeSocket.send("COF:" + filename);
 	removePopup();
 	save();
 }
 
-function deleteFile(fname, yes) {
-	if (yes) {
-		POST("/api/deletefile", {"file": fname});
-	}
-	removePopup();
-	openFile();
-}
-
 //Called by delete in the Edit File prompt
-function deletePrompt(fname) {
+function ynPrompt(titleText, bodyText, yes, no) {
 	removePopup();
 	
 	back = document.createElement("div");
@@ -442,18 +420,18 @@ function deletePrompt(fname) {
 	popup.appendChild(title);
 	title.classList.add("popuptitle");
 	title.classList.add("maincolor");
-	title.innerHTML = "Delete";
+	title.innerHTML = titleText;
 
 	text = document.createElement("div");
 	popup.appendChild(text);
 	text.classList.add("deletetext");
-	text.innerHTML = "Delete "+fname+"?";
+	text.innerHTML = bodyText;
 
 	var okay = document.createElement("div");
 	popup.appendChild(okay);
 	okay.classList.add("fileokay");
 	okay.classList.add("button");
-	okay.onclick = new Function("deleteFile(\""+fname+"\", true)");
+	okay.onclick = yes;
 	okay.innerHTML = "Yes";
 
 	var cancel = document.createElement("div");
@@ -461,7 +439,19 @@ function deletePrompt(fname) {
 	cancel.innerHTML = "No";
 	cancel.classList.add("filecancel");
 	cancel.classList.add("button");
-	cancel.onclick = new Function("deleteFile(\""+fname+"\", false)");
+	cancel.onclick = no;
+}
+
+function deletePrompt(fname) {
+	ynPrompt("Delete", "Delete " + fname + "?", function() {
+		POST("/api/deletefile", {"file": fname});
+		removePopup();
+		openFile();
+	},
+	function() {
+		removePopup();
+		openFile();
+	});
 }
 
 //Called by the edit button in the Select File prompt
@@ -494,8 +484,9 @@ function editFile(fname) {
 	menu.classList.add("filetype");
 	menu.style.display = "inline";
 
-	sp = fname.split(".");
-	menu.innerHTML = " ." + sp[sp.length - 1]; //File extension marker
+	var sp = fname.split(".");
+	var ext = "." + sp[sp.length - 1];
+	menu.innerHTML = " " + ext; //File extension marker
 
 	var cancel = document.createElement("div");
 	popup.appendChild(cancel);
@@ -506,18 +497,37 @@ function editFile(fname) {
 	cancel.style.left = "2%";
 	cancel.style.width = "22%";
 	cancel.style.top = "12%";
-	cancel.onclick = function() {removePopup(); openFile()};
+	cancel.onclick = function() {
+		removePopup();
+		openFile();
+	};
 
 	var duplicate = document.createElement("div");
 	popup.appendChild(duplicate);
 	duplicate.classList.add("button");
-	duplicate.onclick = openFile;
 	duplicate.innerHTML = "Duplicate";
 	duplicate.style.fontSize = 15;
 	duplicate.style.left = "26%";
 	duplicate.style.position = "relative";
 	duplicate.style.width = "29%";
 	duplicate.style.top = "-1.1em";
+	duplicate.onclick = function() {
+		var cutfname = fname.substring(0, fname.length - ext.length);
+		var num = cutfname.match(/\d+$/) || 1;
+		if (num !== 1) {
+			cutfname = cutfname.substring(0, cutfname.length - num[0].length);
+			num = parseInt(num[0]);
+		}
+		var files = GET("/api/listfiles").split("\n");
+		var dupname = cutfname + num + ext;
+		while (files.indexOf(dupname) + 1) {
+			num++;
+			dupname = cutfname + num + ext;
+		}
+		POST("/api/copyfile", {"from": fname, "to": dupname})
+		removePopup();
+		openFile();
+	};
 
 	var del = document.createElement("div");
 	popup.appendChild(del);
@@ -533,14 +543,35 @@ function editFile(fname) {
 	var okay = document.createElement("div");
 	popup.appendChild(okay);
 	okay.classList.add("button");
-	okay.onclick = cancel.onclick;
 	okay.innerHTML = "OK";
 	okay.style.fontSize = 15;
 	okay.style.position = "relative";
 	okay.style.width = "18%";
 	okay.style.left = "80%";
 	okay.style.top = "-4.9em";
-
+	okay.onclick = function() {
+		if (text.value != fname) {
+			var files = GET("/api/listfiles").split("\n");
+			if (files.indexOf(text.value) != -1) {
+				console.log("Exists");
+				var to = text.value;
+				ynPrompt("Overwrite", "Overwrite " + text.value, function() {
+					POST("/api/copyfile", {"from": fname, "to": to})
+					POST("/api/deletefile", {"file": fname})
+					removePopup();
+					openFile();
+				},
+				function() {
+					editFile(fname);
+				})
+			} else {
+				POST("/api/copyfile", {"from": fname, "to": text.value})
+				POST("/api/deletefile", {"file": fname})
+				removePopup();
+				openFile();
+			}
+		}
+	};
 
 	text.focus();
 }
@@ -588,30 +619,33 @@ function newFile() {
 	cancel.innerHTML = "Cancel";
 	cancel.classList.add("filecancel");
 	cancel.classList.add("button");
-	cancel.onclick = function() {removePopup(); openFile();};
+	cancel.onclick = function() {
+		removePopup();
+		openFile();
+	};
 
 	text.focus();
 }
 
 //Called when a file div is clicked in the open file popup
-function loadFile(div) {
-	if (filename != div.innerHTML)
+function loadFile(fname) {
+	if (filename != fname)
 		save();
-	filename = div.innerHTML.replace(/ /g, "-");
+	filename = fname.replace(/ /g, "-");
 	var sp = filename.split(".");
-	type = sp[sp.length-1];
-	if (type == "py")
+	var ext = sp[sp.length-1];
+	if (ext == "py")
 		editor.setOption("mode", {
 			name: "python",
 			version: 3,
 			singleLineStringErrors: false
 		});
-	if (type == "sh")
+	if (ext == "sh")
 		editor.setOption("mode", "shell");
-	titleHolder.innerHTML = div.innerHTML;
+	titleHolder.innerHTML = fname;
 	var contents = GET("/api/readfile?file=" + filename);
 	editor.setValue(contents);
-	if (type == "spr") {
+	if (ext == "spr") {
 		editor.setOption("mode", null);
 		var lines = editor.lineCount();
 		sprColor({
@@ -621,12 +655,17 @@ function loadFile(div) {
 		});
 	}
 	if (changeSocket !== null)
-		changeSocket.send("COF:" + filename);
+		if (changeSocket.readyState == 1)
+			changeSocket.send("COF:" + filename);
+		else
+			setTimeout(5000, function() {changeSocket.send("COF:" + filename);});
 	removePopup();
 }
 
 //Called by the open file button
-function openFile() {
+function openFile(button) {
+	if (button)
+		save();
 	back = document.createElement("div");
 	document.body.appendChild(back);
 	back.classList.add("holder");
@@ -675,7 +714,7 @@ function openFile() {
 		filediv.id = "Button" + i; //Used for key-based selection
 		filediv.innerHTML = files[i].replace(/-/g, " ");
 		filediv.classList.add("filebutton");
-		filediv.onclick = new Function("loadFile(this)");
+		filediv.onclick = new Function("loadFile(this.innerHTML)");
 		var deleteDiv = document.createElement("img");
 		fileholder.appendChild(deleteDiv);
 		deleteDiv.src = "/images/pencil.png";
@@ -738,7 +777,7 @@ function changeTheme() {
 			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "");
 			filediv.classList.add("filediv");
 			filediv.classList.add("maincolor");
-			filediv.onclick = new Function("setTheme(this)");
+			filediv.onclick =  function() {setTheme(this);};
 		}
 	}
 

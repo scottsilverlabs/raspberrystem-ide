@@ -44,6 +44,10 @@ func main() {
 		}
 	}
 	config["projectdir"] = strings.Replace(config["projectdir"], "~", os.Getenv("HOME"), 1)
+	last, _ := ioutil.ReadFile("/etc/ide/lastfile")
+	if string(last) != "" {
+		config["lastfile"] = string(last)
+	}
 	os.Mkdir(config["projectdir"], 0775)
 	if err != nil {
 		panic(err)
@@ -58,6 +62,7 @@ func main() {
 	http.HandleFunc("/api/listthemes", listThemes)
 	http.HandleFunc("/api/readfile", readFile)
 	http.HandleFunc("/api/savefile", saveFile)
+	http.HandleFunc("/api/copyfile", copyFile)
 	http.HandleFunc("/api/deletefile", deleteFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.HandleFunc("/api/configuration", configuration)
@@ -161,6 +166,24 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	file, _ := os.OpenFile(config["projectdir"]+name, os.O_CREATE|os.O_WRONLY, 0744)
 	file.Truncate(0)
 	file.WriteString(content)
+	file.Sync()
+	file.Close()
+	config["lastfile"] = name
+	file, _ = os.OpenFile("/etc/ide/lastfile", os.O_CREATE|os.O_WRONLY, 0744)
+	file.Truncate(0)
+	file.WriteString(name)
+	file.Sync()
+	file.Close()
+}
+
+func copyFile(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	from := strings.Trim(r.Form.Get("from"), " ./")
+	to := strings.Trim(r.Form.Get("to"), " ./")
+	content, _ := ioutil.ReadFile(config["projectdir"] + from)
+	file, _ := os.OpenFile(config["projectdir"]+to, os.O_CREATE|os.O_WRONLY, 0744)
+	file.Truncate(0)
+	file.Write(content)
 	file.Sync()
 	file.Close()
 }
