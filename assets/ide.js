@@ -465,7 +465,6 @@ function deletePrompt(fname) {
 }
 
 //Called by the edit button in the Select File prompt
-//TODO
 function editFile(fname) {
 	removePopup();
 	back = document.createElement("div");
@@ -498,17 +497,50 @@ function editFile(fname) {
 	sp = fname.split(".");
 	menu.innerHTML = " ." + sp[sp.length - 1]; //File extension marker
 
-	var okay = document.createElement("div");
-	popup.appendChild(okay);
-	okay.classList.add("fileokay");
-	okay.onclick = fileButton;
-	okay.innerHTML = "Save";
-
 	var cancel = document.createElement("div");
 	popup.appendChild(cancel);
 	cancel.innerHTML = "Cancel";
-	cancel.classList.add("filecancel");
-	cancel.onclick = removePopup;
+	cancel.classList.add("button");
+	cancel.style.fontSize = 15;
+	cancel.style.position = "relative";
+	cancel.style.left = "2%";
+	cancel.style.width = "22%";
+	cancel.style.top = "12%";
+	cancel.onclick = function() {removePopup(); openFile()};
+
+	var duplicate = document.createElement("div");
+	popup.appendChild(duplicate);
+	duplicate.classList.add("button");
+	duplicate.onclick = openFile;
+	duplicate.innerHTML = "Duplicate";
+	duplicate.style.fontSize = 15;
+	duplicate.style.left = "26%";
+	duplicate.style.position = "relative";
+	duplicate.style.width = "29%";
+	duplicate.style.top = "-1.1em";
+
+	var del = document.createElement("div");
+	popup.appendChild(del);
+	del.classList.add("button");
+	del.onclick = function() {deletePrompt(fname);};
+	del.innerHTML = "Delete";
+	del.style.fontSize = 15;
+	del.style.position = "relative";
+	del.style.width = "21%";
+	del.style.left = "57%";
+	del.style.top = "-3em";
+
+	var okay = document.createElement("div");
+	popup.appendChild(okay);
+	okay.classList.add("button");
+	okay.onclick = cancel.onclick;
+	okay.innerHTML = "OK";
+	okay.style.fontSize = 15;
+	okay.style.position = "relative";
+	okay.style.width = "18%";
+	okay.style.left = "80%";
+	okay.style.top = "-4.9em";
+
 
 	text.focus();
 }
@@ -563,22 +595,19 @@ function newFile() {
 
 //Called when a file div is clicked in the open file popup
 function loadFile(div) {
-	if (filename != div.innerHTML) {
+	if (filename != div.innerHTML)
 		save();
-	}
 	filename = div.innerHTML.replace(/ /g, "-");
 	var sp = filename.split(".");
 	type = sp[sp.length-1];
-	if (type == "py") {
+	if (type == "py")
 		editor.setOption("mode", {
 			name: "python",
 			version: 3,
 			singleLineStringErrors: false
 		});
-	}
-	if (type == "sh") {
+	if (type == "sh")
 		editor.setOption("mode", "shell");
-	}
 	titleHolder.innerHTML = div.innerHTML;
 	var contents = GET("/api/readfile?file=" + filename);
 	editor.setValue(contents);
@@ -591,9 +620,8 @@ function loadFile(div) {
 			text: "abcd",
 		});
 	}
-	if (changeSocket !== null) {
+	if (changeSocket !== null)
 		changeSocket.send("COF:" + filename);
-	}
 	removePopup();
 }
 
@@ -626,9 +654,22 @@ function openFile() {
 	newfile.classList.add("filebutton");
 	newfile.onclick = newFile;
 
-	//Files
-	files = GET("/api/listfiles").split("\n");
+	var files = GET("/api/listfiles").split("\n");
+	//Force capitalized files to their correct sort position
+	var caps = [];
 	for (var i in files) {
+		if (files[i].substring(0, 1) == files[i].substring(0, 1).toUpperCase()) {
+			caps = caps.concat(files[i]);
+			files[i] = files[i].toLowerCase()+"_;";
+		}
+	}
+	files.sort();
+	for (i in caps) {
+		var index = files.indexOf(caps[i].toLowerCase()+"_;");
+		files[index] = caps[i];
+	}
+	//Populate div
+	for (i in files) {
 		var filediv = document.createElement("div");
 		fileholder.appendChild(filediv);
 		filediv.id = "Button" + i; //Used for key-based selection
