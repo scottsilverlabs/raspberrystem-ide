@@ -424,6 +424,7 @@ function deleteFile(fname, yes) {
 	openFile();
 }
 
+//Called by delete in the Edit File prompt
 function deletePrompt(fname) {
 	removePopup();
 	
@@ -463,6 +464,55 @@ function deletePrompt(fname) {
 	cancel.onclick = new Function("deleteFile(\""+fname+"\", false)");
 }
 
+//Called by the edit button in the Select File prompt
+//TODO
+function editFile(fname) {
+	removePopup();
+	back = document.createElement("div");
+	document.body.appendChild(back);
+	back.classList.add("holder");
+
+	popup = document.createElement("div");
+	document.body.appendChild(popup);
+	popup.classList.add("filepopup");
+	popup.classList.add("popup");
+	back.onclick = removePopup;
+
+	var title = document.createElement("h1");
+	popup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.innerHTML = "Edit File";
+
+	text = document.createElement("input");
+	popup.appendChild(text);
+	text.classList.add("editfiletext");
+	text.type = "text";
+	text.value = fname;
+
+	menu = document.createElement("div");
+	popup.appendChild(menu);
+	menu.classList.add("filetype");
+	menu.style.display = "inline";
+
+	sp = fname.split(".");
+	menu.innerHTML = " ." + sp[sp.length - 1]; //File extension marker
+
+	var okay = document.createElement("div");
+	popup.appendChild(okay);
+	okay.classList.add("fileokay");
+	okay.onclick = fileButton;
+	okay.innerHTML = "Save";
+
+	var cancel = document.createElement("div");
+	popup.appendChild(cancel);
+	cancel.innerHTML = "Cancel";
+	cancel.classList.add("filecancel");
+	cancel.onclick = removePopup;
+
+	text.focus();
+}
+
 //Caled by the new file button in the open file popup
 function newFile() {
 	removePopup();
@@ -497,6 +547,7 @@ function newFile() {
 	var okay = document.createElement("div");
 	popup.appendChild(okay);
 	okay.classList.add("fileokay");
+	okay.classList.add("button");
 	okay.onclick = fileButton;
 	okay.innerHTML = "Save";
 
@@ -504,7 +555,8 @@ function newFile() {
 	popup.appendChild(cancel);
 	cancel.innerHTML = "Cancel";
 	cancel.classList.add("filecancel");
-	cancel.onclick = removePopup;
+	cancel.classList.add("button");
+	cancel.onclick = function() {removePopup(); openFile();};
 
 	text.focus();
 }
@@ -528,19 +580,19 @@ function loadFile(div) {
 		editor.setOption("mode", "shell");
 	}
 	titleHolder.innerHTML = div.innerHTML;
-	var contents = GET("/api/readfile?file="+filename);
+	var contents = GET("/api/readfile?file=" + filename);
 	editor.setValue(contents);
 	if (type == "spr") {
 		editor.setOption("mode", null);
 		var lines = editor.lineCount();
 		sprColor({
 			from: {line: 0, ch: 0},
-			to: {line: lines-1, ch: editor.getLine(lines-1).length},
+			to: {line: lines-1, ch: editor.getLine(lines - 1).length},
 			text: "abcd",
 		});
 	}
 	if (changeSocket !== null) {
-		changeSocket.send("COF:"+filename);
+		changeSocket.send("COF:" + filename);
 	}
 	removePopup();
 }
@@ -567,43 +619,38 @@ function openFile() {
 	popup.appendChild(fileholder);
 	fileholder.classList.add("fileholder");
 
+	var newfile = document.createElement("div");
+	fileholder.appendChild(newfile);
+	newfile.innerHTML = "-- New File --";
+	newfile.classList.add("newfilebutton");
+	newfile.classList.add("filebutton");
+	newfile.onclick = newFile;
+
 	//Files
 	files = GET("/api/listfiles").split("\n");
-	if (files[0] === "") {
-		//TODO No Files Found Error
-	} else {
-		for (var i in files) {
-			var filediv = document.createElement("div");
-			fileholder.appendChild(filediv);
-			filediv.innerHTML = files[i].replace(/-/g, " ");
-			filediv.classList.add("filediv");
-			filediv.classList.add("maincolor");
-			filediv.onclick = new Function("loadFile(this)");
-			if (files[i] != "Untitled.py") {
-				var deleteDiv = document.createElement("div");
-				fileholder.appendChild(deleteDiv);
-				deleteDiv.innerHTML = "X";
-				deleteDiv.classList.add("deleteDiv");
-				deleteDiv.onclick = new Function("deletePrompt(\""+files[i]+"\")");
-			} else {
-				filediv.classList.add("untitleddiv");
-			}
-		}
+	for (var i in files) {
+		var filediv = document.createElement("div");
+		fileholder.appendChild(filediv);
+		filediv.id = "Button" + i; //Used for key-based selection
+		filediv.innerHTML = files[i].replace(/-/g, " ");
+		filediv.classList.add("filebutton");
+		filediv.onclick = new Function("loadFile(this)");
+		var deleteDiv = document.createElement("img");
+		fileholder.appendChild(deleteDiv);
+		deleteDiv.src = "/images/pencil.png";
+		deleteDiv.classList.add("pencilButton");
+		deleteDiv.onclick = new Function("editFile(\""+files[i]+"\")");
 	}
 
 	var cancel = document.createElement("div");
-	popup.appendChild(cancel);
-	cancel.innerHTML = "Cancel";
-	cancel.classList.add("foldercancel");
-	cancel.classList.add("button");
+	title.appendChild(cancel);
+	cancel.innerHTML = "X";
+	cancel.style.float = "right";
+	cancel.style.color = "#dc322f"
+	cancel.style.cursor = "pointer";
+	cancel.style.fontWeight = 400;
+	cancel.style.marginRight = "0.3em";
 	cancel.onclick = removePopup;
-
-	var newfile = document.createElement("div");
-	popup.appendChild(newfile);
-	newfile.innerHTML = "New";
-	newfile.classList.add("foldernew");
-	newfile.classList.add("button");
-	newfile.onclick = newFile;
 }
 
 //Called when a div is clicked in the change theme function

@@ -20,6 +20,10 @@
 				-webkit-user-select: none;
 				user-select:none;
 			}
+
+			.maincolor {
+				color: #FFFFFF;
+			}
 			
 			.headerbutton {
 				width: 1.75em;
@@ -75,9 +79,21 @@
 				margin-top: -50px;
 			}
 
+			/*New file prompt*/
 			.filetext {
 				position: relative;
 				width: 79%;
+				height: 26px;
+				left: 2px;
+				top: 4px;
+				font-size: 16px;
+				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+			}
+
+			/*Edit prompt*/
+			.editfiletext {
+				position: relative;
+				width: 87%;
 				height: 26px;
 				left: 2px;
 				top: 4px;
@@ -150,9 +166,9 @@
 				background-color: inherit;
 				margin: 15px;
 				left: 0;
-				top: 0;
+				top: -1%;
 				width: auto;
-				height: 210px;
+				height: 240px;
 				overflow-y: auto;
 				overflow-x: hidden;
 
@@ -169,19 +185,13 @@
 				width: 40%;
 			}
 
-			.foldernew {
-				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-				font-size: 16px;
-				text-align: center;
-				position: relative;
-				margin: 0;
-				top: -29px;
-				cursor: pointer;
-				left: 55%;
-				width: 40%;
+			.newfilebutton {
+				margin-top: 0 !IMPORTANT;
+				margin-bottom: -1.4% !IMPORTANT;
 			}
 
-			.filediv {
+			.filebutton {
+				background-color: #D8D8D8;
 				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
 				font-size: 16px;
 				text-align: center;
@@ -193,6 +203,10 @@
 				height: 20px;
 				padding: 2px;
 				cursor: pointer;
+			}
+
+			.filebutton:hover {
+				background-color: #C8C8C8;
 			}
 
 			.filediv:hover {
@@ -214,24 +228,15 @@
 				margin-bottom: -0.3em;
 			}
 
-			.deleteDiv {
-				text-align: center;
-				color: #fff;
-				background-color: #d14343;
-				width: 1em;
-				height: 1em;
-				font-size: 0.75em;
+			.pencilButton {
+				width: 1.3em;
+				height: 1.3em;
 				position: relative;
-				left: 350px;
+				left: 99%;
 				margin-top: -1.45em;
+				margin-left: -1.3em;
 				border-radius: 100%;
 				cursor: pointer;
-				font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-			}
-
-			.deleteDiv:hover {
-				background-color: #fff;
-				color: #d14343;
 			}
 
 			#title {
