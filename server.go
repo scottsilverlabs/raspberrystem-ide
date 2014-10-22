@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"github.com/kr/pty"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -15,14 +16,10 @@ import (
 	"time"
 )
 
+var page, _ = template.New("index").ParseFiles("/etc/ide/ide.html")
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
 var users = make(map[string]string)
-var config = map[string]string{
-	"port":       "80",
-	"projectdir": "~/raspberrystem_projects/",
-	"pyshebang":  "#!/usr/bin/env python3",
-	"shshebang":  "#!/usr/bin/env bash",
-}
+var config = make(map[string]string)
 
 func main() {
 	settings, err := ioutil.ReadFile("/etc/ide/settings.conf")
@@ -33,8 +30,8 @@ func main() {
 				if len(line) < 10 || line[2:9] != "Shebang" {
 					line = strings.Split(line, "#")[0]
 					lsplit := strings.Split(line, " ")
-					config[strings.ToLower(lsplit[0])] = strings.TrimRight(
-						line[len(lsplit[0])+1:], " ")
+					config[strings.ToLower(lsplit[0])] = strings.TrimLeft(strings.TrimRight(
+						line[len(lsplit[0])+1:], " "), " ")
 				} else {
 					begin := strings.Index(line, "\"")
 					end := strings.Index(line[begin+1:], "\"")
@@ -42,6 +39,8 @@ func main() {
 				}
 			}
 		}
+	} else {
+		panic(err)
 	}
 	config["projectdir"] = strings.Replace(config["projectdir"], "~", os.Getenv("HOME"), 1)
 	last, _ := ioutil.ReadFile("/etc/ide/lastfile")
@@ -49,9 +48,6 @@ func main() {
 		config["lastfile"] = string(last)
 	}
 	os.Mkdir(config["projectdir"], 0775)
-	if err != nil {
-		panic(err)
-	}
 	http.HandleFunc("/", index) //All requests to / and 404s will route to Index
 	http.HandleFunc("/ide.js", ideJs)
 	http.HandleFunc("/cm.js", cmJs)
@@ -78,7 +74,9 @@ func main() {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "/etc/ide/ide.html")
+	page.ExecuteTemplate(w, "ide.html", map[string]string{
+		"OutputSize": config["outputsize"],
+	})
 }
 
 func ideJs(w http.ResponseWriter, r *http.Request) {

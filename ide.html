@@ -257,11 +257,10 @@
 			.outputOpen {
 				overflow-y: auto;
 				position: absolute;
-				top: calc(80% - 1.6em);
-				top: -webkit-calc(80% - 1.6em);
+				top: calc(100% - {{.OutputSize}}%);
+				top: -webkit-calc(100% - {{.OutputSize}}%);
 				bottom: 0;
 				left: 0;
-				margin-top: 2em;
 				width: 100%;
 				-moz-user-select: none;
 				-webkit-user-select: none;
@@ -290,7 +289,8 @@
 			}
 
 			.codeShort {
-				height: 80%;
+				height: calc(100% - {{.OutputSize}}%*1.052);
+				height: -webkit-calc(100% - {{.OutputSize}}%*1.052);
 			}
 
 			.codeLong {
