@@ -158,7 +158,7 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	content := r.Form.Get("content")
 	lines := strings.Split(content, "\n")
 	ftype := strings.Split(name, ".")[len(strings.Split(name, "."))-1]
-	if len(content) < 2 || lines[0][0:2] != "#!" && config[ftype+"shebang"] != "" {
+	if len(lines[0]) < 2 || lines[0][0:2] != "#!" && config[ftype+"shebang"] != "" {
 		content = config[ftype+"shebang"] + "\n" + content
 	}
 	file, _ := os.OpenFile(config["projectdir"]+name, os.O_CREATE|os.O_WRONLY, 0744)

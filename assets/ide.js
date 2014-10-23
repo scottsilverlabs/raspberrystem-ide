@@ -1,6 +1,6 @@
 var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup,
 	changeSocketInit, toggleOutput, toggleWeb; //Function prototypes
-var config, outputOpen;
+var config, outputOpen, back;
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
@@ -47,15 +47,103 @@ window.onload = function main() {
 	loadFile(filename);
 };
 
-window.onbeforeunload = function (event) {
+window.onbeforeunload = function() {
 	save();
 	changeSocket.close();
 };
 
-function key(k) {
-	if (k.keyCode == 27) {
-		removePopup();
+//Called when the header is clicked
+function headerClick() {
+	if (back == null)
+		editor.focus();
+}
+
+var currButton;
+function unhover() {
+	if (currButton)
+		currButton.className = currButton.className.replace("_hover", "");
+}
+
+function hover(button) {
+	if (back == null) return;
+	unhover();
+	currButton = button;
+	currButton.scrollIntoViewIfNeeded(); //May throw off the main viewing frame
+	//TODO, replace.
+	currButton.className = currButton.className.replace(/^filebutton/,
+		"filebutton_hover").replace(" filebutton", " filebutton_hover")
+		.replace(/^button/, "button_hover").replace(" button", " button_hover")
+		.replace("pencilbutton", "pencilbutton_hover");
+}
+
+var place = [0, 0]; //Place in list, standard x, y format
+var typePlace = 0; //For the new file prompt
+var types = ["py", "spr", "sh"]
+//Up/Down keys
+function updown(dir) {
+	if (back == null) return; //Check for popup
+	var typeSel = document.getElementById("TypeMenu");
+	if (typeSel) {
+		typePlace -= dir;
+		if (typePlace == -1)
+			typePlace = types.length - 1;
+		else if (typePlace == types.length)
+			typePlace = 0
+		typeSel.value = types[typePlace];
 	}
+
+
+	place[1] += dir;
+	var button = document.getElementById("Button"+place[0]+","+place[1]);
+	if (button)
+		hover(button);
+	else {
+		place[1] -= dir;
+		if (button = document.getElementById("Button"+place[0]+","+place[1]));
+			hover(button);
+	}
+}
+
+//Left/right
+function leftright(dir) {
+	if (back == null) return;
+	place[0] += dir;
+	var button = document.getElementById("Button"+place[0]+","+place[1]);
+	console.log(button);
+	if (button)
+		hover(button);
+	else {
+		place[0] -= dir;
+		if (button = document.getElementById("Button"+place[0]+","+place[1]));
+			hover(button);
+	}
+	console.log(place);
+}
+
+//Enter key
+function enter() {
+	if (back == null) return;
+	var button = document.getElementById("Button"+place[0]+","+place[1]);
+	if (button)
+		button.click();
+}
+
+//Handle key pressed.
+function key(k) {
+	switch (k.keyCode) {
+		case 27: removePopup(); editor.focus(); break;
+		case 37: leftright(-1); break; //Left
+		case 39: leftright(1); break; //Right
+		case 38: updown(-1); break; //Up
+		case 40: updown(1); break; //Down
+		case 13: enter(); break;
+	}
+}
+
+function setupButton(button, x, y) {
+	button.onmouseenter = new Function("hover(this)");
+	button.onmouseleave = unhover;
+	button.id = "Button" + x + "," + y;
 }
 
 function GET(url) {  
@@ -365,13 +453,17 @@ function toggleWeb() {
 }
 
 //Removes popups
-var back, popup, text, menu;
+var popup, text, menu;
 function removePopup() {
 	if (back != null) {
+		var button = document.getElementById("Button0,0");
+		if (button.innerHTML == "-- New File --")
+				editor.focus();
 		back.parentNode.removeChild(back);
 		popup.parentNode.removeChild(popup);
 	}
-	editor.focus();
+	back = null;
+	place = [0, 0];
 }
 
 //Called when the newFile okay button is pressed
@@ -409,6 +501,7 @@ function ynPrompt(titleText, bodyText, yes, no) {
 	back = document.createElement("div");
 	document.body.appendChild(back);
 	back.classList.add("holder");
+	back.focus();
 
 	popup = document.createElement("div");
 	document.body.appendChild(popup);
@@ -433,6 +526,7 @@ function ynPrompt(titleText, bodyText, yes, no) {
 	okay.classList.add("button");
 	okay.onclick = yes;
 	okay.innerHTML = "Yes";
+	setupButton(okay, 1, 0);
 
 	var cancel = document.createElement("div");
 	popup.appendChild(cancel);
@@ -440,6 +534,7 @@ function ynPrompt(titleText, bodyText, yes, no) {
 	cancel.classList.add("filecancel");
 	cancel.classList.add("button");
 	cancel.onclick = no;
+	setupButton(cancel, 0, 0);
 }
 
 function deletePrompt(fname) {
@@ -460,6 +555,7 @@ function editFile(fname) {
 	back = document.createElement("div");
 	document.body.appendChild(back);
 	back.classList.add("holder");
+	back.focus();
 
 	popup = document.createElement("div");
 	document.body.appendChild(popup);
@@ -497,6 +593,7 @@ function editFile(fname) {
 	cancel.style.left = "2%";
 	cancel.style.width = "22%";
 	cancel.style.top = "12%";
+	setupButton(cancel, 0, 0);
 	cancel.onclick = function() {
 		removePopup();
 		openFile();
@@ -511,6 +608,7 @@ function editFile(fname) {
 	duplicate.style.position = "relative";
 	duplicate.style.width = "29%";
 	duplicate.style.top = "-1.1em";
+	setupButton(duplicate, 1, 0);
 	duplicate.onclick = function() {
 		var cutfname = fname.substring(0, fname.length - ext.length);
 		var num = cutfname.match(/\d+$/) || 1;
@@ -539,6 +637,7 @@ function editFile(fname) {
 	del.style.width = "21%";
 	del.style.left = "57%";
 	del.style.top = "-3em";
+	setupButton(del, 2, 0);
 
 	var okay = document.createElement("div");
 	popup.appendChild(okay);
@@ -549,11 +648,11 @@ function editFile(fname) {
 	okay.style.width = "18%";
 	okay.style.left = "80%";
 	okay.style.top = "-4.9em";
+	setupButton(okay, 3, 0);
 	okay.onclick = function() {
 		if (text.value != fname) {
 			var files = GET("/api/listfiles").split("\n");
 			if (files.indexOf(text.value) != -1) {
-				console.log("Exists");
 				var to = text.value;
 				ynPrompt("Overwrite", "Overwrite " + text.value, function() {
 					POST("/api/copyfile", {"from": fname, "to": to})
@@ -570,6 +669,9 @@ function editFile(fname) {
 				removePopup();
 				openFile();
 			}
+		} else {
+			removePopup();
+			openFile();
 		}
 	};
 
@@ -582,6 +684,7 @@ function newFile() {
 	back = document.createElement("div");
 	document.body.appendChild(back);
 	back.classList.add("holder");
+	back.focus();
 
 	popup = document.createElement("div");
 	document.body.appendChild(popup);
@@ -601,6 +704,7 @@ function newFile() {
 	text.type = "text";
 
 	menu = document.createElement("select");
+	menu.id = "TypeMenu"
 	popup.appendChild(menu);
 	menu.classList.add("filetype");
 	menu.innerHTML = '<option value="py">.py</option>';
@@ -613,12 +717,14 @@ function newFile() {
 	okay.classList.add("button");
 	okay.onclick = fileButton;
 	okay.innerHTML = "Save";
+	setupButton(okay, 1, 0);
 
 	var cancel = document.createElement("div");
 	popup.appendChild(cancel);
 	cancel.innerHTML = "Cancel";
 	cancel.classList.add("filecancel");
 	cancel.classList.add("button");
+	setupButton(cancel, 0, 0);
 	cancel.onclick = function() {
 		removePopup();
 		openFile();
@@ -669,6 +775,7 @@ function openFile(button) {
 	back = document.createElement("div");
 	document.body.appendChild(back);
 	back.classList.add("holder");
+	back.focus();
 
 	popup = document.createElement("div");
 	document.body.appendChild(popup);
@@ -692,6 +799,7 @@ function openFile(button) {
 	newfile.classList.add("newfilebutton");
 	newfile.classList.add("filebutton");
 	newfile.onclick = newFile;
+	setupButton(newfile, 0, 0);
 
 	var files = GET("/api/listfiles").split("\n");
 	//Force capitalized files to their correct sort position
@@ -711,14 +819,15 @@ function openFile(button) {
 	for (i in files) {
 		var filediv = document.createElement("div");
 		fileholder.appendChild(filediv);
-		filediv.id = "Button" + i; //Used for key-based selection
 		filediv.innerHTML = files[i].replace(/-/g, " ");
 		filediv.classList.add("filebutton");
 		filediv.onclick = new Function("loadFile(this.innerHTML)");
+		setupButton(filediv, 0, parseInt(i) + 1);
 		var deleteDiv = document.createElement("img");
 		fileholder.appendChild(deleteDiv);
 		deleteDiv.src = "/images/pencil.png";
-		deleteDiv.classList.add("pencilButton");
+		deleteDiv.classList.add("pencilbutton");
+		setupButton(deleteDiv, 1, parseInt(i) + 1);
 		deleteDiv.onclick = new Function("editFile(\""+files[i]+"\")");
 	}
 
@@ -749,6 +858,7 @@ function changeTheme() {
 	back = document.createElement("div");
 	document.body.appendChild(back);
 	back.classList.add("holder");
+	back.focus();
 
 	popup = document.createElement("div");
 	document.body.appendChild(popup);
@@ -775,17 +885,22 @@ function changeTheme() {
 			var filediv = document.createElement("div");
 			fileholder.appendChild(filediv);
 			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "");
-			filediv.classList.add("filediv");
-			filediv.classList.add("maincolor");
+			filediv.classList.add("filebutton");
+			if (i == 0)
+				filediv.style.marginTop = "0";
+			setupButton(filediv, 0, i);
 			filediv.onclick =  function() {setTheme(this);};
 		}
 	}
 
 	var cancel = document.createElement("div");
-	popup.appendChild(cancel);
-	cancel.innerHTML = "Cancel";
-	cancel.classList.add("themecancel");
-	cancel.classList.add("button");
+	title.appendChild(cancel);
+	cancel.innerHTML = "X";
+	cancel.style.float = "right";
+	cancel.style.color = "#dc322f"
+	cancel.style.cursor = "pointer";
+	cancel.style.fontWeight = 400;
+	cancel.style.marginRight = "0.3em";
 	cancel.onclick = removePopup;
 }
 
