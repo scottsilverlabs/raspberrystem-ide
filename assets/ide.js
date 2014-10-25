@@ -1,8 +1,9 @@
-var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup,
-	changeSocketInit, toggleOutput, toggleWeb; //Function prototypes
+var run, save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup,
+	changeSocketInit, toggleOutput, toggleWeb, changeTheme; //Function prototypes
 var config, outputOpen, back, ws = null;
 var url = document.location.host; //The URL is needed for the web socket connection
-
+var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme", "openFile"];
+var keybindings = {};
 window.onload = function main() {
 	if (window.MozWebSocket)
 		window.WebSocket = window.MozWebSocket;
@@ -52,6 +53,12 @@ window.onload = function main() {
 	if (config.webviewopen == "true")
 		toggleWeb();
 	filename = config["lastfile"] || "Untitled.py";
+	for (i in config) {
+		var func = config[i].substring(0, 1).toLowerCase() + config[i].substring(1);
+		if (bindableFunc.indexOf(func) + 1) {
+			keybindings[i] = new Function(func + "()");
+		}
+	}
 	loadFile(filename);
 };
 
@@ -59,6 +66,22 @@ window.onbeforeunload = function() {
 	save();
 	changeSocket.close();
 };
+
+window.onkeydown = function(k) {
+	var keyseq = "";
+	if (k.ctrlKey || k.metaKey)
+		keyseq += "ctrl+";
+	if (k.shiftKey)
+		keyseq += "shift+";
+	if (k.altKey)
+		keyseq += "alt+";
+	keyseq += String.fromCharCode(k.keyCode).toLowerCase();
+	if (keybindings[keyseq]) {
+		k.preventDefault();
+		keybindings[keyseq]();
+		return false;
+	}
+}
 
 //Called when the header is clicked
 function headerClick() {
@@ -117,7 +140,6 @@ function leftright(dir) {
 	if (back == null) return;
 	place[0] += dir;
 	var button = document.getElementById("Button"+place[0]+","+place[1]);
-	console.log(button);
 	if (button)
 		hover(button);
 	else {
@@ -125,7 +147,6 @@ function leftright(dir) {
 		if (button = document.getElementById("Button"+place[0]+","+place[1]));
 			hover(button);
 	}
-	console.log(place);
 }
 
 //Enter key
@@ -136,7 +157,7 @@ function enter() {
 		button.click();
 }
 
-//Handle key pressed.
+//Handle generic keys
 function key(k) {
 	switch (k.keyCode) {
 		case 27: removePopup(); editor.focus(); break;
@@ -198,7 +219,6 @@ function errorHighlight() {
 		var errLinePos = errLines[0].split(", ")[1].substring(5);
 		var line = editor.lineInfo(errLinePos - 1 - offset);
 		var stripped = errLines[1].replace(stripRegex, "");
-		console.log(line)
 		var match = line.text.indexOf(stripped);
 		var start = {"line": errLinePos-1, "ch": match};
 		var end = {"line": errLinePos-1, "ch": match+stripped.length};
@@ -246,7 +266,6 @@ function errorHighlight() {
 			}
 		}
 		message += "\n"+split[split.length - 1]
-		console.log(split);
 		outputtext.innerHTML = outputtext.innerHTML.replace(traces[j], 
 			"<span style=\"color:red;\">" + message + "</span>");
 	}
@@ -432,6 +451,7 @@ function run() {
 		outputtext.innerHTML = "";
 		if (type != "spr") {
 			socket();
+			stdin.focus();
 		} else {
 			runSpr();
 		}
@@ -580,7 +600,6 @@ function editFile(fname) {
 	popup.appendChild(text);
 	text.classList.add("editfiletext");
 	text.type = "text";
-	text.value = fname;
 
 	menu = document.createElement("div");
 	popup.appendChild(menu);
@@ -589,7 +608,11 @@ function editFile(fname) {
 
 	var sp = fname.split(".");
 	var ext = "." + sp[sp.length - 1];
-	menu.innerHTML = " " + ext; //File extension marker
+	text.value = fname.substring(0, fname.length - ext.length);
+	if (ext.length < 4)
+		menu.innerHTML = " " + ext; //File extension marker
+	else
+		menu.innerHTML = ext;
 
 	var cancel = document.createElement("div");
 	popup.appendChild(cancel);
@@ -657,11 +680,11 @@ function editFile(fname) {
 	okay.style.top = "-4.9em";
 	setupButton(okay, 3, 0);
 	okay.onclick = function() {
-		if (text.value != fname) {
+		if (text.value != fname.substring(0, fname.length - ext.length)) {
 			var files = GET("/api/listfiles").split("\n");
-			if (files.indexOf(text.value) != -1) {
-				var to = text.value;
-				ynPrompt("Overwrite", "Overwrite " + text.value, function() {
+			var to = text.value + ext;
+			if (files.indexOf(to) != -1) {
+				ynPrompt("Overwrite", "Overwrite " + to, function() {
 					POST("/api/copyfile", {"from": fname, "to": to})
 					POST("/api/deletefile", {"file": fname})
 					removePopup();
@@ -671,7 +694,7 @@ function editFile(fname) {
 					editFile(fname);
 				})
 			} else {
-				POST("/api/copyfile", {"from": fname, "to": text.value})
+				POST("/api/copyfile", {"from": fname, "to": to})
 				POST("/api/deletefile", {"file": fname})
 				removePopup();
 				openFile();
@@ -777,6 +800,8 @@ function loadFile(fname) {
 
 //Called by the open file button
 function openFile(button) {
+	if (back != null)
+		removePopup();
 	if (button)
 		save();
 	back = document.createElement("div");
@@ -862,6 +887,8 @@ function setTheme(obj) {
 
 //Called by the change theme button
 function changeTheme() {
+	if (back != null)
+		removePopup();
 	back = document.createElement("div");
 	document.body.appendChild(back);
 	back.classList.add("holder");
