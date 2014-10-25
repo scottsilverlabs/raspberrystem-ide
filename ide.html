@@ -5,6 +5,9 @@
 		<style>
 			html, body {
 				overflow: hidden;
+				width: 100%;
+				height: 100%;
+				top: 0;
 			}
 			
 			body {
@@ -34,7 +37,7 @@
 			}
 
 			.CodeMirror {
-				height: auto !IMPORTANT;
+				height: auto !important;
 			}
 
 			.holder {
@@ -234,7 +237,7 @@
 			}
 
 			.filediv_hover {
-				background-color: #C8C8C8; /*#758888;*/
+				background-color: #C8C8C8;
 			}
 
 			.filediv:hover {
@@ -326,6 +329,15 @@
 				height: calc(100% - 1.5em);
 				height: -webkit-calc(100% - 1.5em);
 				line-height: 1;
+			}
+
+			#stdin {
+				color: inherit;
+				background-color: inherit;
+				border-width: 0;
+				width: 100%;
+				display: inline;
+				outline: none;
 			}
 
 			.codeShort {
@@ -432,10 +444,13 @@
 			</header>
 			<div id="ide" style="width:100%;height:calc(100% - 2em);height:-webkit-calc(100% - 2em);">
 				<div id="codewrapper" class="codeShort" style="width:100%;"></div>
-					<div id="output" class="outputOpen" style="overflow:hidden;" onclick="editor.focus()">
+					<div id="output" class="outputOpen" style="overflow:hidden;" onclick="outFocus()">
 						<div id="outputLabel" style="top:0%;">Program Output<div onclick="toggleOutput()" style="float:right;margin-right:0.3em;color:#dc322f;cursor:pointer;">X</div>
 					</div>
-					<pre id="outputActual" style="margin:0;tab-size:4;overflow-y:auto;"></pre>
+					<pre id="outputActual" style="margin:0;tab-size:4;overflow-y:auto;">
+<span id="outputtext"></span>
+<input type="text" id="stdin"></input>
+					</pre>
 				</div>
 			</div>
 			<iframe id="webview" src="/website/">

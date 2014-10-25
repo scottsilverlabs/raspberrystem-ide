@@ -206,12 +206,18 @@ func configuration(w http.ResponseWriter, r *http.Request) {
 }
 
 //Called as a goroutine to wait for the close command and kill the process.
-func watchClose(s *websocket.Conn, p *os.Process) {
+func watchClose(s *websocket.Conn, p *os.Process, pt *os.File) {
 	data := make([]byte, 512)
-	n, _ := s.Read(data)
-	payload := string(data[:n]) //[:n] to cut out padding
-	if payload == "close" {
-		p.Signal(syscall.SIGINT)
+	for {
+		n, _ := s.Read(data)
+		payload := string(data[:n]) //[:n] to cut out padding
+		if payload == "close" {
+			p.Signal(syscall.SIGINT)
+			break
+		} else if payload != "" {
+			println("IN: " + string(data[:n]))
+			pt.Write(data[:n])
+		}
 	}
 }
 
@@ -226,15 +232,15 @@ func socketServer(s *websocket.Conn) {
 		s.Close()
 		return
 	}
-	go watchClose(s, com.Process)
+	go watchClose(s, com.Process, pt)
 	for {
 		out := make([]byte, 1024)
 		n, err := pt.Read(out)
 		if err != nil {
-			if err.Error() == "read /dev/ptmx: input/output error" || err.Error() == "EOF" {
-				break
+			if err != io.EOF && err.Error()[:4] != "read" {
+				s.Write([]byte("error: " + err.Error()))
 			}
-			s.Write([]byte("error: " + err.Error()))
+			break
 		} else if n > 0 {
 			s.Write([]byte("output: " + string(out[:n])))
 		}

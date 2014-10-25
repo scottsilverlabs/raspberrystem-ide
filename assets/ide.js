@@ -1,6 +1,6 @@
 var save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup,
 	changeSocketInit, toggleOutput, toggleWeb; //Function prototypes
-var config, outputOpen, back;
+var config, outputOpen, back, ws = null;
 var url = document.location.host; //The URL is needed for the web socket connection
 
 window.onload = function main() {
@@ -8,7 +8,15 @@ window.onload = function main() {
 		window.WebSocket = window.MozWebSocket;
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
-	outputtext = document.getElementById("outputActual");
+	//outputtext = document.getElementById("outputActual");
+	outputtext = document.getElementById("outputtext");
+	stdin = document.getElementById("stdin");
+	stdin.onkeydown = function(k) {
+		if (k.keyCode == 13 && ws) {
+			ws.send(stdin.value + "\n");
+			stdin.value = "";
+		}
+	}
 	playButton = document.getElementById("play");
 	saveButton = document.getElementById("save");
 	saveButton.onclick = save;
@@ -175,7 +183,7 @@ function save() {
 
 var errs = [];
 var errRegex = new RegExp(/\s+File ".+", line \d+.*\n.+\n.+\^\n.+: .+/g);
-var traceRegex = new RegExp(/Traceback \(most recent call last\):\n(\s+File ".+", line \d+.*\n.*\n)+.+: .+/g);
+var traceRegex = new RegExp(/Traceback.*:\n(\s+File ".+", line \d+.*\n.*\n)+.*(Error|Interrupt|Exception).*/g);
 var stripRegex = new RegExp(/(^\s+|\s+$)/g);
 function errorHighlight() {
 	var errString = outputtext.innerHTML;
@@ -309,7 +317,6 @@ function changeHandle(cm, change) {
 }
 
 //Creates socket connection to the server and sends the filename
-var ws = null;
 function socket() {
 	ws = new WebSocket("ws://"+url+"/api/socket");
 	ws.onopen = function (event) {
@@ -919,4 +926,12 @@ function toggleOutput() {
 	}
 	outputOpen = !outputOpen;
 	editor.focus();
+}
+
+function outFocus() {
+	if (ws == null) {
+		editor.focus();
+	} else {
+		stdin.focus();
+	}
 }
