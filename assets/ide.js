@@ -3,6 +3,7 @@ var run, save, GET, POST, type, changeHandle, changeSocket, openFile, removePopu
 var config, outputOpen, back, ws = null;
 var url = document.location.host; //The URL is needed for the web socket connection
 var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme", "openFile"];
+var leftButtons = ["Run", "Open File", "Save", "Theme"];
 var keybindings = {};
 window.onload = function main() {
 	if (window.MozWebSocket)
@@ -52,6 +53,55 @@ window.onload = function main() {
 	config = JSON.parse(GET("/api/configuration"));
 	if (config.webviewopen == "true")
 		toggleWeb();
+	if (config.buttontext == "true") {
+		var header = document.getElementById("header");
+		var nodes = header.childNodes;
+		for (i = 2; i < 5; i++) {
+			nodes[(i*2) - 1].style.paddingLeft = "2em";
+		}
+		nodes[11].style.marginLeft = "-5.75em";
+		nodes[13].style.marginLeft = "-2em";
+		header.style.height = "2.6em";
+		for (i in leftButtons) {
+			var label = document.createElement("div");
+			header.appendChild(label);
+			label.classList.add("buttonlabel");
+			label.innerHTML = leftButtons[i];
+			label.style.position = "absolute";
+			label.style.left = 5.45 * i + "em";
+			label.style.marginLeft = "-1.7em";
+			label.style.top = "2.2em";
+			label.style.width = "5.75em";
+			label.style.textAlign = "center";
+			label.style.fontSize = "12px";
+		}
+
+		label = document.createElement("div");
+		header.appendChild(label);
+		label.classList.add("buttonlabel");
+		label.innerHTML = "Output";
+		label.style.position = "absolute";
+		label.style.left = "100%";
+		label.style.marginLeft = "-8.25em";
+		label.style.top = "2.2em";
+		label.style.width = "3em";
+		label.style.textAlign = "center";
+		label.style.fontSize = "12px";
+
+		label = document.createElement("div");
+		header.appendChild(label);
+		label.classList.add("buttonlabel");
+		label.innerHTML = "Web";
+		label.style.position = "absolute";
+		label.style.left = "100%";
+		label.style.marginLeft = "-3em";
+		label.style.top = "2.2em";
+		label.style.width = "3em";
+		label.style.textAlign = "center";
+		label.style.fontSize = "12px";
+
+		ide.style.height = ide.style.height.replace("2em", "2.5em");
+	}
 	filename = config["lastfile"] || "Untitled.py";
 	for (i in config) {
 		var func = config[i].substring(0, 1).toLowerCase() + config[i].substring(1);
