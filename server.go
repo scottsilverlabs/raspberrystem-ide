@@ -246,6 +246,7 @@ func socketServer(s *websocket.Conn) {
 		}
 		time.Sleep(time.Millisecond * 10) //For minimal CPU impact
 	}
+	com.Process.Wait()
 	s.Close()
 }
 
