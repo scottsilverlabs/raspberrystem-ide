@@ -215,7 +215,6 @@ func watchClose(s *websocket.Conn, p *os.Process, pt *os.File) {
 			p.Signal(syscall.SIGINT)
 			break
 		} else if payload != "" {
-			println("IN: " + string(data[:n]))
 			pt.Write(data[:n])
 		}
 	}
