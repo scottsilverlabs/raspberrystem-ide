@@ -854,7 +854,7 @@ function loadFile(fname) {
 	removePopup();
 }
 
-//Called by the open file button
+//Open file popup
 function openFile(button) {
 	if (back != null)
 		removePopup();
@@ -890,7 +890,7 @@ function openFile(button) {
 	setupButton(newfile, 0, 0);
 
 	var files = GET("/api/listfiles").split("\n");
-	//Force capitalized files to their correct sort position
+	//Force lower capitalized files to their correct sort position
 	var caps = [];
 	for (var i in files) {
 		if (files[i].substring(0, 1) == files[i].substring(0, 1).toUpperCase()) {
@@ -920,13 +920,13 @@ function openFile(button) {
 	}
 
 	var cancel = document.createElement("div");
-	title.appendChild(cancel);
-	cancel.innerHTML = "X";
-	cancel.style.float = "right";
-	cancel.style.color = "#dc322f"
-	cancel.style.cursor = "pointer";
-	cancel.style.fontWeight = 400;
-	cancel.style.marginRight = "0.3em";
+	popup.appendChild(cancel);
+	cancel.innerHTML = "Cancel";
+	cancel.classList.add("button");
+	cancel.style.position = "relative";
+	cancel.style.marginTop = "-5px";
+	cancel.style.width = "25%";
+	cancel.style.left = "37.5%";
 	cancel.onclick = removePopup;
 }
 
@@ -980,13 +980,13 @@ function changeTheme() {
 	}
 
 	var cancel = document.createElement("div");
-	title.appendChild(cancel);
-	cancel.innerHTML = "X";
-	cancel.style.float = "right";
-	cancel.style.color = "#dc322f"
-	cancel.style.cursor = "pointer";
-	cancel.style.fontWeight = 400;
-	cancel.style.marginRight = "0.3em";
+	popup.appendChild(cancel);
+	cancel.innerHTML = "Cancel";
+	cancel.classList.add("button");
+	cancel.style.position = "relative";
+	cancel.style.marginTop = "-5px";
+	cancel.style.width = "25%";
+	cancel.style.left = "37.5%";
 	cancel.onclick = removePopup;
 }
 
