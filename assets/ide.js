@@ -1,6 +1,6 @@
 var run, save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup,
 	changeSocketInit, toggleOutput, toggleWeb, changeTheme; //Function prototypes
-var config, outputOpen, back, ws = null;
+var config, outputOpen, back, ws = null, titleText;
 var url = document.location.host; //The URL is needed for the web socket connection
 var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme", "openFile"];
 var leftButtons = ["Run", "Open File", "Save", "Theme"];
@@ -389,15 +389,20 @@ function changeHandle(cm, change) {
 function socket() {
 	ws = new WebSocket("ws://"+url+"/api/socket");
 	ws.onopen = function (event) {
+		var a;
 		while ((a = errs.pop()) !== undefined)
 			a.clear();
 		ws.send(filename);
 		playButton.src = "/images/stop.png";
+		titleText += " - RUNNING";
+		titleHolder.innerHTML = titleText;
 	};
 	ws.onclose = function (event) {
 		ws = null;
 		errorHighlight();
 		playButton.src = "/images/play.png";
+		titleText = titleText.replace(/ - RUNNING$/, "");
+		titleHolder.innerHTML = titleText;
 	};
 	ws.onmessage = function (event) {
 		message = event.data;
@@ -446,12 +451,11 @@ function changeSocketInit() {
 			editor.setValue(message.substring(5));
 		} else if (message.substring(0, 6) == "USERS:") {
 			var num = parseInt(message.substring(6));
-			if (num > 1) {
-				titleHolder.innerHTML = filename.replace(/\-/g, " ") + " - "
+			if (num > 1)
+				titleHolder.innerHTML = titleText + " - "
 					+ num + " Users";
-			} else {
-				titleHolder.innerHTML = filename.replace(/\-/g, " ");
-			}
+			else
+				titleHolder.innerHTML = titleText;
 		} else {
 			var arr = message.split(",");
 			var content = message.substring((arr[0]+arr[1]+arr[2]+arr[3]).length+4);
@@ -547,6 +551,7 @@ function removePopup() {
 function fileButton() {
 	type = menu.value;
 	titleHolder.innerHTML = text.value + "." + type;
+	titleText = text.value + "." + type;
 	filename = titleHolder.innerHTML.replace(/ /g, "-");
 	if (type === "py") {
 		editor.setOption("mode", {
@@ -829,6 +834,7 @@ function loadFile(fname) {
 	if (ext == "sh")
 		editor.setOption("mode", "shell");
 	titleHolder.innerHTML = fname;
+	titleText = fname;
 	var contents = GET("/api/readfile?file=" + filename);
 	editor.setValue(contents);
 	if (ext == "spr") {
@@ -962,19 +968,15 @@ function changeTheme() {
 
 	//Files
 	files = GET("/api/listthemes").split("\n");
-	if (files[0] === "") {
-		//TODO No Files Found Error
-	} else {
-		for (var i in files) {
-			var filediv = document.createElement("div");
-			fileholder.appendChild(filediv);
-			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "");
-			filediv.classList.add("filebutton");
-			if (i == 0)
-				filediv.style.marginTop = "0";
-			setupButton(filediv, 0, i);
-			filediv.onclick =  function() {setTheme(this);};
-		}
+	for (var i in files) {
+		var filediv = document.createElement("div");
+		fileholder.appendChild(filediv);
+		filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "");
+		filediv.classList.add("filebutton");
+		if (i == 0)
+			filediv.style.marginTop = "0";
+		setupButton(filediv, 0, i);
+		filediv.onclick =  function() {setTheme(this);};
 	}
 
 	var cancel = document.createElement("div");
@@ -1006,9 +1008,8 @@ function toggleOutput() {
 }
 
 function outFocus() {
-	if (ws == null) {
+	if (ws == null)
 		editor.focus();
-	} else {
+	else
 		stdin.focus();
-	}
 }
