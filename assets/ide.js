@@ -199,14 +199,21 @@ function enter() {
 
 //Handle generic keys
 function key(k) {
-	switch (k.keyCode) {
-		case 27: removePopup(); editor.focus(); break;
-		case 37: leftright(-1); break; //Left
-		case 39: leftright(1); break; //Right
-		case 38: updown(-1); break; //Up
-		case 40: updown(1); break; //Down
-		case 13: enter(); break;
-	}
+	if (!document.getElementById("editfile"))
+		switch (k.keyCode) {
+			case 27: removePopup(); editor.focus(); break;
+			case 37: leftright(-1); break; //Left
+			case 39: leftright(1); break; //Right
+			case 38: updown(-1); break; //Up
+			case 40: updown(1); break; //Down
+			case 13: enter(); break;
+		}
+	else
+		if (k.keyCode == 27) {
+			document.getElementById("Button0,0").click();
+		} else if (k.keyCode == 13) {
+			document.getElementById("Button3,0").click();
+		}
 }
 
 function setupButton(button, x, y) {
@@ -644,6 +651,7 @@ function editFile(fname) {
 	popup.appendChild(text);
 	text.classList.add("editfiletext");
 	text.type = "text";
+	text.id = "editfile";
 	text.value = fname;
 
 	var cancel = document.createElement("div");
