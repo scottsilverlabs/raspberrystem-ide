@@ -164,17 +164,6 @@ var types = ["py", "spr", "sh"]
 //Up/Down keys
 function updown(dir) {
 	if (back == null) return; //Check for popup
-	var typeSel = document.getElementById("TypeMenu");
-	if (typeSel) {
-		typePlace -= dir;
-		if (typePlace == -1)
-			typePlace = types.length - 1;
-		else if (typePlace == types.length)
-			typePlace = 0
-		typeSel.value = types[typePlace];
-	}
-
-
 	place[1] += dir;
 	var button = document.getElementById("Button"+place[0]+","+place[1]);
 	if (button)
@@ -655,19 +644,7 @@ function editFile(fname) {
 	popup.appendChild(text);
 	text.classList.add("editfiletext");
 	text.type = "text";
-
-	menu = document.createElement("div");
-	popup.appendChild(menu);
-	menu.classList.add("filetype");
-	menu.style.display = "inline";
-
-	var sp = fname.split(".");
-	var ext = "." + sp[sp.length - 1];
-	text.value = fname.substring(0, fname.length - ext.length);
-	if (ext.length < 4)
-		menu.innerHTML = " " + ext; //File extension marker
-	else
-		menu.innerHTML = ext;
+	text.value = fname;
 
 	var cancel = document.createElement("div");
 	popup.appendChild(cancel);
@@ -695,6 +672,7 @@ function editFile(fname) {
 	duplicate.style.top = "-1.1em";
 	setupButton(duplicate, 1, 0);
 	duplicate.onclick = function() {
+		var ext = "." + fname.split(".")[fname.split(".").length - 1];
 		var cutfname = fname.substring(0, fname.length - ext.length);
 		var num = cutfname.match(/\d+$/) || 1;
 		if (num !== 1) {
@@ -735,12 +713,11 @@ function editFile(fname) {
 	okay.style.top = "-4.9em";
 	setupButton(okay, 3, 0);
 	okay.onclick = function() {
-		if (text.value != fname.substring(0, fname.length - ext.length)) {
+		if (text.value != fname) {
 			var files = GET("/api/listfiles").split("\n");
-			var to = text.value + ext;
-			if (files.indexOf(to) != -1) {
-				ynPrompt("Overwrite", "Overwrite " + to, function() {
-					POST("/api/copyfile", {"from": fname, "to": to})
+			if (files.indexOf(text.value) != -1) {
+				ynPrompt("Overwrite", "Overwrite " + text.value, function() {
+					POST("/api/copyfile", {"from": fname, "to": text.value})
 					POST("/api/deletefile", {"file": fname})
 					removePopup();
 					openFile();
@@ -749,7 +726,7 @@ function editFile(fname) {
 					editFile(fname);
 				})
 			} else {
-				POST("/api/copyfile", {"from": fname, "to": to})
+				POST("/api/copyfile", {"from": fname, "to": text.value})
 				POST("/api/deletefile", {"file": fname})
 				removePopup();
 				openFile();
@@ -766,56 +743,15 @@ function editFile(fname) {
 //Caled by the new file button in the open file popup
 function newFile() {
 	removePopup();
-	back = document.createElement("div");
-	document.body.appendChild(back);
-	back.classList.add("holder");
-	back.focus();
-
-	popup = document.createElement("div");
-	document.body.appendChild(popup);
-	popup.classList.add("filepopup");
-	popup.classList.add("popup");
-	back.onclick = removePopup;
-
-	var title = document.createElement("h1");
-	popup.appendChild(title);
-	title.classList.add("popuptitle");
-	title.classList.add("maincolor");
-	title.innerHTML = "New File";
-
-	text = document.createElement("input");
-	popup.appendChild(text);
-	text.classList.add("filetext");
-	text.type = "text";
-
-	menu = document.createElement("select");
-	menu.id = "TypeMenu"
-	popup.appendChild(menu);
-	menu.classList.add("filetype");
-	menu.innerHTML = '<option value="py">.py</option>';
-	menu.innerHTML += '<option value="spr">.spr</option>';
-	menu.innerHTML += '<option value="sh">.sh</option>';
-
-	var okay = document.createElement("div");
-	popup.appendChild(okay);
-	okay.classList.add("fileokay");
-	okay.classList.add("button");
-	okay.onclick = fileButton;
-	okay.innerHTML = "Save";
-	setupButton(okay, 1, 0);
-
-	var cancel = document.createElement("div");
-	popup.appendChild(cancel);
-	cancel.innerHTML = "Cancel";
-	cancel.classList.add("filecancel");
-	cancel.classList.add("button");
-	setupButton(cancel, 0, 0);
-	cancel.onclick = function() {
-		removePopup();
-		openFile();
-	};
-
-	text.focus();
+	var fname = "Untitled.py";
+	var files = GET("/api/listfiles").split("\n");
+	if (files.indexOf(fname) != -1) {
+		var i = 1;
+		while (files.indexOf("Untitled"+(++i)+".py") != -1);
+		fname = "Untitled"+i+".py"
+	}
+	POST("/api/savefile", {"file": fname, "content": ""});
+	openFile();
 }
 
 //Called when a file div is clicked in the open file popup
@@ -921,6 +857,7 @@ function openFile(button) {
 
 	var cancel = document.createElement("div");
 	popup.appendChild(cancel);
+	setupButton(cancel, 0, files.length + 1);
 	cancel.innerHTML = "Cancel";
 	cancel.classList.add("button");
 	cancel.style.position = "relative";
