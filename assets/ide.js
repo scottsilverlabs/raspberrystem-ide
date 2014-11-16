@@ -1,10 +1,11 @@
 var run, save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup,
 	changeSocketInit, toggleOutput, toggleWeb, changeTheme; //Function prototypes
-var config, outputOpen, back, ws = null, titleText;
+var config, outputOpen, back, ws = null, titleText, filename;
 var url = document.location.host; //The URL is needed for the web socket connection
 var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme", "openFile"];
 var leftButtons = ["Run", "Open File", "Save", "Theme"];
 var keybindings = {};
+
 window.onload = function main() {
 	if (window.MozWebSocket)
 		window.WebSocket = window.MozWebSocket;
@@ -47,8 +48,6 @@ window.onload = function main() {
 	for (var i in themes)
 		output.classList.add("cm-s-"+themes[i]);
 	editor.on("change", changeHandle);
-	if (GET("/api/listfiles").split("\n")[0] === "")
-		save(); //Create untitled document
 	changeSocketInit();
 	config = JSON.parse(GET("/api/configuration"));
 	if (config.webviewopen == "true")
@@ -109,6 +108,8 @@ window.onload = function main() {
 			keybindings[i] = new Function(func + "()");
 		}
 	}
+	if (GET("/api/listfiles").split("\n")[0] === "")
+		save(); //Create untitled document
 	loadFile(filename);
 };
 
@@ -245,7 +246,6 @@ function POST(url, args) {
 }
 
 function save() {
-	console.log("Saving "+filename);
 	if (filename !== "")
 		POST("/api/savefile", {"file": filename, "content": editor.getValue()});
 }
