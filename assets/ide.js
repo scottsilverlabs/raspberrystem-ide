@@ -26,6 +26,7 @@ window.onload = function main() {
 	ide = document.getElementById("ide");
 	web = document.getElementById("webview");
 	titleHolder = document.getElementById("title");
+	config = JSON.parse(GET("/api/configuration"));
 	editor = CodeMirror(document.getElementById("codewrapper"), {
 		mode: {
 			name: "python",
@@ -43,13 +44,13 @@ window.onload = function main() {
 		pollInterval: 300,
 		workDelay: 400, //Default: 300
 		viewportMargin: 3, //Default: 10
+		undoDepth: config.undodepth || 20 //Default: 20
 	});
 	themes = editor.options.theme.split(" ");
 	for (var i in themes)
 		output.classList.add("cm-s-"+themes[i]);
 	editor.on("change", changeHandle);
 	changeSocketInit();
-	config = JSON.parse(GET("/api/configuration"));
 	if (config.webviewopen == "true")
 		toggleWeb();
 	if (config.buttontext == "true") {
@@ -101,7 +102,7 @@ window.onload = function main() {
 
 		ide.style.height = ide.style.height.replace("2em", "2.5em");
 	}
-	filename = config["lastfile"] || "Untitled.py";
+	filename = config.lastfile || "Untitled.py";
 	for (i in config) {
 		var func = config[i].substring(0, 1).toLowerCase() + config[i].substring(1);
 		if (bindableFunc.indexOf(func) + 1) {
