@@ -705,11 +705,12 @@ function editFile(fname) {
 	okay.style.top = "-4.9em";
 	setupButton(okay, 3, 0);
 	okay.onclick = function() {
-		if (text.value != fname) {
+		tval = text.value.replace(/ /g, "-")
+		if (tval != fname) {
 			var files = GET("/api/listfiles").split("\n");
-			if (files.indexOf(text.value) != -1) {
-				ynPrompt("Overwrite", "Overwrite " + text.value, function() {
-					POST("/api/copyfile", {"from": fname, "to": text.value})
+			if (files.indexOf(tval) != -1) {
+				ynPrompt("Overwrite", "Overwrite " + tval, function() {
+					POST("/api/copyfile", {"from": fname, "to": tval})
 					POST("/api/deletefile", {"file": fname})
 					removePopup();
 					openFile();
@@ -718,7 +719,7 @@ function editFile(fname) {
 					editFile(fname);
 				})
 			} else {
-				POST("/api/copyfile", {"from": fname, "to": text.value})
+				POST("/api/copyfile", {"from": fname, "to": tval})
 				POST("/api/deletefile", {"file": fname})
 				removePopup();
 				openFile();
