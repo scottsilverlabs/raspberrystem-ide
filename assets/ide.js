@@ -1,6 +1,6 @@
-var run, save, GET, POST, type, changeHandle, changeSocket, openFile, removePopup,
+var run, save, GET, POST, changeHandle, changeSocket, openFile, removePopup,
 	changeSocketInit, toggleOutput, toggleWeb, changeTheme; //Function prototypes
-var config, outputOpen, back, ws = null, titleText, filename;
+var config, outputOpen, back, ws = null, titleText, filename, type;
 var url = document.location.host; //The URL is needed for the web socket connection
 var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme", "openFile"];
 var leftButtons = ["Run", "Open File", "Save", "Theme"];
@@ -11,8 +11,8 @@ window.onload = function main() {
 		window.WebSocket = window.MozWebSocket;
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
-	//outputtext = document.getElementById("outputActual");
-	outputtext = document.getElementById("outputtext");
+	outputHolder = document.getElementById("outputActual");
+	outputText = document.getElementById("outputtext");
 	stdin = document.getElementById("stdin");
 	stdin.onkeydown = function(k) {
 		if (k.keyCode == 13 && ws) {
@@ -175,7 +175,7 @@ function updown(dir) {
 	}
 }
 
-//Left/right
+//Left/right keys
 function leftright(dir) {
 	if (back == null) return;
 	place[0] += dir;
@@ -246,14 +246,24 @@ function save() {
 		POST("/api/savefile", {"file": filename, "content": editor.getValue()});
 }
 
-//Called when the script stops running on the server side
+function setOutput(text) {
+	var lines = text.split("\n");
+	outputText.innerHTML = text;
+	stdin.scrollIntoViewIfNeeded();
+}
 
+function appendOutput(text) {
+	setOutput(outputText.innerHTML + text);
+}
+
+
+//Called when the script stops running on the server side
 var errs = [];
 var errRegex = new RegExp(/\s+File ".+", line \d+.*\n.+\n.+\^\n.+: .+/g);
 var traceRegex = new RegExp(/Traceback.*:\n(\s+File ".+", line \d+.*\n.*\n)+.*(Error|Interrupt|Exception).*/g);
 var stripRegex = new RegExp(/(^\s+|\s+$)/g);
 function errorHighlight() {
-	var errString = outputtext.innerHTML;
+	var errString = outputText.innerHTML;
 	var lines = errString.split("\n");
 	var errors = errString.match(errRegex) || [];
 	var offset = 0;
@@ -275,8 +285,8 @@ function errorHighlight() {
 		}));
 		if (i === 0)
 			editor.scrollTo(0, errLinePos);
-		outputtext.innerHTML = outputtext.innerHTML.replace(err, 
-			"<span style=\"color:red;\">" + err + "</span>");
+		setOutput(outputText.innerHTML.replace(err, "<span style=\"color:red;\">" +
+			err + "</span>"));
 	}
 	var traces = errString.match(traceRegex);
 	for (var j = 0; traces && j < traces.length; j++) {
@@ -312,8 +322,8 @@ function errorHighlight() {
 			}
 		}
 		message += "\n"+split[split.length - 1]
-		outputtext.innerHTML = outputtext.innerHTML.replace(traces[j], 
-			"<span style=\"color:red;\">" + message + "</span>");
+		setOutput(outputText.innerHTML.replace(traces[j], 
+			"<span style=\"color:red;\">" + message + "</span>"));
 	}
 }
 
@@ -384,7 +394,7 @@ function changeHandle(cm, change) {
 //Creates socket connection to the server and sends the filename
 function socket() {
 	ws = new WebSocket("ws://"+url+"/api/socket");
-	ws.onopen = function (event) {
+	ws.onopen = function(event) {
 		var a;
 		while ((a = errs.pop()) !== undefined)
 			a.clear();
@@ -393,31 +403,33 @@ function socket() {
 		titleText += " - RUNNING";
 		titleHolder.innerHTML = titleText;
 	};
-	ws.onclose = function (event) {
+	ws.onclose = function(event) {
 		ws = null;
 		errorHighlight();
 		playButton.src = "/images/play.png";
 		titleText = titleText.replace(/ - RUNNING$/, "");
 		titleHolder.innerHTML = titleText;
+		//Remove trailing \n
+		var innerHTML = outputText.innerHTML;
+		if (innerHTML.substring(innerHTML.length - 1) == "\n")
+			setOutput(innerHTML.substring(0, innerHTML.length - 1));
+		editor.focus();
 	};
-	ws.onmessage = function (event) {
+	ws.onmessage = function(event) {
 		message = event.data;
 		if (message.substring(0, 8) == "output: ") {
 			if (!outputOpen)
 				toggleOutput();
-			outputtext.innerHTML += message.substring(8).replace(/</g, "&lt;")
-				.replace(/>/g, "&gt;");
-			output.scrollTop = output.scrollHeight;		
+			appendOutput(message.substring(8).replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;"));
 			return;
 		} else if (message.substring(0, 7) == "error: ") {
 			if (!outputOpen)
 				toggleOutput();
 			messageActual = message.substring(7).replace(/</g, "&lt;")
 				.replace(/>/g, "&gt;");
-			outputtext.innerHTML += "<span style=\"color:red;\">SERVER ERROR:";
-			outputtext.innerHTML += messageActual;
-			outputtext.innerHTML += "</span>\n";
-			output.scrollTop = output.scrollHeight;
+			appendOutput("<span style=\"color:red;\">SERVER ERROR:" + messageActual +
+				"</span>\n");
 		}
 	};
 }
@@ -431,7 +443,7 @@ function changeSocketInit() {
 	changeSocket.onclose = function (event) {
 		changeSocket = null;
 		if (good)
-			setTimeout(changeSocketInit, 5000);
+			setTimeout(5000, changeSocketInit);
 	};
 	changeSocket.onerror = function (event) {
 		if (!good)
@@ -480,8 +492,8 @@ function runSpr() {
 		for (var j in line) {
 			if (line[j] !== "" && (line[j].match(sprColorRegex) === null
 				|| line[j].match(sprColorRegex)[0] != line[j])) {
-				outputtext.innerHTML += "<span style=\"color:red;\">ERROR at line "
-					 + (parseInt(i)+1)+": invalid color \""+line[j]+"\"";
+				appendOutput("<span style=\"color:red;\">ERROR at line "
+					 + (parseInt(i)+1)+": invalid color \""+line[j]+"\"");
 				return;
 			} else if (line[j] !== "") {
 				if (line[j] == "-")
@@ -491,17 +503,18 @@ function runSpr() {
 		}
 		valhtml += "</div>";
 	}
-	outputtext.innerHTML += valhtml;
+	appendOutput(valhtml);
 }
 
 //Called by the run button
 function run() {
 	if (ws === null) {
 		save();
-		outputtext.innerHTML = "";
+		outputText.innerHTML = "";
 		if (type != "spr") {
 			socket();
-			stdin.focus();
+			//Override the editor.focus() from the header click
+			setTimeout(function() { stdin.focus() }, 10);
 		} else {
 			runSpr();
 		}
@@ -541,35 +554,6 @@ function removePopup() {
 	}
 	back = null;
 	place = [0, 0];
-}
-
-//Called when the newFile okay button is pressed
-function fileButton() {
-	type = menu.value;
-	titleHolder.innerHTML = text.value + "." + type;
-	titleText = text.value + "." + type;
-	filename = titleHolder.innerHTML.replace(/ /g, "-");
-	if (type === "py") {
-		editor.setOption("mode", {
-			name: "python",
-			version: 3,
-			singleLineStringErrors: false
-		});
-		editor.setValue("");
-	} else if (type === "spr") {
-		var val = "\n- - - - - - - -";
-		for (var i = 0; i < 3; i++)
-			val = val+val;
-		editor.setValue(val.substring(1));
-		editor.setOption("mode", null);
-	} else if (type === "sh") {
-		editor.setValue("");
-		editor.setOption("mode", "shell");
-	}
-	if (changeSocket !== null)
-		changeSocket.send("COF:" + filename);
-	removePopup();
-	save();
 }
 
 //Called by delete in the Edit File prompt
@@ -767,21 +751,20 @@ function loadFile(fname) {
 	if (filename != fname)
 		save();
 	filename = fname.replace(/ /g, "-");
-	var sp = filename.split(".");
-	var ext = sp[sp.length-1];
-	if (ext == "py")
+	type = filename.split(".").reverse()[0];
+	if (type == "py")
 		editor.setOption("mode", {
 			name: "python",
 			version: 3,
 			singleLineStringErrors: false
 		});
-	if (ext == "sh")
+	if (type == "sh")
 		editor.setOption("mode", "shell");
 	titleHolder.innerHTML = fname;
 	titleText = fname;
 	var contents = GET("/api/readfile?file=" + filename);
 	editor.setValue(contents);
-	if (ext == "spr") {
+	if (type == "spr") {
 		editor.setOption("mode", null);
 		var lines = editor.lineCount();
 		sprColor({
