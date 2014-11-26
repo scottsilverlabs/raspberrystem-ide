@@ -409,6 +409,7 @@ function socket() {
 		playButton.src = "/images/play.png";
 		titleText = titleText.replace(/ - RUNNING$/, "");
 		titleHolder.innerHTML = titleText;
+		stdin.style.width = "0";
 		//Remove trailing \n
 		var innerHTML = outputText.innerHTML;
 		if (innerHTML.substring(innerHTML.length - 1) == "\n")
@@ -466,7 +467,8 @@ function changeSocketInit() {
 				titleHolder.innerHTML = titleText;
 		} else {
 			var arr = message.split(",");
-			var content = message.substring((arr[0]+arr[1]+arr[2]+arr[3]).length+4);
+			var content = message.substring((arr[0] + arr[1] + arr[2] +
+				arr[3]).length + 4);
 			last = content;
 			for (var i = 0; i < 4; i++) {
 				arr[i] = parseInt(arr[i]);
@@ -474,8 +476,8 @@ function changeSocketInit() {
 			if (editor.lastLine() < parseInt(arr[0])) {
 				editor.setValue(editor.getValue()+"\n");
 			}
-			editor.replaceRange(content, {line:arr[0], ch:arr[1]}, {line:arr[2]
-				, ch:arr[3]});
+			editor.replaceRange(content, {line:arr[0], ch:arr[1]}, {line:arr[2],
+				ch:arr[3]});
 		}
 	};
 }
@@ -514,6 +516,7 @@ function run() {
 		if (type != "spr") {
 			socket();
 			//Override the editor.focus() from the header click
+			stdin.style.width = "100%";
 			setTimeout(function() { stdin.focus() }, 10);
 		} else {
 			runSpr();
@@ -685,7 +688,7 @@ function editFile(fname) {
 	var del = document.createElement("div");
 	popup.appendChild(del);
 	del.classList.add("button");
-	del.onclick = function() {deletePrompt(fname);};
+	del.onclick = function() { deletePrompt(fname); };
 	del.innerHTML = "Delete";
 	del.style.fontSize = 15;
 	del.style.position = "relative";
@@ -778,7 +781,7 @@ function loadFile(fname) {
 		if (changeSocket.readyState == 1)
 			changeSocket.send("COF:" + filename);
 		else
-			setTimeout(5000, function() {changeSocket.send("COF:" + filename);});
+			setTimeout(5000, function() { changeSocket.send("COF:" + filename); });
 	removePopup();
 }
 
@@ -905,7 +908,7 @@ function changeTheme() {
 		if (i == 0)
 			filediv.style.marginTop = "0";
 		setupButton(filediv, 0, i);
-		filediv.onclick =  function() {setTheme(this);};
+		filediv.onclick = function() { setTheme(this); };
 	}
 
 	var cancel = document.createElement("div");
