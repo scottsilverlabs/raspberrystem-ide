@@ -1,8 +1,8 @@
 var run, save, GET, POST, changeHandle, changeSocket, openFile, removePopup,
 	changeSocketInit, toggleOutput, toggleWeb, changeTheme; //Function prototypes
 var config, outputOpen, back, ws = null, titleText, filename, type;
-var url = document.location.host; //The URL is needed for the web socket connection
-var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme", "openFile"];
+var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme",
+	"openFile"];
 var leftButtons = ["Run", "Open File", "Save", "Theme"];
 var keybindings = {};
 
@@ -394,7 +394,7 @@ function changeHandle(cm, change) {
 
 //Creates socket connection to the server and sends the filename
 function socket() {
-	ws = new WebSocket("ws://"+url+"/api/socket");
+	ws = new WebSocket("ws://"+document.location.host+"/api/socket");
 	ws.onopen = function(event) {
 		var a;
 		while ((a = errs.pop()) !== undefined)
@@ -437,7 +437,7 @@ function socket() {
 }
 
 function changeSocketInit() {
-	changeSocket = new WebSocket("ws://"+url+"/api/change");
+	changeSocket = new WebSocket("ws://"+document.location.host+"/api/change");
 	changeSocket.onopen = function (event) {
 		changeSocket.send("COF:"+filename);
 		good = true;
