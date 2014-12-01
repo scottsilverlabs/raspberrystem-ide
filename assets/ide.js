@@ -247,14 +247,45 @@ function save() {
 		POST("/api/savefile", {"file": filename, "content": editor.getValue()});
 }
 
+var linepos = 0; //Used for tracking \r position
 function setOutput(text) {
-	var lines = text.split("\n");
 	outputText.innerHTML = text;
 	stdin.scrollIntoViewIfNeeded();
 }
 
+//Appends to output and handles \r and \f
 function appendOutput(text) {
-	setOutput(outputText.innerHTML + text);
+	//text = text.replace(/\r\n/g, "\n"); 
+	var lines = outputText.innerHTML.split("\n");
+	var lastline = lines.pop();
+	var content;
+	if (lines.length > 1)
+		content = lines.join("\n") + "\n";
+	else if (lines.length == 1)
+		content = lines[0] + "\n";
+	else
+		content = "";
+	var i = 0;
+	while (i < text.length) {
+		var chr = text.substring(i, i + 1);
+		i++;
+		if (chr == "\r") {
+			console.log("\\r:"+i)
+			linepos = 0;
+		} else if (chr == "\f") {
+			lastline = "";
+			content = "";
+			linepos = 0;
+		} else if (chr == "\n") {
+			content += lastline + "\n";
+			lastline = "";
+			linepos = 0;
+		} else {
+			lastline = lastline.substring(0, linepos) + chr + lastline.substring(linepos + 1);
+			linepos++;
+		}
+	}
+	setOutput(content + lastline);
 }
 
 
@@ -513,6 +544,7 @@ function runSpr() {
 function run() {
 	if (ws === null) {
 		save();
+		linepos = 0;
 		outputText.innerHTML = "";
 		if (type != "spr") {
 			socket();
