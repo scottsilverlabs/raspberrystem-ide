@@ -424,6 +424,10 @@
 				color: #fff;
 				background-color: #ff0000;
 			}
+			#webview {
+				height: calc(100% - 2em);
+				height: -webkit-calc(100% - 2em);
+			}
 		</style>
 		<link rel="stylesheet" href="/cm.css">
 		<link id="theme" rel="stylesheet" href="/themes/solarized-dark.css">
@@ -452,8 +456,14 @@
 <span id="outputtext"></span><input type="text" id="stdin"></input> </pre>
 				</div>
 			</div>
-			<iframe id="webview" src="/website/">
-			</iframe>
+			<div id="webview" class="webview">
+				<div style="height:2em;position:relative;z-index:2;text-align:center;">
+					<img src="/images/back.png" class="fancybutton" style="height:2em;" onclick='document.getElementById("webviewframe").contentWindow.history.back()'/>
+					<img src="/images/home.png" class="fancybutton" style="height:2em;" onclick='document.getElementById("webviewframe").src = "/website/"'/>
+					<img src="/images/forward.png" class="fancybutton" style="height:2em;" onclick='document.getElementById("webviewframe").contentWindow.history.forward()'/>
+				</div>
+				<iframe id="webviewframe" src="/website/" style="height:100%;width:100%;margin-top:-2em;position:relative;z-index:1;"/>
+			</div>
 		</div>
 	</body>
 </html>
