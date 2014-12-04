@@ -11,6 +11,7 @@
 #		sudo GOOS=linux GOARCH=arm ./make.bash
 #		
 PI=pi@raspberrypi
+RUNONPI=ssh $(SSHFLAGS) -q -t $(PI) "cd rsinstall;"
 
 PACKAGES=github.com/kr/pty code.google.com/p/go.net/websocket
 
@@ -21,6 +22,9 @@ export GOPATH=$(HOME)/tmp/idebuild
 .PHONY: local run install pi pi-install
 
 all: pi
+
+targets:
+	@echo target1-foo.tar target2-foo.tar
 
 clean:
 	rm -f server
@@ -36,8 +40,11 @@ $(PACKAGES):
 		go get $@; \
 	fi
 
-run:
+local-run:
 	go run ./server.go
+
+run:
+	$(RUNONPI) "sudo ideserver &"
 
 local: is_go_installed $(PACKAGES)
 	go build ./server.go
