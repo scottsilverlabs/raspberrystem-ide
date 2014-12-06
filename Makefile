@@ -10,6 +10,21 @@
 #		cd /usr/local/go/src
 #		sudo GOOS=linux GOARCH=arm ./make.bash
 #		
+#
+# Installation layout:
+#	- Installed via pip
+#		/opt/raspberrystem/ide - IDE server and resources
+#		/etc/rstem_ide.conf - IDE config
+#		/var/local/raspberrystem/ide/html - top-level html
+#		/usr/local/bin/rstem_ide - Link to IDE server
+#	- Install via tarballs
+#		/var/local/raspberrystem/ide/html/lessons - Lesson Plans
+#	- Installed via raspberrystem pip: APIs
+#
+PYTHON=python3
+SETUP=$(PYTHON) setup.py
+PIP=pip-3.2
+
 PI=pi@raspberrypi
 RUNONPI=ssh $(SSHFLAGS) -q -t $(PI) "cd rsinstall;"
 
@@ -17,19 +32,27 @@ PACKAGES=github.com/kr/pty code.google.com/p/go.net/websocket
 
 export GOPATH=$(HOME)/tmp/idebuild
 
-.PHONY: all clean deb
-.PHONY: is_go_installed $(PACKAGES)
-.PHONY: local run install pi pi-install
+# Create version name
+DUMMY:=$(shell scripts/version.sh)
 
-all: pi
+# Name must be generated the same way as setup.py
+NAME:=$(shell cat NAME)
+VER:=$(shell cat VERSION)
 
-targets:
-	@echo target1-foo.tar target2-foo.tar
+# Final targets
+IDE_TAR:=$(NAME)-$(VER).tar.gz
+TARGETS=$(IDE_TAR)
 
-clean:
-	rm -f server
-	rm -f payload.tar.gz
-	rm -rf $(GOPATH)
+# Dependency files
+GIT_FILES=$(shell git ls-files)
+
+.PHONY: all is_go_installed $(PACKAGES)
+
+all: $(TARGETS)
+
+#########################################################################
+# Prerequisites
+#
 
 is_go_installed:
 	@which go > /dev/null
@@ -40,17 +63,45 @@ $(PACKAGES):
 		go get $@; \
 	fi
 
-local-run:
-	go run ./server.go
+#########################################################################
+# Pi targets
+#
+
+.PHONY: run targets clean install
 
 run:
 	$(RUNONPI) "sudo ideserver &"
 
+server: server.go | is_go_installed $(PACKAGES)
+	GOARCH=arm GOARM=5 GOOS=linux go build $<
+
+$(IDE_TAR): server
+	$(SETUP) sdist
+	mv dist/$(notdir $@) $@
+
+targets:
+	@echo $(TARGETS)
+
+install:
+	scp $(IDE_TAR) $(PI):/tmp
+	-$(RUNONPI) sudo $(PIP) uninstall -y $(NAME)
+	$(RUNONPI) sudo $(PIP) install /tmp/$(notdir $(IDE_TAR))
+
+clean:
+	rm NAME VERSION
+	rm -f server
+	rm -f 
+	rm -f payload.tar.gz
+	rm -rf $(GOPATH)
+
+#########################################################################
+# local targets
+#
+
+.PHONY: local local-install local-run
+
 local: is_go_installed $(PACKAGES)
 	go build ./server.go
-
-pi: is_go_installed $(PACKAGES)
-	GOARCH=arm GOARM=5 GOOS=linux go build ./server.go
 
 local-install:
 	cp ./server /usr/bin/ideserver
@@ -61,7 +112,16 @@ local-install:
 	cp *.html /etc/ide/
 	cp settings.conf /etc/ide/
 
-install:
+local-run:
+	go run ./server.go
+
+#########################################################################
+# Deprecated targets
+#
+
+.PHONY: old-install deb
+
+old-install:
 	- mkdir ./sitescrape/website
 	tar -czf payload.tar.gz \
 		./server ./assets ./ide.html ./settings.conf ./sitescrape/website
@@ -90,7 +150,7 @@ sudo dpkg-deb --build debian > /dev/null; \
 cat debian.deb;
 endef
 
-deb: pi
+deb: server
 	- mkdir ./sitescrape/website
 	tar -czf payload.tar.gz ./server ./assets ./debcontrol ./ide.html ./settings.conf ./sitescrape/website
 	ssh $(PI) "$(sshpayload)" < payload.tar.gz > raspberrystem.deb
