@@ -432,7 +432,6 @@ function socket() {
 		while ((a = errs.pop()) !== undefined)
 			a.clear();
 		ws.send(filename);
-		playButton.src = "/images/stop.png";
 		titleHolder.innerHTML = titleText;
 	};
 	ws.onclose = function(event) {
@@ -555,6 +554,7 @@ function run() {
 			stdin.style.width = "100%";
 			var i = 0;
 			title.innerHTML = "STARTING";
+			playButton.src = "/images/stop.png";
 			loopID = setInterval(function() {
 				title.innerHTML += "."
 				if (++i == 3) {
@@ -594,11 +594,11 @@ function toggleWeb() {
 var popup, text, menu;
 function removePopup() {
 	if (back != null) {
-		var button = document.getElementById("Button0,0");
-		if (button.innerHTML == "-- New File --")
-				editor.focus();
 		back.parentNode.removeChild(back);
 		popup.parentNode.removeChild(popup);
+		var button = document.getElementById("Button0,0");
+		if (button && button.innerHTML == "-- New File --")
+				editor.focus();
 	}
 	back = null;
 	place = [0, 0];
@@ -661,7 +661,6 @@ function deletePrompt(fname) {
 
 //Called by the edit button in the Select File prompt
 function editFile(fname) {
-	removePopup();
 	back = document.createElement("div");
 	document.body.appendChild(back);
 	back.classList.add("holder");
@@ -795,8 +794,44 @@ function newFile() {
 	openFile();
 }
 
+function loading(titletext, bodyText) {
+	removePopup();
+
+	back = document.createElement("div");
+	document.body.appendChild(back);
+	back.classList.add("holder");
+	back.focus();
+
+	popup = document.createElement("div");
+	document.body.appendChild(popup);
+	popup.classList.add("filepopup");
+	popup.classList.add("popup");
+
+	var title = document.createElement("h1");
+	popup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.style.height = "1.1em";
+	title.innerHTML = titletext;
+
+	var text = document.createElement("div");
+	popup.appendChild(text);
+	text.classList.add("deletetext");
+	text.innerHTML = bodyText;
+	var i = 0;
+	return 0;
+	return setInterval(function() {
+		text.innerHTML += ".";
+		if (++i == 3) {
+			text.innerHTML = bodyText;
+			i = 0;
+		}
+	}, 500);
+}
+
 //Called when a file div is clicked in the open file popup
 function loadFile(fname) {
+	var intID = loading("LOADING", "LOADING " + fname);
 	if (filename != fname)
 		save();
 	filename = fname.replace(/ /g, "-");
@@ -827,6 +862,7 @@ function loadFile(fname) {
 			changeSocket.send("COF:" + filename);
 		else
 			setTimeout(5000, function() { changeSocket.send("COF:" + filename); });
+	clearInterval(intID);
 	removePopup();
 }
 
@@ -885,7 +921,9 @@ function openFile(button) {
 		fileholder.appendChild(filediv);
 		filediv.innerHTML = files[i].replace(/-/g, " ");
 		filediv.classList.add("filebutton");
-		filediv.onclick = new Function("loadFile(this.innerHTML)");
+		filediv.onclick = function() {
+			loadFile(this.innerHTML);
+		};
 		setupButton(filediv, 0, parseInt(i) + 1);
 		var deleteDiv = document.createElement("img");
 		fileholder.appendChild(deleteDiv);
