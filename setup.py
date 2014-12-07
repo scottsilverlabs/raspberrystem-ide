@@ -14,20 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import os
 import sys
 from setuptools import setup, find_packages
 from setuptools.command.install import install as _install
-import subprocess
 
 # Utility function to read the README file.
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 def _post_install(dir):
-    from subprocess import call
-    call("bash ./pkg/postinstall", shell=True)
+    from subprocess import Popen, PIPE
+    task = Popen("bash ./pkg/postinstall", stdout=PIPE, stderr=PIPE, shell=True)
+    out, err = task.communicate()
+    for i in out.decode().splitlines():
+        print('\t' + i)
+    if err:
+        print("\t<stderr>:")
+        for i in err.decode().splitlines():
+            print('\t\t' + i)
 
 # Post installation task to setup raspberry pi
 class install(_install):
