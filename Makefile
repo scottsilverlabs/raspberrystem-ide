@@ -75,7 +75,7 @@ run:
 server: server.go | is_go_installed $(PACKAGES)
 	GOARCH=arm GOARM=5 GOOS=linux go build $<
 
-$(IDE_TAR): server
+$(IDE_TAR): server $(GIT_FILES)
 	$(SETUP) sdist
 	mv dist/$(notdir $@) $@
 
