@@ -424,6 +424,7 @@ function changeHandle(cm, change) {
 }
 
 //Creates socket connection to the server and sends the filename
+var loopID;
 function socket() {
 	ws = new WebSocket("ws://"+document.location.host+"/api/socket");
 	ws.onopen = function(event) {
@@ -432,14 +433,12 @@ function socket() {
 			a.clear();
 		ws.send(filename);
 		playButton.src = "/images/stop.png";
-		titleText += " - RUNNING";
 		titleHolder.innerHTML = titleText;
 	};
 	ws.onclose = function(event) {
 		ws = null;
 		errorHighlight();
 		playButton.src = "/images/play.png";
-		titleText = titleText.replace(/ - RUNNING$/, "");
 		titleHolder.innerHTML = titleText;
 		stdin.style.width = "0";
 		//Remove trailing \n
@@ -450,6 +449,10 @@ function socket() {
 	};
 	ws.onmessage = function(event) {
 		message = event.data;
+		if (message == "started") {
+			clearInterval(loopID);
+			title.innerHTML = "RUNNING";
+		}
 		if (message.substring(0, 8) == "output: ") {
 			if (!outputOpen)
 				toggleOutput();
@@ -550,6 +553,15 @@ function run() {
 			socket();
 			//Override the editor.focus() from the header click
 			stdin.style.width = "100%";
+			var i = 0;
+			title.innerHTML = "STARTING";
+			loopID = setInterval(function() {
+				title.innerHTML += "."
+				if (++i == 3) {
+					i = 0;
+					title.innerHTML = "STARTING";
+				}
+			}, 500)
 			setTimeout(function() { stdin.focus() }, 10);
 		} else {
 			runSpr();
