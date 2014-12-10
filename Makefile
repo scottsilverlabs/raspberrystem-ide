@@ -17,9 +17,8 @@
 #		/etc/rstem_ide.conf - IDE config
 #		/var/local/raspberrystem/ide/html - top-level html
 #		/usr/local/bin/rstem_ide - Link to IDE server
-#	- Install via tarballs
-#		/var/local/raspberrystem/ide/html/lessons - Lesson Plans
-#	- Installed via raspberrystem pip: APIs
+#	- Dependency of lesson plans pip install
+#	- Depends on raspberrystem pip install
 #
 PYTHON=python3
 SETUP=$(PYTHON) setup.py
@@ -75,7 +74,11 @@ run:
 server: server.go | is_go_installed $(PACKAGES)
 	GOARCH=arm GOARM=5 GOOS=linux go build $<
 
-$(IDE_TAR): server $(GIT_FILES)
+ide/server: server
+	mkdir -p $(dir $@)
+	cp $< $@
+
+$(IDE_TAR): ide/server $(GIT_FILES)
 	$(SETUP) sdist
 	mv dist/$(notdir $@) $@
 

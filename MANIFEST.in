@@ -1,4 +1,6 @@
 graft pkg
+graft ide
+graft html
 include README.md
 include LICENSE
 include NAME
