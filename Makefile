@@ -76,7 +76,7 @@ run:
 server: server.go | is_go_installed $(PACKAGES)
 	GOARCH=arm GOARM=5 GOOS=linux go build $<
 
-ide/server: server
+ide/server: server $(IDE_SOURCE_FILES)
 	$(eval DIR=$(dir $@))
 	rm -rf $(DIR)
 	mkdir -p $(DIR)

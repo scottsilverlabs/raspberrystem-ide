@@ -36,6 +36,11 @@ outputs = [
     ]
 
 def post_install():
+    # import rstem to find its install path
+    # NOTE: Require dependency on rstem
+    import rstem
+    api_path = os.path.join(os.path.dirname(rstem.__file__), 'api', rstem.__name__)
+
     for dir in [TGT_INSTALL_DIR, TGT_HTML_DIR]:
         print('Removing: ' + dir)
         shutil.rmtree(dir, ignore_errors=True)
@@ -44,8 +49,22 @@ def post_install():
         shutil.copytree(os.path.basename(dir), dir)
 
     print('Creating links...')
-    os.remove(TGT_BIN_SYMLINK)
-    os.symlink(os.path.join(TGT_INSTALL_DIR, 'server'), TGT_BIN_SYMLINK)
+    # API docs symlink
+    api_symlink = os.path.join(TGT_HTML_DIR, 'api')
+    try:
+        os.remove(api_symlink)
+    except OSError:
+        pass
+    print('  symlink {} -->\n    {}'.format(api_symlink, api_path))
+    os.symlink(api_path, api_symlink)
+    # server binary symlink
+    try:
+        os.remove(TGT_BIN_SYMLINK)
+    except OSError:
+        pass
+    dest_bin = os.path.join(TGT_INSTALL_DIR, 'server')
+    print('  symlink {} -->\n    {}'.format(TGT_BIN_SYMLINK, dest_bin))
+    os.symlink(dest_bin, TGT_BIN_SYMLINK)
     os.chmod(TGT_BIN_SYMLINK, 0o4755)
 
     if os.path.exists(TGT_CONFIG_FILE):
