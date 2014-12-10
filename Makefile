@@ -16,7 +16,7 @@
 #		/opt/raspberrystem/ide - IDE server and resources
 #		/etc/rstem_ide.conf - IDE config
 #		/var/local/raspberrystem/ide/html - top-level html
-#		/usr/local/bin/rstem_ide - Link to IDE server
+#		/usr/local/bin/rstem_ide_server - Link to IDE server
 #	- Dependency of lesson plans pip install
 #	- Depends on raspberrystem pip install
 #
@@ -69,7 +69,8 @@ $(PACKAGES):
 .PHONY: run targets clean install
 
 run:
-	$(RUNONPI) "sudo ideserver &"
+	$(RUNONPI) "sudo killall rstem_ide_server"
+	$(RUNONPI) "sudo rstem_ide_server" &
 
 server: server.go | is_go_installed $(PACKAGES)
 	GOARCH=arm GOARM=5 GOOS=linux go build $<
@@ -93,7 +94,6 @@ install:
 clean:
 	rm NAME VERSION
 	rm -f server
-	rm -f 
 	rm -f payload.tar.gz
 	rm -rf $(GOPATH)
 

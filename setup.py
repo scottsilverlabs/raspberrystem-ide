@@ -24,35 +24,36 @@ import shutil
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-DEST_INSTALL_DIR = '/opt/raspberrystem/ide'
-DEST_HTML_DIR = '/var/local/raspberrystem/ide/html'
-DEST_CONFIG_FILE = '/etc/rstem_ide.conf'
-BIN_SYMLINK = '/usr/local/bin/rstem_ide_server'
+TGT_INSTALL_DIR = '/opt/raspberrystem/ide'
+TGT_HTML_DIR = '/var/local/raspberrystem/ide/html'
+TGT_CONFIG_FILE = '/etc/rstem_ide.conf'
+TGT_BIN_SYMLINK = '/usr/local/bin/rstem_ide_server'
 outputs = [
-    DEST_INSTALL_DIR,
-    DEST_HTML_DIR,
-    DEST_CONFIG_FILE,
-    BIN_SYMLINK,
+    TGT_INSTALL_DIR,
+    TGT_HTML_DIR,
+    TGT_CONFIG_FILE,
+    TGT_BIN_SYMLINK,
     ]
 
 def post_install():
-    for dir in [DEST_INSTALL_DIR, DEST_HTML_DIR]:
+    for dir in [TGT_INSTALL_DIR, TGT_HTML_DIR]:
         print('Removing: ' + dir)
         shutil.rmtree(dir, ignore_errors=True)
-    for dir in [DEST_INSTALL_DIR, DEST_HTML_DIR]:
+    for dir in [TGT_INSTALL_DIR, TGT_HTML_DIR]:
         print('Installing: ' + dir)
         shutil.copytree(os.path.basename(dir), dir)
 
     print('Creating links...')
-    os.remove(BIN_SYMLINK)
-    os.symlink(os.path.join(DEST_INSTALL_DIR, os.path.basename(BIN_SYMLINK)), BIN_SYMLINK)
+    os.remove(TGT_BIN_SYMLINK)
+    os.symlink(os.path.join(TGT_INSTALL_DIR, 'server'), TGT_BIN_SYMLINK)
+    os.chmod(TGT_BIN_SYMLINK, 0o4755)
 
-    if os.path.exists(DEST_CONFIG_FILE):
+    if os.path.exists(TGT_CONFIG_FILE):
         print('Config file exists - skipping copy')
     else:
-        SRC_CONFIG_FILE = os.path.join('pkg', os.path.basename(DEST_CONFIG_FILE)) 
-        print('Copying config file {} -> {}', SRC_CONFIG_FILE, DEST_CONFIG_FILE)
-        shutil.copy(SRC_CONFIG_FILE, DEST_CONFIG_FILE)
+        SRC_CONFIG_FILE = '.' + TGT_CONFIG_FILE
+        print('Copying config file {} -> {}', SRC_CONFIG_FILE, TGT_CONFIG_FILE)
+        shutil.copy(SRC_CONFIG_FILE, TGT_CONFIG_FILE)
 
 # Post installation task to setup raspberry pi
 class install(_install):

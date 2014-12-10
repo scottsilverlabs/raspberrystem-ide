@@ -1,4 +1,4 @@
-graft pkg
+graft etc
 graft ide
 graft html
 include README.md
