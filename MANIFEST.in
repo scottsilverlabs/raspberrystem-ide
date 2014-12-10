@@ -1,6 +1,6 @@
 graft etc
 graft ide
-graft html
+graft website
 include README.md
 include LICENSE
 include NAME

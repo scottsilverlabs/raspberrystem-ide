@@ -20,6 +20,7 @@ var SETTINGS_FILE = "/etc/ide/settings.conf"
 var INSTALL_DIR = "/opt/raspberrystem/ide/"
 var IDE_HTML = INSTALL_DIR + "ide.html"
 var VAR_DIR = "/var/local/raspberrystem/ide/"
+var WEBSITE_DIR = VAR_DIR + "website"
 var LASTFILE_FILE = VAR_DIR + "lastfile"
 
 var page, _ = template.New("index").ParseFiles(IDE_HTML)
@@ -70,7 +71,7 @@ func main() {
 	http.HandleFunc("/api/configuration", configuration)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
-	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir("/etc/ide/website"))))
+	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir(WEBSITE_DIR))))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir(INSTALL_DIR + "assets/images"))))
 	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir(INSTALL_DIR + "assets/themes"))))
 	err = http.ListenAndServe(":"+config["port"], nil)

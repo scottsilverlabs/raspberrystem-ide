@@ -38,6 +38,7 @@ DUMMY:=$(shell scripts/version.sh)
 NAME:=$(shell cat NAME)
 VER:=$(shell cat VERSION)
 
+IDE_SOURCE_FILES=$(shell git ls-files assets ide.html)
 # Final targets
 IDE_TAR:=$(NAME)-$(VER).tar.gz
 TARGETS=$(IDE_TAR)
@@ -76,7 +77,13 @@ server: server.go | is_go_installed $(PACKAGES)
 	GOARCH=arm GOARM=5 GOOS=linux go build $<
 
 ide/server: server
-	mkdir -p $(dir $@)
+	$(eval DIR=$(dir $@))
+	rm -rf $(DIR)
+	mkdir -p $(DIR)
+	@for f in $(IDE_SOURCE_FILES); do \
+		mkdir -p ide/`dirname $$f`; \
+		cp -v $$f $(DIR)/$$f; \
+	done
 	cp $< $@
 
 $(IDE_TAR): ide/server $(GIT_FILES)
@@ -92,9 +99,10 @@ install:
 	$(RUNONPI) sudo $(PIP) install /tmp/$(notdir $(IDE_TAR))
 
 clean:
+	rm -rf ide
 	rm NAME VERSION
 	rm -f server
-	rm -f payload.tar.gz
+	rm -f $(TARGETS)
 	rm -rf $(GOPATH)
 
 #########################################################################

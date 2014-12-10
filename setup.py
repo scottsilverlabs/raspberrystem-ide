@@ -25,7 +25,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 TGT_INSTALL_DIR = '/opt/raspberrystem/ide'
-TGT_HTML_DIR = '/var/local/raspberrystem/ide/html'
+TGT_HTML_DIR = '/var/local/raspberrystem/ide/website'
 TGT_CONFIG_FILE = '/etc/rstem_ide.conf'
 TGT_BIN_SYMLINK = '/usr/local/bin/rstem_ide_server'
 outputs = [

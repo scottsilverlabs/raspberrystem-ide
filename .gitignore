@@ -1,8 +1,14 @@
+# wildcards
 *.pyc
-__pycache__/
 *.egg-info/
-/dist/
 *.tar.gz
-server
-VERSION
-NAME
+
+# dirs
+__pycache__/
+/dist/
+/ide/
+
+# specific files
+/server
+/VERSION
+/NAME
