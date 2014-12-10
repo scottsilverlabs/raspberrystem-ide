@@ -70,7 +70,7 @@ $(PACKAGES):
 .PHONY: run targets clean install
 
 run:
-	$(RUNONPI) "sudo killall rstem_ide_server"
+	$(RUNONPI) "(sudo killall rstem_ide_server; exit 0)"
 	$(RUNONPI) "sudo rstem_ide_server" &
 
 server: server.go | is_go_installed $(PACKAGES)
