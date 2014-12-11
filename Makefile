@@ -102,6 +102,9 @@ clean:
 	rm -rf ide
 	rm NAME VERSION
 	rm -f server
+	rm -f *.tar.gz
+	rm -rf *.egg-info
+	rm -rf __pycache__
 	rm -f $(TARGETS)
 	rm -rf $(GOPATH)
 
