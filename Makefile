@@ -15,7 +15,7 @@
 #	- Installed via pip
 #		/opt/raspberrystem/ide - IDE server and resources
 #		/etc/rstem_ide.conf - IDE config
-#		/var/local/raspberrystem/ide/html - top-level html
+#		/var/local/raspberrystem/ide/website - top-level html
 #		/usr/local/bin/rstem_ide_server - Link to IDE server
 #	- Dependency of lesson plans pip install
 #	- Depends on raspberrystem pip install
@@ -40,7 +40,7 @@ VER:=$(shell cat VERSION)
 
 IDE_SOURCE_FILES=$(shell git ls-files assets ide.html)
 # Final targets
-IDE_TAR:=$(NAME)-$(VER).tar.gz
+IDE_TAR:=$(abspath $(NAME)-$(VER).tar.gz)
 TARGETS=$(IDE_TAR)
 
 # Dependency files
