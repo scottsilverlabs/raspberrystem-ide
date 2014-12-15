@@ -1,3 +1,14 @@
-payload.tar.gz
-server
+# wildcards
+*.pyc
+*.egg-info/
+*.tar.gz
 
+# dirs
+__pycache__/
+/dist/
+/ide/
+
+# specific files
+/server
+/VERSION
+/NAME

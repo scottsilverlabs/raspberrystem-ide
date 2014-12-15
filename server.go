@@ -16,13 +16,20 @@ import (
 	"time"
 )
 
-var page, _ = template.New("index").ParseFiles("/etc/ide/ide.html")
+var SETTINGS_FILE = "/etc/ide/settings.conf"
+var INSTALL_DIR = "/opt/raspberrystem/ide/"
+var IDE_HTML = INSTALL_DIR + "ide.html"
+var VAR_DIR = "/var/local/raspberrystem/ide/"
+var WEBSITE_DIR = VAR_DIR + "website"
+var LASTFILE_FILE = VAR_DIR + "lastfile"
+
+var page, _ = template.New("index").ParseFiles(IDE_HTML)
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
 var users = make(map[string]string)
 var config = make(map[string]string)
 
 func main() {
-	settings, err := ioutil.ReadFile("/etc/ide/settings.conf")
+	settings, err := ioutil.ReadFile(SETTINGS_FILE)
 	if err == nil {
 		set := strings.Split(string(settings), "\n")
 		for _, line := range set {
@@ -43,7 +50,7 @@ func main() {
 		panic(err)
 	}
 	config["projectdir"] = strings.Replace(config["projectdir"], "~", os.Getenv("HOME"), 1)
-	last, _ := ioutil.ReadFile("/etc/ide/lastfile")
+	last, _ := ioutil.ReadFile(LASTFILE_FILE)
 	if string(last) != "" {
 		config["lastfile"] = string(last)
 	}
@@ -64,9 +71,9 @@ func main() {
 	http.HandleFunc("/api/configuration", configuration)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
-	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir("/etc/ide/website"))))
-	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("/etc/ide/assets/images"))))
-	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir("/etc/ide/assets/themes"))))
+	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir(WEBSITE_DIR))))
+	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir(INSTALL_DIR + "assets/images"))))
+	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir(INSTALL_DIR + "assets/themes"))))
 	err = http.ListenAndServe(":"+config["port"], nil)
 	if err != nil {
 		panic(err)
@@ -80,23 +87,23 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func ideJs(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "/etc/ide/assets/ide.js")
+	http.ServeFile(w, r, INSTALL_DIR + "assets/ide.js")
 }
 
 func cmJs(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "/etc/ide/assets/cmirror/codemirror.js")
+	http.ServeFile(w, r, INSTALL_DIR + "assets/cmirror/codemirror.js")
 }
 
 func cmCss(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "/etc/ide/assets/cmirror/codemirror.css")
+	http.ServeFile(w, r, INSTALL_DIR + "assets/cmirror/codemirror.css")
 }
 
 func pythonMode(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "/etc/ide/assets/cmirror/python.js")
+	http.ServeFile(w, r, INSTALL_DIR + "assets/cmirror/python.js")
 }
 
 func shellMode(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "/etc/ide/assets/cmirror/shell.js")
+	http.ServeFile(w, r, INSTALL_DIR + "assets/cmirror/shell.js")
 }
 
 //Lists all files in the projects directory
@@ -117,7 +124,7 @@ func listFiles(w http.ResponseWriter, r *http.Request) {
 //Lists the availible themes
 func listThemes(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	files, _ := ioutil.ReadDir("/etc/ide/assets/themes/")
+	files, _ := ioutil.ReadDir(INSTALL_DIR + "assets/themes/")
 	var list string
 	for _, f := range files {
 		if !f.IsDir() {
@@ -167,7 +174,7 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	file.Sync()
 	file.Close()
 	config["lastfile"] = name
-	file, _ = os.OpenFile("/etc/ide/lastfile", os.O_CREATE|os.O_WRONLY, 0744)
+	file, _ = os.OpenFile(LASTFILE_FILE, os.O_CREATE|os.O_WRONLY, 0744)
 	file.Truncate(0)
 	file.WriteString(name)
 	file.Sync()
