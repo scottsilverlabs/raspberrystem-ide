@@ -233,6 +233,7 @@ func socketServer(s *websocket.Conn) {
 	n, _ := s.Read(data)
 	com := exec.Command(config["projectdir"] + string(data[:n])) //[:n] to cut out padding
 	pt, err := pty.Start(com)
+	s.Write([]byte("started"))
 	if err != nil {
 		s.Write([]byte("error: " + err.Error()))
 		s.Close()
