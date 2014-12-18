@@ -120,10 +120,12 @@ local: is_go_installed $(PACKAGES)
 local-install:
 	cp ./server /usr/bin/ideserver
 	sudo mkdir -p /etc/ide
+	sudo mkdir -p /var/local/raspberrystem/ide/
+	sudo mkdir -p /opt/raspberrystem/ide/
 	sudo chmod 777 /etc/ide
 	cp -R sitescrape/website /etc/ide
-	cp -R assets /etc/ide/
-	cp *.html /etc/ide/
+	cp -R assets /opt/raspberrystem/ide/
+	cp *.html /opt/raspberrystem/ide/
 	cp settings.conf /etc/ide/
 
 local-run:
