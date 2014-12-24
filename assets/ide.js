@@ -141,6 +141,11 @@ function headerClick() {
 		editor.focus();
 }
 
+function setTitle(text) {
+	titleHolder.innerHTML = text;
+	titleHolder.style.width = (titleHolder.innerHTML.length * 0.6) + "em";
+}
+
 var currButton;
 function unhover() {
 	if (currButton)
@@ -432,13 +437,13 @@ function socket() {
 		while ((a = errs.pop()) !== undefined)
 			a.clear();
 		ws.send(filename);
-		titleHolder.innerHTML = titleText;
+		setTitle(titleText);
 	};
 	ws.onclose = function(event) {
 		ws = null;
 		errorHighlight();
 		playButton.src = "/images/play.png";
-		titleHolder.innerHTML = titleText;
+		setTitle(titleText);
 		stdin.style.width = "0";
 		//Remove trailing \n
 		var innerHTML = outputText.innerHTML;
@@ -450,7 +455,7 @@ function socket() {
 		message = event.data;
 		if (message == "started") {
 			clearInterval(loopID);
-			title.innerHTML = "RUNNING";
+			setTitle("RUNNING");
 		}
 		if (message.substring(0, 8) == "output: ") {
 			if (!outputOpen)
@@ -495,10 +500,9 @@ function changeSocketInit() {
 		} else if (message.substring(0, 6) == "USERS:") {
 			var num = parseInt(message.substring(6));
 			if (num > 1)
-				titleHolder.innerHTML = titleText + " - "
-					+ num + " Users";
+				setTitle(titleText + " - " + num + " Users");
 			else
-				titleHolder.innerHTML = titleText;
+				setTitle(titleText);
 		} else {
 			var arr = message.split(",");
 			var content = message.substring((arr[0] + arr[1] + arr[2] +
@@ -553,13 +557,13 @@ function run() {
 			//Override the editor.focus() from the header click
 			stdin.style.width = "100%";
 			var i = 0;
-			title.innerHTML = "STARTING";
+			setTitle("STARTING");
 			playButton.src = "/images/stop.png";
 			loopID = setInterval(function() {
-				title.innerHTML += "."
+				setTitle(title.innerHTML + ".");
 				if (++i == 3) {
 					i = 0;
-					title.innerHTML = "STARTING";
+					setTitle("STARTING");
 				}
 			}, 500)
 			setTimeout(function() { stdin.focus() }, 10);
@@ -575,15 +579,20 @@ function run() {
 //Called by the web button
 var webShowing = false;
 function toggleWeb() {
+	var button = document.getElementById("webbutton");
 	webShowing = !webShowing;
 	if (webShowing) {
-		codewrapper.style.width = "50%";
-		output.style.width = "50%";
+		button.style.transform = "rotateY(0deg)";
+		title.classList.remove("headertextCenter");
+		title.classList.add("headertextRight");
+		ide.style.width = "50%";
 		web.style.width = "50%";
 		web.style.left = "50%";
 	} else {
-		codewrapper.style.width = "100%";
-		output.style.width = "100%";
+		button.style.transform = "rotateY(180deg)";
+		title.classList.remove("headertextRight");
+		title.classList.add("headertextCenter");
+		ide.style.width = "100%";
 		web.style.width = "0";
 		web.style.left = "100%";
 	}
@@ -844,7 +853,7 @@ function loadFile(fname) {
 		});
 	if (type == "sh")
 		editor.setOption("mode", "shell");
-	titleHolder.innerHTML = fname;
+	setTitle(fname);
 	titleText = fname;
 	var contents = GET("/api/readfile?file=" + filename);
 	editor.setValue(contents);
@@ -1007,12 +1016,19 @@ function changeTheme() {
 
 outputOpen = true;
 function toggleOutput() {
+	var button = document.getElementById("outputbutton");
 	if (outputOpen) {
+		button.style.transform = "rotateZ(-90deg)";
+		button.style.webkitTransform = "rotateZ(-90deg)";
+		button.style.marginTop = "-5em";
 		output.classList.remove("outputOpen");
 		output.classList.add("outputClosed");
 		codewrapper.classList.remove("codeShort");
 		codewrapper.classList.add("codeLong");
 	} else {
+		button.style.transform = "rotateZ(90deg)";
+		button.style.webkitTransform = "rotateZ(90deg)";
+		button.style.marginTop = "-3em";
 		output.classList.remove("outputClosed");
 		output.classList.add("outputOpen");
 		codewrapper.classList.remove("codeLong");
