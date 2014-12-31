@@ -940,12 +940,13 @@ function openFile(button) {
 			loadFile(this.innerHTML);
 		};
 		setupButton(filediv, 0, parseInt(i) + 1);
-		var deleteDiv = document.createElement("img");
-		fileholder.appendChild(deleteDiv);
-		deleteDiv.src = "/images/pencil.png";
-		deleteDiv.classList.add("pencilbutton");
-		setupButton(deleteDiv, 1, parseInt(i) + 1);
-		deleteDiv.onclick = new Function("editFile(\""+files[i]+"\")");
+		var pencilDiv = document.createElement("img");
+		fileholder.appendChild(pencilDiv);
+		pencilDiv.src = "/images/pencil.png";
+		pencilDiv.classList.add("pencilbutton");
+		pencilDiv.draggable = false;
+		setupButton(pencilDiv, 1, parseInt(i) + 1);
+		pencilDiv.onclick = new Function("editFile(\""+files[i]+"\")");
 	}
 
 	var cancel = document.createElement("div");
