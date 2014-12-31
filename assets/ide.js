@@ -676,6 +676,7 @@ function deletePrompt(fname) {
 
 //Called by the edit button in the Select File prompt
 function editFile(fname) {
+	removePopup();
 	back = document.createElement("div");
 	document.body.appendChild(back);
 	back.classList.add("holder");
