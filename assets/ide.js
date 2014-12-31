@@ -585,7 +585,7 @@ function toggleWeb() {
 	webShowing = !webShowing;
 	if (webShowing) {
 		if (document.location.host == "127.0.0.1")
-			button.src = "/images/arrow-left.png"
+			button.src = "/images/arrow-right.png"
 		else
 			button.style.transform = "rotateY(0deg)";
 		title.classList.remove("headertextCenter");
@@ -595,7 +595,7 @@ function toggleWeb() {
 		web.style.left = "50%";
 	} else {
 		if (document.location.host == "127.0.0.1")
-			button.src = "/images/arrow-right.png"
+			button.src = "/images/arrow-left.png"
 		else
 			button.style.transform = "rotateY(180deg)";
 		title.classList.remove("headertextRight");
