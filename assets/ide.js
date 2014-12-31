@@ -588,8 +588,7 @@ function toggleWeb() {
 			button.src = "/images/arrow-right.png"
 		else
 			button.style.transform = "rotateY(0deg)";
-		title.classList.remove("headertextCenter");
-		title.classList.add("headertextRight");
+		title.className = "headertextRight"; //classList.remove wasn't working in chromium
 		ide.style.width = "50%";
 		web.style.width = "50%";
 		web.style.left = "50%";
@@ -598,8 +597,7 @@ function toggleWeb() {
 			button.src = "/images/arrow-left.png"
 		else
 			button.style.transform = "rotateY(180deg)";
-		title.classList.remove("headertextRight");
-		title.classList.add("headertextCenter");
+		title.className = "headertextCenter";
 		ide.style.width = "100%";
 		web.style.width = "0";
 		web.style.left = "100%";
