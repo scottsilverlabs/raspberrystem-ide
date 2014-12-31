@@ -9,6 +9,8 @@ var keybindings = {};
 window.onload = function main() {
 	if (window.MozWebSocket)
 		window.WebSocket = window.MozWebSocket;
+	if (document.location.host == "127.0.0.1")
+		document.getElementById("outputbutton").src = "/images/arrow-down.png"
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
 	outputHolder = document.getElementById("outputActual");
@@ -582,14 +584,20 @@ function toggleWeb() {
 	var button = document.getElementById("webbutton");
 	webShowing = !webShowing;
 	if (webShowing) {
-		button.style.transform = "rotateY(0deg)";
+		if (document.location.host == "127.0.0.1")
+			button.src = "/images/arrow-left.png"
+		else
+			button.style.transform = "rotateY(0deg)";
 		title.classList.remove("headertextCenter");
 		title.classList.add("headertextRight");
 		ide.style.width = "50%";
 		web.style.width = "50%";
 		web.style.left = "50%";
 	} else {
-		button.style.transform = "rotateY(180deg)";
+		if (document.location.host == "127.0.0.1")
+			button.src = "/images/arrow-right.png"
+		else
+			button.style.transform = "rotateY(180deg)";
 		title.classList.remove("headertextRight");
 		title.classList.add("headertextCenter");
 		ide.style.width = "100%";
@@ -1018,16 +1026,20 @@ outputOpen = true;
 function toggleOutput() {
 	var button = document.getElementById("outputbutton");
 	if (outputOpen) {
-		button.style.transform = "rotateZ(-90deg)";
-		button.style.webkitTransform = "rotateZ(-90deg)";
+		if (document.location.host == "127.0.0.1")
+			button.src = "/images/arrow-up.png"
+		else
+			button.style.transform = "rotateZ(-90deg)";
 		button.style.marginTop = "-5em";
 		output.classList.remove("outputOpen");
 		output.classList.add("outputClosed");
 		codewrapper.classList.remove("codeShort");
 		codewrapper.classList.add("codeLong");
 	} else {
-		button.style.transform = "rotateZ(90deg)";
-		button.style.webkitTransform = "rotateZ(90deg)";
+		if (document.location.host == "127.0.0.1")
+			button.src = "/images/arrow-down.png"
+		else
+			button.style.transform = "rotateZ(90deg)";
 		button.style.marginTop = "-3em";
 		output.classList.remove("outputClosed");
 		output.classList.add("outputOpen");
