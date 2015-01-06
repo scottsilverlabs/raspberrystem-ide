@@ -116,6 +116,7 @@ window.onload = function main() {
 	loadFile(filename);
 };
 
+//Save on window close
 window.onbeforeunload = function() {
 	save();
 	changeSocket.close();
@@ -460,8 +461,16 @@ function socket() {
 			setTitle("RUNNING");
 		}
 		if (message.substring(0, 8) == "output: ") {
-			if (!outputOpen)
+			if (!outputOpen) {
 				toggleOutput();
+				if (document.location.host == "127.0.0.1") {
+					stdin.focus();
+				} else {
+					setTimeout(function() {
+						stdin.focus();
+					}, 1000);
+				}
+			}
 			appendOutput(message.substring(8).replace(/</g, "&lt;")
 				.replace(/>/g, "&gt;"));
 			return;
@@ -556,7 +565,6 @@ function run() {
 		outputText.innerHTML = "";
 		if (type != "spr") {
 			socket();
-			//Override the editor.focus() from the header click
 			stdin.style.width = "100%";
 			var i = 0;
 			setTitle("STARTING");
@@ -568,7 +576,6 @@ function run() {
 					setTitle("STARTING");
 				}
 			}, 500)
-			setTimeout(function() { stdin.focus() }, 10);
 		} else {
 			runSpr();
 		}
@@ -1025,7 +1032,8 @@ function changeTheme() {
 outputOpen = true;
 function toggleOutput() {
 	var button = document.getElementById("outputbutton");
-	if (outputOpen) {
+	outputOpen = !outputOpen;
+	if (!outputOpen) {
 		if (document.location.host == "127.0.0.1")
 			button.src = "/images/arrow-up.png"
 		else
@@ -1035,6 +1043,7 @@ function toggleOutput() {
 		output.classList.add("outputClosed");
 		codewrapper.classList.remove("codeShort");
 		codewrapper.classList.add("codeLong");
+		setTimeout(function() { ide.scrollIntoViewIfNeeded(); }, 10);
 	} else {
 		if (document.location.host == "127.0.0.1")
 			button.src = "/images/arrow-down.png"
@@ -1045,9 +1054,8 @@ function toggleOutput() {
 		output.classList.add("outputOpen");
 		codewrapper.classList.remove("codeLong");
 		codewrapper.classList.add("codeShort");
+		editor.focus();
 	}
-	outputOpen = !outputOpen;
-	editor.focus();
 }
 
 function outFocus() {
