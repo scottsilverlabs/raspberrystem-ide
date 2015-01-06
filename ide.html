@@ -335,9 +335,10 @@
 			}
 
 			#outputActual {
-				top: 1.5em;
-				height: calc(100% - 1.5em);
-				height: -webkit-calc(100% - 1.5em);
+				top: 27px;
+				height: calc(100% - 26px);
+				height: -webkit-calc(100% - 26px);
+				width: 100%;
 				line-height: 1;
 			}
 
@@ -452,10 +453,10 @@
 			</header>
 			<div id="codewrapper" class="codeShort" style="width:100%;"></div>
 			<div id="output" class="outputOpen" onclick="outFocus()">
-				<div class="maincolor" id="outputLabel" style="top:0%;height:2em;color:#ffffff;"><h4 style="margin-top:3;">Program Output</h4>
-					<img draggable="false" id="outputbutton" class="fancybutton" src="/images/arrow-right.png" style="position:relative;margin-top:-3em;height:2em;transition:transform 1s, margin-top 2s;filter:invert(100%);-webkit-filter:invert(100%);transform:rotateZ(90deg);margin-left:-2em;left:100%;" onclick="toggleOutput()"></img>
+				<div class="maincolor" id="outputLabel" style="top:0%;height:2em;color:#ffffff;position:absolute;width:100%;z-index:1;"><h4 style="margin-top:3;">Program Output</h4>
+					<img draggable="false" id="outputbutton" class="fancybutton" src="/images/arrow-right.png" style="position:relative;margin-top:-3em;height:2em;transition:transform 1s, margin-top 2s;filter:invert(100%);-webkit-filter:invert(100%);transform:rotateZ(90deg);margin-left:-3em;left:100%;" onclick="toggleOutput()"></img>
 				</div>
-				<pre id="outputActual" style="margin:0;tab-size:4;overflow-y:auto;overflow-x:hidden">
+				<pre id="outputActual" style="margin:0;tab-size:4;overflow-y:auto;overflow-x:hidden;position:absolute;z-index:0;">
 <span id="outputtext"></span><input type="text" id="stdin"></input> </pre>
 			</div>
 		</div>
