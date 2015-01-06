@@ -1,6 +1,6 @@
 var run, save, GET, POST, changeHandle, changeSocket, openFile, removePopup,
 	changeSocketInit, toggleOutput, toggleWeb, changeTheme; //Function prototypes
-var config, outputOpen, back, ws = null, titleText, filename, type;
+var config, outputOpen, outputPos, back, ws = null, titleText, filename, type;
 var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme",
 	"openFile"];
 var leftButtons = ["Run", "Open File", "Save", "Theme"];
@@ -462,6 +462,7 @@ function socket() {
 		}
 		if (message.substring(0, 8) == "output: ") {
 			if (!outputOpen) {
+				outputPos = 0;
 				toggleOutput();
 				if (document.location.host == "127.0.0.1") {
 					stdin.focus();
@@ -475,8 +476,10 @@ function socket() {
 				.replace(/>/g, "&gt;"));
 			return;
 		} else if (message.substring(0, 7) == "error: ") {
-			if (!outputOpen)
+			if (!outputOpen) {
+				outputPos = 0;
 				toggleOutput();
+			}
 			messageActual = message.substring(7).replace(/</g, "&lt;")
 				.replace(/>/g, "&gt;");
 			appendOutput("<span style=\"color:red;\">SERVER ERROR:" + messageActual +
@@ -1034,6 +1037,7 @@ function toggleOutput() {
 	var button = document.getElementById("outputbutton");
 	outputOpen = !outputOpen;
 	if (!outputOpen) {
+		outputPos = outputHolder.scrollTop;
 		if (document.location.host == "127.0.0.1")
 			button.src = "/images/arrow-up.png"
 		else
@@ -1046,7 +1050,7 @@ function toggleOutput() {
 		setTimeout(function() { ide.scrollIntoViewIfNeeded(); }, 10);
 	} else {
 		if (document.location.host == "127.0.0.1")
-			button.src = "/images/arrow-down.png"
+					button.src = "/images/arrow-down.png"
 		else
 			button.style.transform = "rotateZ(90deg)";
 		button.style.marginTop = "-3em";
@@ -1055,6 +1059,7 @@ function toggleOutput() {
 		codewrapper.classList.remove("codeLong");
 		codewrapper.classList.add("codeShort");
 		editor.focus();
+		outputHolder.scrollTop = outputPos;
 	}
 }
 
