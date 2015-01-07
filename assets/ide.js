@@ -146,7 +146,7 @@ function headerClick() {
 
 function setTitle(text) {
 	titleHolder.innerHTML = text;
-	titleHolder.style.width = (titleHolder.innerHTML.length * 0.6) + "em";
+	titleHolder.style.width = (titleHolder.innerHTML.length * 0.667) + "em";
 }
 
 var currButton;
