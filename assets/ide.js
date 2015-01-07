@@ -297,7 +297,7 @@ function appendOutput(text) {
 }
 
 
-//Called when the script stops running on the server side
+//Called when the script stops running on the server side, highlights errors in the output
 var errs = [];
 var errRegex = new RegExp(/\s+File ".+", line \d+.*\n.+\n.+\^\n.+: .+/g);
 var traceRegex = new RegExp(/Traceback.*:\n(\s+File ".+", line \d+.*\n.*\n)+.*(Error|Interrupt|Exception).*/g);
@@ -367,6 +367,7 @@ function errorHighlight() {
 	}
 }
 
+//Colors characters in the editor while in a .spr file
 function sprColor(change) {
 	var baseline = change.from.line;
 	var ldiff = change.to.line - change.from.line;
@@ -416,10 +417,41 @@ function sprColor(change) {
 	}
 }
 
+//Checks the line designated by lnum for space/tab conflicts
+var errTags = {}
+function checkForSpaces(lnum) {
+	var start = 0;
+	var line = editor.getLine(lnum);
+	if (errTags[lnum] == undefined)
+		errTags[lnum] = [];
+	var a;
+	while (a = errTags[lnum].pop())
+		a.clear();
+	for (var j in line) {
+		if (line[j] == " " && start == -1) {
+			start = j;
+		} else if (start != -1 && line[j] != " ") {
+			errTags[lnum].push(editor.markText({"line": lnum, "ch": start}, {"line": lnum, "ch": j}, {
+				className: "cm-error",
+			}));
+			start = -1;
+		} else if (start != -1 && j == line.length - 1) {
+			errTags[lnum].push(editor.markText({"line": lnum, "ch": start}, {"line": lnum, "ch": j + 1}, {
+				className: "cm-error",
+			}));
+			start = -1;
+		}
+		if (line[j] != "\t" && line[j] != " ")
+			break;
+	}
+}
+
 var last = null;
 function changeHandle(cm, change) {
 	if (type == "spr")
 		sprColor(change);
+	if (type == "py")
+		checkForSpaces(change.from.line);
 	if (changeSocket !== null && last === null && change.origin != "setValue") {
 		var text = "";
 		for (var i in change.text)
