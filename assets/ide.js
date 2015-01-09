@@ -145,7 +145,7 @@ function headerClick() {
 }
 
 function setTitle(text) {
-	titleHolder.innerHTML = text;
+	titleHolder.innerHTML = text.replace(/-/g, " ");
 	titleHolder.style.width = (titleHolder.innerHTML.length * 0.667) + "em";
 }
 
@@ -751,7 +751,7 @@ function editFile(fname) {
 	text.classList.add("editfiletext");
 	text.type = "text";
 	text.id = "editfile";
-	text.value = fname;
+	text.value = fname.replace(/-/g, " ");
 
 	var cancel = document.createElement("div");
 	popup.appendChild(cancel);
