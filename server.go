@@ -72,8 +72,8 @@ func main() {
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
 	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir(WEBSITE_DIR))))
-	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir(INSTALL_DIR + "assets/images"))))
-	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir(INSTALL_DIR + "assets/themes"))))
+	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir(INSTALL_DIR+"assets/images"))))
+	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir(INSTALL_DIR+"assets/themes"))))
 	err = http.ListenAndServe(":"+config["port"], nil)
 	if err != nil {
 		panic(err)
@@ -87,23 +87,23 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func ideJs(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, INSTALL_DIR + "assets/ide.js")
+	http.ServeFile(w, r, INSTALL_DIR+"assets/ide.js")
 }
 
 func cmJs(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, INSTALL_DIR + "assets/cmirror/codemirror.js")
+	http.ServeFile(w, r, INSTALL_DIR+"assets/cmirror/codemirror.js")
 }
 
 func cmCss(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, INSTALL_DIR + "assets/cmirror/codemirror.css")
+	http.ServeFile(w, r, INSTALL_DIR+"assets/cmirror/codemirror.css")
 }
 
 func pythonMode(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, INSTALL_DIR + "assets/cmirror/python.js")
+	http.ServeFile(w, r, INSTALL_DIR+"assets/cmirror/python.js")
 }
 
 func shellMode(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, INSTALL_DIR + "assets/cmirror/shell.js")
+	http.ServeFile(w, r, INSTALL_DIR+"assets/cmirror/shell.js")
 }
 
 //Lists all files in the projects directory

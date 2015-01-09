@@ -1,12 +1,12 @@
 var run, save, GET, POST, changeHandle, changeSocket, openFile, removePopup,
 	changeSocketInit, toggleOutput, toggleWeb, changeTheme; //Function prototypes
-var config, outputOpen, outputPos, back, ws = null, titleText, filename, type;
+var config, outputOpen, outputPos, back, ws = null, titleText, filename, type, changed;
 var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme",
 	"openFile"];
 var leftButtons = ["Run", "Open File", "Save", "Theme"];
 var keybindings = {};
 
-window.onload = function main() {
+window.onload = function() {
 	if (window.MozWebSocket)
 		window.WebSocket = window.MozWebSocket;
 	if (document.location.host == "127.0.0.1")
@@ -251,8 +251,13 @@ function POST(url, args) {
 }
 
 function save() {
-	if (filename !== "")
-		POST("/api/savefile", {"file": filename, "content": editor.getValue()});
+	if (changed) {
+		changed = false;
+		saveButton.src = "/images/savegray.png";
+		saveButton.style.cursor = "initial";
+		if (filename !== "")
+			POST("/api/savefile", {"file": filename, "content": editor.getValue()});
+	}
 }
 
 var linepos = 0; //Used for tracking \r position
@@ -448,6 +453,11 @@ function checkForSpaces(lnum) {
 
 var last = null;
 function changeHandle(cm, change) {
+	if (!changed) {
+		changed = true;
+		saveButton.src = "/images/save.png";
+		saveButton.style.cursor = "";
+	}
 	if (type == "spr")
 		sprColor(change);
 	if (type == "py")
@@ -922,6 +932,9 @@ function loadFile(fname) {
 			setTimeout(5000, function() { changeSocket.send("COF:" + filename); });
 	clearInterval(intID);
 	removePopup();
+	saveButton.src = "/images/savegray.png";
+	saveButton.style.cursor = "initial";
+	changed = false;
 }
 
 //Open file popup
