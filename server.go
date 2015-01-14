@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -214,17 +215,23 @@ func configuration(w http.ResponseWriter, r *http.Request) {
 }
 
 //Called as a goroutine to wait for the close command and kill the process.
-func watchClose(s *websocket.Conn, p *os.Process, pt *os.File) {
+func watchInput(s *websocket.Conn, p *os.Process, pt *os.File, mut *sync.Mutex, run *bool) {
 	data := make([]byte, 512)
 	for {
 		n, _ := s.Read(data)
 		payload := string(data[:n]) //[:n] to cut out padding
-		if payload == "close" {
+		mut.Lock()
+		state := *run
+		mut.Unlock()
+		if !state {
+			break
+		} else if payload == "close" {
 			p.Signal(syscall.SIGINT)
 			break
 		} else if payload != "" {
 			pt.Write(data[:n])
 		}
+		time.Sleep(time.Millisecond * 10) //For minimal CPU impact
 	}
 }
 
@@ -240,7 +247,10 @@ func socketServer(s *websocket.Conn) {
 		s.Close()
 		return
 	}
-	go watchClose(s, com.Process, pt)
+	mut := &sync.Mutex{}
+	run := new(bool)
+	*run = true
+	go watchInput(s, com.Process, pt, mut, run)
 	for {
 		out := make([]byte, 1024)
 		n, err := pt.Read(out)
@@ -254,6 +264,9 @@ func socketServer(s *websocket.Conn) {
 		}
 		time.Sleep(time.Millisecond * 10) //For minimal CPU impact
 	}
+	mut.Lock()
+	*run = false
+	mut.Unlock()
 	com.Process.Wait()
 	s.Close()
 }
