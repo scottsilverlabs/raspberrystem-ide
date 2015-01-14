@@ -150,7 +150,7 @@ function headerClick() {
 //Set's the title text and sets to width of the title which is used for centering.
 function setTitle(text) {
 	titleHolder.innerHTML = text.replace(/-/g, " ");
-	titleHolder.style.width = (titleHolder.innerHTML.length*(1/3)) + "em";
+	titleHolder.style.width = (titleHolder.innerHTML.length*(2/3)) + "em";
 }
 
 //Used to replicate hover actions on buttons for keyboard controls.
@@ -654,7 +654,7 @@ function toggleWeb() {
 			button.src = "/images/arrow-right.png"
 		else
 			button.style.transform = "rotateY(0deg)";
-		title.className = "headertextRight"; //classList.remove wasn't working in chromium
+		title.className = "headertextRight"; //classList.remove wasn't working in Chromium
 		ide.style.width = "50%";
 		web.style.width = "50%";
 		web.style.left = "50%";
@@ -685,7 +685,7 @@ function removePopup() {
 	place = [0, 0];
 }
 
-//Called by delete in the Edit File prompt
+//Creates a basic yes/no prompt which calls yes or no based on response.
 function ynPrompt(titleText, bodyText, yes, no) {
 	removePopup();
 	
@@ -728,6 +728,7 @@ function ynPrompt(titleText, bodyText, yes, no) {
 	setupButton(cancel, 0, 0);
 }
 
+//Are you sure prompt for file deletion
 function deletePrompt(fname) {
 	ynPrompt("Delete", "Delete " + fname + "?", function() {
 		POST("/api/deletefile", {"file": fname});
@@ -876,6 +877,7 @@ function newFile() {
 	openFile();
 }
 
+//Loading popup currently non-functional, TODO implement async GET for file operations.
 function loading(titletext, bodyText) {
 	removePopup();
 

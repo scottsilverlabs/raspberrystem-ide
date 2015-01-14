@@ -44,6 +44,9 @@
 				color: white;
 				z-index: 1;
 				transition: right 2s, width 2s, margin-right 2s;
+				{{if eq .RaspiTransforms "true"}}
+				-webkit-transition: right 2s, width 2s, margin-right 2s;
+				{{end}}
 			}
 
 			.maincolor {
@@ -315,6 +318,9 @@
 
 			.outputOpen {
 				transition: top 2s, bottom 2s;
+				{{if eq .RaspiTransforms "true"}}
+				-webkit-transition: top 2s, bottom 2s;
+				{{end}}
 				overflow-y: hidden;
 				position: absolute;
 				top: calc(100% - {{.OutputSize}}%);
@@ -332,6 +338,9 @@
 
 			.outputClosed {
 				transition: top 2s, bottom 2s;
+				{{if eq .RaspiTransforms "true"}}
+				-webkit-transition: top 2s, bottom 2s;
+				{{end}}
 				position: absolute;
 				width: inherit;
 				top: 100%;
@@ -359,6 +368,9 @@
 
 			.codeShort {
 				transition: height 2s;
+				{{if eq .RaspiTransforms "true"}}
+				-webkit-transition: height 2s;
+				{{end}}
 				height: calc(100% - {{.OutputSize}}% - 2em);
 				height: -webkit-calc(100% - {{.OutputSize}}% - 2em);
 			}
@@ -369,11 +381,24 @@
 			}
 
 			#webview {
-				width: 0;
 				position: absolute;
+				height:100%;
+				width: 0;
 				bottom: 0;
-				height: 100%;
 				left: 100%;
+				transition: width 2s ease-in-out, left 2s ease-in-out;
+				{{if eq .RaspiTransforms "true"}}
+				-webkit-transition: width 2s ease-in-out, left 2s ease-in-out;
+				{{end}}
+			}
+
+			#ide {
+				width: 100%;
+				height: 100%;
+				transition: width 2s ease-in-out;
+				{{if eq .RaspiTransforms "true"}}
+				-webkit-transition: width 2s ease-in-out;
+				{{end}}
 			}
 
 			.sprerr {
@@ -450,7 +475,7 @@
 		<script src="/ide.js"></script>
 	</head>
 	<body onkeyup="key(event)">
-		<div id="ide" style="width:100%;height:100%;transition: width 2s ease-in-out;">
+		<div id="ide">
 			<header id="header" class="maincolor" onclick="headerClick()">
 				<img draggable="false" id="play" class="headerbutton fancybutton" src="/images/play.png" onclick="run()"></img>
 				<img draggable="false" id="open" class="headerbutton fancybutton" src="/images/folder.png" onclick="openFile(true)"></img>
@@ -467,7 +492,7 @@
 <span id="outputtext"></span><input type="text" id="stdin"></input> </pre>
 			</div>
 		</div>
-		<div id="webview" class="webview" style="height:100%;transition: width 2s ease-in-out, left 2s ease-in-out;">
+		<div id="webview">
 			<div style="height:2em;position:relative;z-index:2;background-color:#bbbbbb;">
 				<img draggable="false" id="webbutton" class="fancybutton" src="/images/arrow-right.png" style="position:relative;margin-left:-2em;height:2em;transition:transform 1s;-webkit-filter: invert(100%);filter:invert(100%);transform:rotateY(180deg);" onclick="toggleWeb()"></img>
 				<img draggable="false" src="/images/back.png" class="fancybutton" style="height:2em;" onclick='document.getElementById("webviewframe").contentWindow.history.back()'/>

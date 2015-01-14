@@ -83,9 +83,13 @@ func main() {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	page.ExecuteTemplate(w, "ide.html", map[string]string{
-		"OutputSize": config["outputsize"],
+	err := page.ExecuteTemplate(w, "ide.html", map[string]string{
+		"OutputSize":      config["outputsize"],
+		"RaspiTransforms": config["raspitransforms"],
 	})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func ideJs(w http.ResponseWriter, r *http.Request) {
