@@ -25,11 +25,12 @@ var LASTFILE_FILE = VAR_DIR + "lastfile"
 
 var page, _ = template.New("index").ParseFiles(IDE_HTML)
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
-var users = make(map[string]string)
-var config = make(map[string]string)
+var users = make(map[string]string)  //Used to track users and their current file
+var config = make(map[string]string) //Used for settings
 
 func main() {
 	settings, err := ioutil.ReadFile(SETTINGS_FILE)
+	//Process the settings file
 	if err == nil {
 		set := strings.Split(string(settings), "\n")
 		for _, line := range set {

@@ -105,6 +105,8 @@ window.onload = function() {
 		ide.style.height = ide.style.height.replace("2em", "2.5em");
 	}
 	filename = config.lastfile || "Untitled.py";
+	/* Create keybinding table:
+	keybindings[keyString] = function() { bindableFunction(); } */
 	for (i in config) {
 		var func = config[i].substring(0, 1).toLowerCase() + config[i].substring(1);
 		if (bindableFunc.indexOf(func) + 1) {
@@ -112,7 +114,7 @@ window.onload = function() {
 		}
 	}
 	if (GET("/api/listfiles").split("\n")[0] === "")
-		save(); //Create untitled document
+		save(); //Create untitled document if there are no documents
 	loadFile(filename);
 };
 
@@ -122,6 +124,7 @@ window.onbeforeunload = function() {
 	changeSocket.close();
 };
 
+//Process keybindings
 window.onkeydown = function(k) {
 	var keyseq = "";
 	if (k.ctrlKey || k.metaKey)
@@ -132,29 +135,32 @@ window.onkeydown = function(k) {
 		keyseq += "alt+";
 	keyseq += String.fromCharCode(k.keyCode).toLowerCase();
 	if (keybindings[keyseq]) {
-		k.preventDefault();
+		k.preventDefault(); //Used to prevent default action...duh.
 		keybindings[keyseq]();
-		return false;
+		return false; //Used to prevent default action
 	}
 }
 
-//Called when the header is clicked
+//Focus on the editor when the header is clicked
 function headerClick() {
 	if (back == null)
 		editor.focus();
 }
 
+//Set's the title text and sets to width of the title which is used for centering.
 function setTitle(text) {
 	titleHolder.innerHTML = text.replace(/-/g, " ");
-	titleHolder.style.width = (titleHolder.innerHTML.length * 0.667) + "em";
+	titleHolder.style.width = (titleHolder.innerHTML.length*(1/3)) + "em";
 }
 
+//Used to replicate hover actions on buttons for keyboard controls.
 var currButton;
 function unhover() {
 	if (currButton)
 		currButton.className = currButton.className.replace("_hover", "");
 }
 
+//Used to replicate hover actions on buttons for keyboard controls.
 function hover(button) {
 	if (back == null) return;
 	unhover();
@@ -206,7 +212,7 @@ function enter() {
 		button.click();
 }
 
-//Handle generic keys
+//Handle generic keys, keybindings are handled in the window.onkeydown function
 function key(k) {
 	if (!document.getElementById("editfile"))
 		switch (k.keyCode) {
@@ -231,6 +237,7 @@ function setupButton(button, x, y) {
 	button.id = "Button" + x + "," + y;
 }
 
+//Send GET request to url
 function GET(url) {  
 	var req = new XMLHttpRequest();
 	req.open("GET", url, false);
@@ -238,6 +245,7 @@ function GET(url) {
 	return req.responseText;
 }
 
+//Send POST request to url, where args is a dictionary of arguments
 function POST(url, args) {  
 	argsActual = "";
 	for (var i in args)
@@ -250,6 +258,7 @@ function POST(url, args) {
 	return req.responseText;
 }
 
+//Saves the current file's contents to the server
 function save() {
 	if (changed) {
 		changed = false;
@@ -260,6 +269,7 @@ function save() {
 	}
 }
 
+//Sets the output text to text
 var linepos = 0; //Used for tracking \r position
 function setOutput(text) {
 	outputText.innerHTML = text;
@@ -451,6 +461,10 @@ function checkForSpaces(lnum) {
 	}
 }
 
+/*
+Handles changes in the file, used for sprite highlighting, space/tab conflicts,
+and updating other clients working on the same file.
+*/
 var last = null;
 function changeHandle(cm, change) {
 	if (!changed) {
