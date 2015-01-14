@@ -24,7 +24,7 @@ PYTHON=python3
 SETUP=$(PYTHON) setup.py
 PIP=pip-3.2
 
-PI=pi@raspberrypi
+PI=pi@raspberrypi.local
 RUNONPI=ssh $(SSHFLAGS) -q -t $(PI) "cd rsinstall;"
 
 PACKAGES=github.com/kr/pty code.google.com/p/go.net/websocket
