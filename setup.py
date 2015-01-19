@@ -67,12 +67,9 @@ def post_install():
     os.symlink(dest_bin, TGT_BIN_SYMLINK)
     os.chmod(TGT_BIN_SYMLINK, 0o4755)
 
-    if os.path.exists(TGT_CONFIG_FILE):
-        print('Config file exists - skipping copy')
-    else:
-        SRC_CONFIG_FILE = '.' + TGT_CONFIG_FILE
-        print('Copying config file {} -> {}', SRC_CONFIG_FILE, TGT_CONFIG_FILE)
-        shutil.copy(SRC_CONFIG_FILE, TGT_CONFIG_FILE)
+    SRC_CONFIG_FILE = '.' + TGT_CONFIG_FILE
+    print('Copy config file {} -> {}'.format(SRC_CONFIG_FILE, TGT_CONFIG_FILE))
+    shutil.copy(SRC_CONFIG_FILE, TGT_CONFIG_FILE)
 
 # Post installation task to setup raspberry pi
 class install(_install):

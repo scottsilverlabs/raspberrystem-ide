@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-var SETTINGS_FILE = "/etc/ide/settings.conf"
+var SETTINGS_FILE = "/etc/rstem_ide.conf"
 var INSTALL_DIR = "/opt/raspberrystem/ide/"
 var IDE_HTML = INSTALL_DIR + "ide.html"
 var VAR_DIR = "/var/local/raspberrystem/ide/"
