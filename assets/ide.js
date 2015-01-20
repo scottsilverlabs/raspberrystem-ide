@@ -10,7 +10,7 @@ window.onload = function() {
 	if (window.MozWebSocket)
 		window.WebSocket = window.MozWebSocket;
 	if (document.location.host == "127.0.0.1")
-		document.getElementById("outputbutton").src = "/images/arrow-down.png"
+		document.getElementById("outputbutton").src = "/images/arrow-down.png";
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
 	outputHolder = document.getElementById("outputActual");
@@ -21,7 +21,7 @@ window.onload = function() {
 			ws.send(stdin.value + "\n");
 			stdin.value = "";
 		}
-	}
+	};
 	playButton = document.getElementById("play");
 	saveButton = document.getElementById("save");
 	saveButton.onclick = save;
@@ -37,7 +37,6 @@ window.onload = function() {
 		},
 		autofocus: true,
 		lineNumbers: true,
-		undoDepth: 20, //Default: 40
 		indentUnit: 4,
 		indentWithTabs: true,
 		matchBrackets: true,
@@ -64,8 +63,9 @@ window.onload = function() {
 		nodes[11].style.marginLeft = "-5.75em";
 		nodes[13].style.marginLeft = "-2em";
 		header.style.height = "2.6em";
+		var label;
 		for (i in leftButtons) {
-			var label = document.createElement("div");
+			label = document.createElement("div");
 			header.appendChild(label);
 			label.classList.add("buttonlabel");
 			label.innerHTML = leftButtons[i];
@@ -139,11 +139,11 @@ window.onkeydown = function(k) {
 		keybindings[keyseq]();
 		return false; //Used to prevent default action
 	}
-}
+};
 
 //Focus on the editor when the header is clicked
 function headerClick() {
-	if (back == null)
+	if (back === null)
 		editor.focus();
 }
 
@@ -162,7 +162,7 @@ function unhover() {
 
 //Used to replicate hover actions on buttons for keyboard controls.
 function hover(button) {
-	if (back == null) return;
+	if (back === null) return;
 	unhover();
 	currButton = button;
 	currButton.scrollIntoViewIfNeeded(); //May throw off the main viewing frame
@@ -175,10 +175,10 @@ function hover(button) {
 
 var place = [0, 0]; //Place in list, standard x, y format
 var typePlace = 0; //For the new file prompt
-var types = ["py", "spr", "sh"]
+var types = ["py", "spr", "sh"];
 //Up/Down keys
 function updown(dir) {
-	if (back == null) return; //Check for popup
+	if (back === null) return; //Check for popup
 	place[1] += dir;
 	var button = document.getElementById("Button"+place[0]+","+place[1]);
 	if (button)
@@ -192,7 +192,7 @@ function updown(dir) {
 
 //Left/right keys
 function leftright(dir) {
-	if (back == null) return;
+	if (back === null) return;
 	place[0] += dir;
 	var button = document.getElementById("Button"+place[0]+","+place[1]);
 	if (button)
@@ -206,7 +206,7 @@ function leftright(dir) {
 
 //Enter key
 function enter() {
-	if (back == null) return;
+	if (back === null) return;
 	var button = document.getElementById("Button"+place[0]+","+place[1]);
 	if (button)
 		button.click();
@@ -293,7 +293,7 @@ function appendOutput(text) {
 		var chr = text.substring(i, i + 1);
 		i++;
 		if (chr == "\r") {
-			console.log("\\r:"+i)
+			console.log("\\r:"+i);
 			linepos = 0;
 		} else if (chr == "\f") {
 			lastline = "";
@@ -322,17 +322,20 @@ function errorHighlight() {
 	var lines = errString.split("\n");
 	var errors = errString.match(errRegex) || [];
 	var offset = 0;
+	var line, start, end, lnum;
+
 	if (editor.lineInfo(0).text.substring(0, 2) != "#!")
 		offset = 1;
 	for (var i in errors) {
 		var err = errors[i];
 		var errLines = err.split("\n");
 		var errLinePos = errLines[0].split(", ")[1].substring(5);
-		var line = editor.lineInfo(errLinePos - 1 - offset);
+		line = editor.lineInfo(errLinePos - 1 - offset);
 		var stripped = errLines[1].replace(stripRegex, "");
 		var match = line.text.indexOf(stripped);
 		var start = {"line": errLinePos-1, "ch": match};
-		var end = {"line": errLinePos-1, "ch": match+stripped.length};
+		end = {"line": errLinePos-1, "ch": match+stripped.length};
+
 		errs.push(editor.markText(start, end, {
 			className: "cm-error",
 			clearOnEnter: true,
@@ -347,24 +350,24 @@ function errorHighlight() {
 	for (var j = 0; traces && j < traces.length; j++) {
 		var split = traces[j].split("\n");
 		var message = split[0];
-		for (var i = 1; i < split.length-1; i++) {
-			var line = split[i];
+		for (i = 1; i < split.length-1; i++) {
+			line = split[i];
 			if (i%2 !== 0) {
-				var end = 0;
+				end = 0;
 				for (var k = 8; k < line.length; k++)
 					if (line.substr(k, 1) == "\"")
 						end = k;
-				message += "\n"+line.substring(0, 8) + "<span class=\"cm-variable\">"
-					+line.substring(8, end) + "</span>";
+				message += "\n"+line.substring(0, 8) + "<span class=\"cm-variable\">" +
+					line.substring(8, end) + "</span>";
 				var nextend = end+8;
 				while (parseInt(line.substr(nextend, 1)) || line.substr(nextend, 1) == "0")
 					nextend++;
-				message += line.substring(end, end+8) + "<span class=\"cm-variable\">"
-					+ line.substring(end+8, nextend) + "</span>" + line.substring(nextend);
+				message += line.substring(end, end+8) + "<span class=\"cm-variable\">" +
+					line.substring(end+8, nextend) + "</span>" + line.substring(nextend);
 				if (line.substring(end-filename.length, end) == filename) {
-					var lnum = parseInt(line.substring(end + 8, nextend)) - 1 - offset;
-					var start = {"line": lnum, "ch": 0};
-					var end = {"line": lnum, "ch": editor.getLine(lnum).length};
+					lnum = parseInt(line.substring(end + 8, nextend)) - 1 - offset;
+					start = {"line": lnum, "ch": 0};
+					end = {"line": lnum, "ch": editor.getLine(lnum).length};
 					errs.push(editor.markText(start, end, {
 						className: "cm-error",
 						clearOnEnter: true,
@@ -376,7 +379,7 @@ function errorHighlight() {
 				message += "\n"+"<span class=\"cm-variable\">"+line+"</span>";
 			}
 		}
-		message += "\n"+split[split.length - 1]
+		message += "\n"+split[split.length - 1];
 		setOutput(outputText.innerHTML.replace(traces[j], 
 			"<span style=\"color:red;\">" + message + "</span>"));
 	}
@@ -386,7 +389,7 @@ function errorHighlight() {
 function sprColor(change) {
 	var baseline = change.from.line;
 	var ldiff = change.to.line - change.from.line;
-	if (ldiff == 0 && change.text.length == 2) {
+	if (ldiff === 0 && change.text.length == 2) {
 		var marks = editor.findMarksAt({line: baseline+1, ch: 0});
 		for (var i = 0; i < marks.length; i++)
 			marks[i].clear();
@@ -433,11 +436,11 @@ function sprColor(change) {
 }
 
 //Checks the line designated by lnum for space/tab conflicts
-var errTags = {}
+var errTags = {};
 function checkForSpaces(lnum) {
 	var start = 0;
 	var line = editor.getLine(lnum);
-	if (errTags[lnum] == undefined)
+	if (errTags[lnum] === undefined)
 		errTags[lnum] = [];
 	var a;
 	while (a = errTags[lnum].pop())
@@ -480,8 +483,8 @@ function changeHandle(cm, change) {
 		var text = "";
 		for (var i in change.text)
 			text += "\n"+change.text[i];
-		changeSocket.send("CIF:" + change.from.line + "," + change.from.ch + ","
-			+ change.to.line + "," + change.to.ch + "," + text.substring(1));
+		changeSocket.send("CIF:" + change.from.line + "," + change.from.ch + "," +
+			change.to.line + "," + change.to.ch + "," + text.substring(1));
 	} else {
 		last = null;
 	}
@@ -600,10 +603,10 @@ function runSpr() {
 		var line = lines[i].split(" ");
 		valhtml += "<div style=\"margin-bottom:0.2em;\">";
 		for (var j in line) {
-			if (line[j] !== "" && (line[j].match(sprColorRegex) === null
-				|| line[j].match(sprColorRegex)[0] != line[j])) {
-				appendOutput("<span style=\"color:red;\">ERROR at line "
-					 + (parseInt(i)+1)+": invalid color \""+line[j]+"\"");
+			if (line[j] !== "" && (line[j].match(sprColorRegex) === null ||
+				line[j].match(sprColorRegex)[0] != line[j])) {
+				appendOutput("<span style=\"color:red;\">ERROR at line " +
+					(parseInt(i)+1)+": invalid color \""+line[j]+"\"");
 				return;
 			} else if (line[j] !== "") {
 				if (line[j] == "-")
@@ -634,7 +637,7 @@ function run() {
 					i = 0;
 					setTitle("STARTING");
 				}
-			}, 500)
+			}, 500);
 		} else {
 			runSpr();
 		}
@@ -651,7 +654,7 @@ function toggleWeb() {
 	webShowing = !webShowing;
 	if (webShowing) {
 		if (document.location.host == "127.0.0.1")
-			button.src = "/images/arrow-right.png"
+			button.src = "/images/arrow-right.png";
 		else
 			button.style.transform = "rotateY(0deg)";
 		title.className = "headertextRight"; //classList.remove wasn't working in Chromium
@@ -660,7 +663,7 @@ function toggleWeb() {
 		web.style.left = "50%";
 	} else {
 		if (document.location.host == "127.0.0.1")
-			button.src = "/images/arrow-left.png"
+			button.src = "/images/arrow-left.png";
 		else
 			button.style.transform = "rotateY(180deg)";
 		title.className = "headertextCenter";
@@ -674,7 +677,7 @@ function toggleWeb() {
 //Removes popups
 var popup, text, menu;
 function removePopup() {
-	if (back != null) {
+	if (back !== null) {
 		back.parentNode.removeChild(back);
 		popup.parentNode.removeChild(popup);
 		var button = document.getElementById("Button0,0");
@@ -807,7 +810,7 @@ function editFile(fname) {
 			num++;
 			dupname = cutfname + num + ext;
 		}
-		POST("/api/copyfile", {"from": fname, "to": dupname})
+		POST("/api/copyfile", {"from": fname, "to": dupname});
 		removePopup();
 		openFile();
 	};
@@ -835,22 +838,22 @@ function editFile(fname) {
 	okay.style.top = "-4.9em";
 	setupButton(okay, 3, 0);
 	okay.onclick = function() {
-		tval = text.value.replace(/ /g, "-")
+		tval = text.value.replace(/ /g, "-");
 		if (tval != fname) {
 			var files = GET("/api/listfiles").split("\n");
 			if (files.indexOf(tval) != -1) {
 				ynPrompt("Overwrite", "Overwrite " + tval, function() {
-					POST("/api/copyfile", {"from": fname, "to": tval})
-					POST("/api/deletefile", {"file": fname})
+					POST("/api/copyfile", {"from": fname, "to": tval});
+					POST("/api/deletefile", {"file": fname});
 					removePopup();
 					openFile();
 				},
 				function() {
 					editFile(fname);
-				})
+				});
 			} else {
-				POST("/api/copyfile", {"from": fname, "to": tval})
-				POST("/api/deletefile", {"file": fname})
+				POST("/api/copyfile", {"from": fname, "to": tval});
+				POST("/api/deletefile", {"file": fname});
 				removePopup();
 				openFile();
 			}
@@ -871,7 +874,7 @@ function newFile() {
 	if (files.indexOf(fname) != -1) {
 		var i = 1;
 		while (files.indexOf("Untitled"+(++i)+".py") != -1);
-		fname = "Untitled"+i+".py"
+		fname = "Untitled" + i + ".py";
 	}
 	POST("/api/savefile", {"file": fname, "content": ""});
 	openFile();
@@ -903,14 +906,14 @@ function loading(titletext, bodyText) {
 	text.classList.add("deletetext");
 	text.innerHTML = bodyText;
 	var i = 0;
-	return 0;
-	return setInterval(function() {
+	return
+	/*return setInterval(function() {
 		text.innerHTML += ".";
 		if (++i == 3) {
 			text.innerHTML = bodyText;
 			i = 0;
 		}
-	}, 500);
+	}, 500);*/
 }
 
 //Called when a file div is clicked in the open file popup
@@ -955,7 +958,7 @@ function loadFile(fname) {
 
 //Open file popup
 function openFile(button) {
-	if (back != null)
+	if (back !== null)
 		removePopup();
 	if (button)
 		save();
@@ -1046,7 +1049,7 @@ function setTheme(obj) {
 
 //Called by the change theme button
 function changeTheme() {
-	if (back != null)
+	if (back !== null)
 		removePopup();
 	back = document.createElement("div");
 	document.body.appendChild(back);
@@ -1076,7 +1079,7 @@ function changeTheme() {
 		fileholder.appendChild(filediv);
 		filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "");
 		filediv.classList.add("filebutton");
-		if (i == 0)
+		if (i === 0)
 			filediv.style.marginTop = "0";
 		setupButton(filediv, 0, i);
 		filediv.onclick = function() { setTheme(this); };
@@ -1100,7 +1103,7 @@ function toggleOutput() {
 	if (!outputOpen) {
 		outputPos = outputHolder.scrollTop;
 		if (document.location.host == "127.0.0.1")
-			button.src = "/images/arrow-up.png"
+			button.src = "/images/arrow-up.png";
 		else
 			button.style.transform = "rotateZ(-90deg)";
 		button.style.marginTop = "-5em";
@@ -1111,7 +1114,7 @@ function toggleOutput() {
 		setTimeout(function() { ide.scrollIntoViewIfNeeded(); }, 10);
 	} else {
 		if (document.location.host == "127.0.0.1")
-					button.src = "/images/arrow-down.png"
+					button.src = "/images/arrow-down.png";
 		else
 			button.style.transform = "rotateZ(90deg)";
 		button.style.marginTop = "-3em";
@@ -1125,7 +1128,7 @@ function toggleOutput() {
 }
 
 function outFocus() {
-	if (ws == null)
+	if (ws === null)
 		editor.focus();
 	else
 		stdin.focus();
