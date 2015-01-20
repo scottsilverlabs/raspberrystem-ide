@@ -1117,7 +1117,7 @@ function toggleOutput() {
 					button.src = "/assets/images/arrow-down.png";
 		else
 			button.style.transform = "rotateZ(90deg)";
-		button.style.marginTop = "-3em";
+		button.style.marginTop = "-2.75em";
 		output.classList.remove("outputClosed");
 		output.classList.add("outputOpen");
 		codewrapper.classList.remove("codeLong");
