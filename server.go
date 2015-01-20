@@ -58,11 +58,6 @@ func main() {
 	}
 	os.Mkdir(config["projectdir"], 0775)
 	http.HandleFunc("/", index) //All requests to / and 404s will route to Index
-	http.HandleFunc("/ide.js", ideJs)
-	http.HandleFunc("/cm.js", cmJs)
-	http.HandleFunc("/cm.css", cmCss)
-	http.HandleFunc("/python.js", pythonMode)
-	http.HandleFunc("/shell.js", shellMode)
 	http.HandleFunc("/api/listfiles", listFiles)
 	http.HandleFunc("/api/listthemes", listThemes)
 	http.HandleFunc("/api/readfile", readFile)
@@ -74,8 +69,7 @@ func main() {
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
 	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir(WEBSITE_DIR))))
-	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir(INSTALL_DIR+"assets/images"))))
-	http.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir(INSTALL_DIR+"assets/themes"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(INSTALL_DIR+"assets"))))
 	err = http.ListenAndServe(":"+config["port"], nil)
 	if err != nil {
 		panic(err)
@@ -90,26 +84,6 @@ func index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func ideJs(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, INSTALL_DIR+"assets/ide.js")
-}
-
-func cmJs(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, INSTALL_DIR+"assets/cmirror/codemirror.js")
-}
-
-func cmCss(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, INSTALL_DIR+"assets/cmirror/codemirror.css")
-}
-
-func pythonMode(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, INSTALL_DIR+"assets/cmirror/python.js")
-}
-
-func shellMode(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, INSTALL_DIR+"assets/cmirror/shell.js")
 }
 
 //Lists all files in the projects directory

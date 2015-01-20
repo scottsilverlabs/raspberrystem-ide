@@ -10,7 +10,7 @@ window.onload = function() {
 	if (window.MozWebSocket)
 		window.WebSocket = window.MozWebSocket;
 	if (document.location.host == "127.0.0.1")
-		document.getElementById("outputbutton").src = "/images/arrow-down.png";
+		document.getElementById("outputbutton").src = "/assets/images/arrow-down.png";
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
 	outputHolder = document.getElementById("outputActual");
@@ -262,7 +262,7 @@ function POST(url, args) {
 function save() {
 	if (changed) {
 		changed = false;
-		saveButton.src = "/images/savegray.png";
+		saveButton.src = "/assets/images/savegray.png";
 		saveButton.style.cursor = "initial";
 		if (filename !== "")
 			POST("/api/savefile", {"file": filename, "content": editor.getValue()});
@@ -472,7 +472,7 @@ var last = null;
 function changeHandle(cm, change) {
 	if (!changed) {
 		changed = true;
-		saveButton.src = "/images/save.png";
+		saveButton.src = "/assets/images/save.png";
 		saveButton.style.cursor = "";
 	}
 	if (type == "spr")
@@ -504,7 +504,7 @@ function socket() {
 	ws.onclose = function(event) {
 		ws = null;
 		errorHighlight();
-		playButton.src = "/images/play.png";
+		playButton.src = "/assets/images/play.png";
 		setTitle(titleText);
 		stdin.style.width = "0";
 		//Remove trailing \n
@@ -630,7 +630,7 @@ function run() {
 			stdin.style.width = "100%";
 			var i = 0;
 			setTitle("STARTING");
-			playButton.src = "/images/stop.png";
+			playButton.src = "/assets/images/stop.png";
 			loopID = setInterval(function() {
 				setTitle(title.innerHTML + ".");
 				if (++i == 3) {
@@ -654,7 +654,7 @@ function toggleWeb() {
 	webShowing = !webShowing;
 	if (webShowing) {
 		if (document.location.host == "127.0.0.1")
-			button.src = "/images/arrow-right.png";
+			button.src = "/assets/images/arrow-right.png";
 		else
 			button.style.transform = "rotateY(0deg)";
 		title.className = "headertextRight"; //classList.remove wasn't working in Chromium
@@ -663,7 +663,7 @@ function toggleWeb() {
 		web.style.left = "50%";
 	} else {
 		if (document.location.host == "127.0.0.1")
-			button.src = "/images/arrow-left.png";
+			button.src = "/assets/images/arrow-left.png";
 		else
 			button.style.transform = "rotateY(180deg)";
 		title.className = "headertextCenter";
@@ -951,7 +951,7 @@ function loadFile(fname) {
 			setTimeout(5000, function() { changeSocket.send("COF:" + filename); });
 	clearInterval(intID);
 	removePopup();
-	saveButton.src = "/images/savegray.png";
+	saveButton.src = "/assets/images/savegray.png";
 	saveButton.style.cursor = "initial";
 	changed = false;
 }
@@ -1017,7 +1017,7 @@ function openFile(button) {
 		setupButton(filediv, 0, parseInt(i) + 1);
 		var pencilDiv = document.createElement("img");
 		fileholder.appendChild(pencilDiv);
-		pencilDiv.src = "/images/pencil.png";
+		pencilDiv.src = "/assets/images/pencil.png";
 		pencilDiv.classList.add("pencilbutton");
 		pencilDiv.draggable = false;
 		setupButton(pencilDiv, 1, parseInt(i) + 1);
@@ -1103,7 +1103,7 @@ function toggleOutput() {
 	if (!outputOpen) {
 		outputPos = outputHolder.scrollTop;
 		if (document.location.host == "127.0.0.1")
-			button.src = "/images/arrow-up.png";
+			button.src = "/assets/images/arrow-up.png";
 		else
 			button.style.transform = "rotateZ(-90deg)";
 		button.style.marginTop = "-5em";
@@ -1114,7 +1114,7 @@ function toggleOutput() {
 		setTimeout(function() { ide.scrollIntoViewIfNeeded(); }, 10);
 	} else {
 		if (document.location.host == "127.0.0.1")
-					button.src = "/images/arrow-down.png";
+					button.src = "/assets/images/arrow-down.png";
 		else
 			button.style.transform = "rotateZ(90deg)";
 		button.style.marginTop = "-3em";
