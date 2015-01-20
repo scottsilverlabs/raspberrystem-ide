@@ -14,6 +14,7 @@ body {
 header {
     height: 2em;
     color: #fff;
+    -ms-user-select: none;
     -moz-user-select: none;
     -webkit-user-select: none;
     user-select:none;
@@ -100,6 +101,7 @@ header {
     left: 50%;
     top: 50%;
     border-radius: 4px;
+    -ms-user-select: none;
     -moz-user-select: none;
     -webkit-user-select: none;
     user-select:none;
@@ -198,7 +200,7 @@ header {
     background-color: inherit;
     margin: 15px;
     left: 0;
-    top: 0%;
+    top: 0;
     width: auto;
     height: 205px;
     overflow-y: auto;
