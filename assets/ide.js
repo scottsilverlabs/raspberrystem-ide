@@ -245,6 +245,17 @@ function GET(url) {
 	return req.responseText;
 }
 
+//Send Async GET request to url
+function asyncGET(url, callback) {
+	var req = new XMLHttpRequest();
+	req.onreadystatechange = function() {
+		if (req.readyState == 4)
+			callback(req.responseText);
+	};
+	req.open("GET", url, true);
+	req.send(null);
+}
+
 //Send POST request to url, where args is a dictionary of arguments
 function POST(url, args) {  
 	argsActual = "";
@@ -482,7 +493,7 @@ function changeHandle(cm, change) {
 	if (changeSocket !== null && last === null && change.origin != "setValue") {
 		var text = "";
 		for (var i in change.text)
-			text += "\n"+change.text[i];
+			text += "\n" + change.text[i];
 		changeSocket.send("CIF:" + change.from.line + "," + change.from.ch + "," +
 			change.to.line + "," + change.to.ch + "," + text.substring(1));
 	} else {
@@ -566,7 +577,7 @@ function changeSocketInit() {
 		message = event.data;
 		if (message == "FILE") {
 			var pos = editor.getCursor();
-			changeSocket.send("FILE:"+editor.getValue());
+			changeSocket.send("FILE:" + editor.getValue());
 			editor.setCursor(pos);
 		} else if (message.substring(0, 5) == "FILE:") {
 			editor.setValue(message.substring(5));
@@ -677,7 +688,7 @@ function toggleWeb() {
 //Removes popups
 var popup, text, menu;
 function removePopup() {
-	if (back !== null) {
+	if (back != null) {
 		back.parentNode.removeChild(back);
 		popup.parentNode.removeChild(popup);
 		var button = document.getElementById("Button0,0");
@@ -892,6 +903,7 @@ function loading(titletext, bodyText) {
 	popup = document.createElement("div");
 	document.body.appendChild(popup);
 	popup.classList.add("filepopup");
+	popup.style.height = "60px";
 	popup.classList.add("popup");
 
 	var title = document.createElement("h1");
@@ -906,14 +918,13 @@ function loading(titletext, bodyText) {
 	text.classList.add("deletetext");
 	text.innerHTML = bodyText;
 	var i = 0;
-	return
-	/*return setInterval(function() {
+	return setInterval(function() {
 		text.innerHTML += ".";
 		if (++i == 3) {
 			text.innerHTML = bodyText;
 			i = 0;
 		}
-	}, 500);*/
+	}, 500);
 }
 
 //Called when a file div is clicked in the open file popup
@@ -933,107 +944,114 @@ function loadFile(fname) {
 		editor.setOption("mode", "shell");
 	setTitle(fname);
 	titleText = fname;
-	var contents = GET("/api/readfile?file=" + filename);
-	editor.setValue(contents);
-	if (type == "spr") {
-		editor.setOption("mode", null);
-		var lines = editor.lineCount();
-		sprColor({
-			from: {line: 0, ch: 0},
-			to: {line: lines-1, ch: editor.getLine(lines - 1).length},
-			text: "abcd",
-		});
-	}
-	if (changeSocket !== null)
-		if (changeSocket.readyState == 1)
-			changeSocket.send("COF:" + filename);
-		else
-			setTimeout(5000, function() { changeSocket.send("COF:" + filename); });
-	clearInterval(intID);
-	removePopup();
-	saveButton.src = "/assets/images/savegray.png";
-	saveButton.style.cursor = "initial";
-	changed = false;
+	asyncGET("/api/readfile?file=" + filename, function(content) {
+		editor.setValue(content);
+		if (type == "spr") {
+			editor.setOption("mode", null);
+			var lines = editor.lineCount();
+			sprColor({
+				from: {line: 0, ch: 0},
+				to: {line: lines-1, ch: editor.getLine(lines - 1).length},
+				text: "abcd",
+			});
+		}
+		if (changeSocket !== null)
+			if (changeSocket.readyState == 1)
+				changeSocket.send("COF:" + filename);
+			else
+				setTimeout(5000, function() { changeSocket.send("COF:" + filename); });
+		console.log(intID);
+		clearInterval(intID);
+		console.log("Cleared");
+		removePopup();
+		saveButton.src = "/assets/images/savegray.png";
+		saveButton.style.cursor = "initial";
+		changed = false;
+	});
 }
 
 //Open file popup
 function openFile(button) {
-	if (back !== null)
+	var loopID = loading("Loading", "Generating theme list");
+	asyncGET("api/listfiles", function(response) {
+		console.log(response);
+		if (button)
+			save();
+		clearInterval(loopID);
 		removePopup();
-	if (button)
-		save();
-	back = document.createElement("div");
-	document.body.appendChild(back);
-	back.classList.add("holder");
-	back.focus();
+		back = document.createElement("div");
+		document.body.appendChild(back);
+		back.classList.add("holder");
+		back.focus();
 
-	popup = document.createElement("div");
-	document.body.appendChild(popup);
-	popup.classList.add("folderpopup");
-	popup.classList.add("popup");
-	back.onclick = removePopup;
+		popup = document.createElement("div");
+		document.body.appendChild(popup);
+		popup.classList.add("folderpopup");
+		popup.classList.add("popup");
+		back.onclick = removePopup;
 
-	var title = document.createElement("h1");
-	popup.appendChild(title);
-	title.classList.add("popuptitle");
-	title.classList.add("maincolor");
-	title.innerHTML = "Select File";
+		var title = document.createElement("h1");
+		popup.appendChild(title);
+		title.classList.add("popuptitle");
+		title.classList.add("maincolor");
+		title.innerHTML = "Select File";
 
-	var fileholder = document.createElement("div");
-	popup.appendChild(fileholder);
-	fileholder.classList.add("fileholder");
+		var fileholder = document.createElement("div");
+		popup.appendChild(fileholder);
+		fileholder.classList.add("fileholder");
 
-	var newfile = document.createElement("div");
-	fileholder.appendChild(newfile);
-	newfile.innerHTML = "-- New File --";
-	newfile.classList.add("newfilebutton");
-	newfile.classList.add("filebutton");
-	newfile.onclick = newFile;
-	setupButton(newfile, 0, 0);
+		var newfile = document.createElement("div");
+		fileholder.appendChild(newfile);
+		newfile.innerHTML = "-- New File --";
+		newfile.classList.add("newfilebutton");
+		newfile.classList.add("filebutton");
+		newfile.onclick = newFile;
+		setupButton(newfile, 0, 0);
 
-	var files = GET("/api/listfiles").split("\n");
-	//Force lower capitalized files to their correct sort position
-	var caps = [];
-	for (var i in files) {
-		if (files[i].substring(0, 1) == files[i].substring(0, 1).toUpperCase()) {
-			caps = caps.concat(files[i]);
-			files[i] = files[i].toLowerCase()+"_;";
+		var files = response.split("\n");
+		//Force lower capitalized files to their correct sort position
+		var caps = [];
+		for (var i in files) {
+			if (files[i].substring(0, 1) == files[i].substring(0, 1).toUpperCase()) {
+				caps = caps.concat(files[i]);
+				files[i] = files[i].toLowerCase()+"_;";
+			}
 		}
-	}
-	files.sort();
-	for (i in caps) {
-		var index = files.indexOf(caps[i].toLowerCase()+"_;");
-		files[index] = caps[i];
-	}
-	//Populate div
-	for (i in files) {
-		var filediv = document.createElement("div");
-		fileholder.appendChild(filediv);
-		filediv.innerHTML = files[i].replace(/-/g, " ");
-		filediv.classList.add("filebutton");
-		filediv.onclick = function() {
-			loadFile(this.innerHTML);
-		};
-		setupButton(filediv, 0, parseInt(i) + 1);
-		var pencilDiv = document.createElement("img");
-		fileholder.appendChild(pencilDiv);
-		pencilDiv.src = "/assets/images/pencil.png";
-		pencilDiv.classList.add("pencilbutton");
-		pencilDiv.draggable = false;
-		setupButton(pencilDiv, 1, parseInt(i) + 1);
-		pencilDiv.onclick = new Function("editFile(\""+files[i]+"\")");
-	}
+		files.sort();
+		for (i in caps) {
+			var index = files.indexOf(caps[i].toLowerCase()+"_;");
+			files[index] = caps[i];
+		}
+		//Populate div
+		for (i in files) {
+			var filediv = document.createElement("div");
+			fileholder.appendChild(filediv);
+			filediv.innerHTML = files[i].replace(/-/g, " ");
+			filediv.classList.add("filebutton");
+			filediv.onclick = function() {
+				loadFile(this.innerHTML);
+			};
+			setupButton(filediv, 0, parseInt(i) + 1);
+			var pencilDiv = document.createElement("img");
+			fileholder.appendChild(pencilDiv);
+			pencilDiv.src = "/assets/images/pencil.png";
+			pencilDiv.classList.add("pencilbutton");
+			pencilDiv.draggable = false;
+			setupButton(pencilDiv, 1, parseInt(i) + 1);
+			pencilDiv.onclick = new Function("editFile(\""+files[i]+"\")");
+		}
 
-	var cancel = document.createElement("div");
-	popup.appendChild(cancel);
-	setupButton(cancel, 0, files.length + 1);
-	cancel.innerHTML = "Cancel";
-	cancel.classList.add("button");
-	cancel.style.position = "relative";
-	cancel.style.marginTop = "-5px";
-	cancel.style.width = "25%";
-	cancel.style.left = "37.5%";
-	cancel.onclick = removePopup;
+		var cancel = document.createElement("div");
+		popup.appendChild(cancel);
+		setupButton(cancel, 0, files.length + 1);
+		cancel.innerHTML = "Cancel";
+		cancel.classList.add("button");
+		cancel.style.position = "relative";
+		cancel.style.marginTop = "-5px";
+		cancel.style.width = "25%";
+		cancel.style.left = "37.5%";
+		cancel.onclick = removePopup;
+	});
 }
 
 //Called when a div is clicked in the change theme function
@@ -1049,51 +1067,55 @@ function setTheme(obj) {
 
 //Called by the change theme button
 function changeTheme() {
-	if (back !== null)
+	removePopup();
+	var loopID = loading("Loading", "Generating theme list");
+	asyncGET("api/listthemes", function(response) {
+		clearInterval(loopID);
 		removePopup();
-	back = document.createElement("div");
-	document.body.appendChild(back);
-	back.classList.add("holder");
-	back.focus();
+		back = document.createElement("div");
+		document.body.appendChild(back);
+		back.classList.add("holder");
+		back.focus();
 
-	popup = document.createElement("div");
-	document.body.appendChild(popup);
-	popup.classList.add("folderpopup");
-	popup.classList.add("popup");
-	back.onclick = removePopup;
+		popup = document.createElement("div");
+		document.body.appendChild(popup);
+		popup.classList.add("folderpopup");
+		popup.classList.add("popup");
+		back.onclick = removePopup;
 
-	var title = document.createElement("h1");
-	popup.appendChild(title);
-	title.classList.add("popuptitle");
-	title.classList.add("maincolor");
-	title.innerHTML = "Select Theme";
+		var title = document.createElement("h1");
+		popup.appendChild(title);
+		title.classList.add("popuptitle");
+		title.classList.add("maincolor");
+		title.innerHTML = "Select Theme";
 
-	var fileholder = document.createElement("div");
-	popup.appendChild(fileholder);
-	fileholder.classList.add("fileholder");
+		var fileholder = document.createElement("div");
+		popup.appendChild(fileholder);
+		fileholder.classList.add("fileholder");
 
-	//Files
-	files = GET("/api/listthemes").split("\n");
-	for (var i in files) {
-		var filediv = document.createElement("div");
-		fileholder.appendChild(filediv);
-		filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "");
-		filediv.classList.add("filebutton");
-		if (i === 0)
-			filediv.style.marginTop = "0";
-		setupButton(filediv, 0, i);
-		filediv.onclick = function() { setTheme(this); };
-	}
+		//Files
+		files = response.split("\n");
+		for (var i in files) {
+			var filediv = document.createElement("div");
+			fileholder.appendChild(filediv);
+			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "");
+			filediv.classList.add("filebutton");
+			if (i === 0)
+				filediv.style.marginTop = "0";
+			setupButton(filediv, 0, i);
+			filediv.onclick = function() { setTheme(this); };
+		}
 
-	var cancel = document.createElement("div");
-	popup.appendChild(cancel);
-	cancel.innerHTML = "Cancel";
-	cancel.classList.add("button");
-	cancel.style.position = "relative";
-	cancel.style.marginTop = "-5px";
-	cancel.style.width = "25%";
-	cancel.style.left = "37.5%";
-	cancel.onclick = removePopup;
+		var cancel = document.createElement("div");
+		popup.appendChild(cancel);
+		cancel.innerHTML = "Cancel";
+		cancel.classList.add("button");
+		cancel.style.position = "relative";
+		cancel.style.marginTop = "-5px";
+		cancel.style.width = "25%";
+		cancel.style.left = "37.5%";
+		cancel.onclick = removePopup;
+	});
 }
 
 outputOpen = true;

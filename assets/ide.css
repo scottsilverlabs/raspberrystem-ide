@@ -62,7 +62,7 @@ header {
     background-color: #000;
     opacity: 0.4;
     position: absolute;
-    z-index: 3;
+    z-index: 6;
     width: 100%;
     height: 100%;
     left: 0;
@@ -97,7 +97,7 @@ header {
 .popup {
     background-color: #eee;
     position: absolute;
-    z-index: 4;
+    z-index: 7;
     left: 50%;
     top: 50%;
     border-radius: 4px;
