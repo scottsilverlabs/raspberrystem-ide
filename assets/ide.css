@@ -12,7 +12,7 @@ body {
 }
 
 header {
-    height: 2em;
+    height: 3em;
     color: #fff;
     -ms-user-select: none;
     -moz-user-select: none;
@@ -35,8 +35,9 @@ header {
 }
 
 .headerbutton {
-    width: 1.75em;
-    height: 1.75em;
+    width: 2.25em;
+    height: 2.25em;
+    margin-top: 0.25em;
     position: relative;
     cursor: pointer;
     z-index: 2;
