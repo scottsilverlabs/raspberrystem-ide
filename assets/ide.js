@@ -1,6 +1,6 @@
 var run, save, GET, POST, changeHandle, changeSocket, openFile, removePopup,
 	changeSocketInit, toggleOutput, toggleWeb, changeTheme; //Function prototypes
-var config, outputOpen, outputPos, back, ws = null, titleText, filename, type, changed;
+var config, outputOpen, outputPos, back, ws = null, titleText, filename, type, changed, webShowing = false;
 var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme",
 	"openFile"];
 var leftButtons = ["Run", "Open File", "Save", "Theme"];
@@ -149,8 +149,13 @@ function headerClick() {
 
 //Set's the title text and sets to width of the title which is used for centering.
 function setTitle(text) {
+	var width = text.length*(2/3);
+	if (webShowing)
+		document.getElementById("running").style.marginLeft = "-" + (parseFloat(width) + 5) + "em";
+	else
+		document.getElementById("running").style.marginLeft = "-" + ((width/2) + 2) + "em";		
 	titleHolder.innerHTML = text.replace(/-/g, " ");
-	titleHolder.style.width = (titleHolder.innerHTML.length*(2/3)) + "em";
+	titleHolder.style.width = width + "em";
 }
 
 //Used to replicate hover actions on buttons for keyboard controls.
@@ -510,13 +515,12 @@ function socket() {
 		while ((a = errs.pop()) !== undefined)
 			a.clear();
 		ws.send(filename);
-		setTitle(titleText);
 	};
 	ws.onclose = function(event) {
 		ws = null;
 		errorHighlight();
 		playButton.src = "/assets/images/play.png";
-		setTitle(titleText);
+		document.getElementById("running").src = "/assets/images/rstemlogo.png";
 		stdin.style.width = "0";
 		//Remove trailing \n
 		var innerHTML = outputText.innerHTML;
@@ -526,10 +530,8 @@ function socket() {
 	};
 	ws.onmessage = function(event) {
 		message = event.data;
-		if (message == "started") {
-			clearInterval(loopID);
-			setTitle("RUNNING");
-		}
+		if (message == "started")
+			document.getElementById("running").src = "/assets/images/running.gif";
 		if (message.substring(0, 8) == "output: ") {
 			if (!outputOpen) {
 				outputPos = 0;
@@ -640,15 +642,7 @@ function run() {
 			socket();
 			stdin.style.width = "100%";
 			var i = 0;
-			setTitle("STARTING");
 			playButton.src = "/assets/images/stop.png";
-			loopID = setInterval(function() {
-				setTitle(title.innerHTML + ".");
-				if (++i == 3) {
-					i = 0;
-					setTitle("STARTING");
-				}
-			}, 500);
 		} else {
 			runSpr();
 		}
@@ -659,10 +653,10 @@ function run() {
 }
 
 //Called by the web button
-var webShowing = false;
 function toggleWeb() {
 	var button = document.getElementById("webbutton");
 	webShowing = !webShowing;
+	setTitle(title.innerHTML);
 	if (webShowing) {
 		if (document.location.host == "127.0.0.1")
 			button.src = "/assets/images/arrow-right.png";
