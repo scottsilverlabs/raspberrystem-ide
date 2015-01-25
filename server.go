@@ -28,6 +28,8 @@ var page, _ = template.New("index").ParseFiles(IDE_HTML)
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
 var users = make(map[string]string)  //Used to track users and their current file
 var config = make(map[string]string) //Used for settings
+var changeSockets = make(map[string][]*websocket.Conn)
+var lastSocket *websocket.Conn
 
 func main() {
 	settings, err := ioutil.ReadFile(SETTINGS_FILE)
@@ -145,14 +147,39 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	content := r.Form.Get("content")
 	lines := strings.Split(content, "\n")
 	ftype := strings.Split(name, ".")[len(strings.Split(name, "."))-1]
+
 	if len(lines[0]) < 2 || lines[0][0:2] != "#!" && config[ftype+"shebang"] != "" {
 		content = config[ftype+"shebang"] + "\n" + content
 	}
+	//Backup file
+	if stat, err := os.Stat(config["projectdir"] + name); err == nil {
+		os.Mkdir(config["projectdir"]+"."+name+".bak", os.ModeDir)
+		dir, _ := ioutil.ReadDir(config["projectdir"] + "." + name + ".bak")
+		size := stat.Size()
+		for _, v := range dir {
+			size += v.Size()
+		}
+		i := 0
+		//IEC standards be damned, 1MB will always be 2^20 bytes!
+		for size > 1048576 && i < len(dir) {
+			stat, _ = os.Stat(config["projectdir"] + "." + name + ".bak/" + strconv.Itoa(i+1))
+			size -= stat.Size()
+			os.Remove(config["projectdir"] + "." + name + ".bak/" + stat.Name())
+			i += 1
+		}
+		//Rename based on number of removes, if 1 got remove then 2 turns to 1, etc.
+		for _, v := range dir[i:] {
+			intname, _ := strconv.Atoi(v.Name())
+			os.Rename(config["projectdir"]+"."+name+".bak/"+v.Name(), config["projectdir"]+"."+name+".bak/"+strconv.Itoa(intname-i))
+		}
+		os.Rename(config["projectdir"]+name, config["projectdir"]+"."+name+".bak/"+strconv.Itoa(len(dir)-i+1))
+	}
+	//Write to file
 	file, _ := os.OpenFile(config["projectdir"]+name, os.O_CREATE|os.O_WRONLY, 0744)
-	file.Truncate(0)
 	file.WriteString(content)
 	file.Sync()
 	file.Close()
+	//Set last file
 	config["lastfile"] = name
 	file, _ = os.OpenFile(LASTFILE_FILE, os.O_CREATE|os.O_WRONLY, 0744)
 	file.Truncate(0)
@@ -167,6 +194,7 @@ func copyFile(w http.ResponseWriter, r *http.Request) {
 	to := strings.Trim(r.Form.Get("to"), " ./")
 	content, _ := ioutil.ReadFile(config["projectdir"] + from)
 	file, _ := os.OpenFile(config["projectdir"]+to, os.O_CREATE|os.O_WRONLY, 0744)
+
 	file.Truncate(0)
 	file.Write(content)
 	file.Sync()
@@ -248,9 +276,6 @@ func socketServer(s *websocket.Conn) {
 	com.Process.Wait()
 	s.Close()
 }
-
-var changeSockets = make(map[string][]*websocket.Conn)
-var lastSocket *websocket.Conn
 
 //Receives /api/change socket connections and manages concurrent editing
 func changeServer(s *websocket.Conn) {
