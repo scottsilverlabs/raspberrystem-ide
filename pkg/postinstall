@@ -1,0 +1,57 @@
+#!/bin/bash
+
+PKG_DIR=$1
+PKG_NAME=$2
+
+#
+# Enable boot to desktop...  Taken from http://github.com/asb/raspi-config
+#
+
+disable_raspi_config_at_boot() {
+  if [ -e /etc/profile.d/raspi-config.sh ]; then
+    rm -f /etc/profile.d/raspi-config.sh
+    sed -i /etc/inittab \
+      -e "s/^#\(.*\)#\s*RPICFG_TO_ENABLE\s*/\1/" \
+      -e "/#\s*RPICFG_TO_DISABLE/d"
+    telinit q
+  fi
+}
+
+disable_boot_to_scratch() {
+  if [ -e /etc/profile.d/boottoscratch.sh ]; then
+    rm -f /etc/profile.d/boottoscratch.sh
+    sed -i /etc/inittab \
+      -e "s/^#\(.*\)#\s*BTS_TO_ENABLE\s*/\1/" \
+      -e "/#\s*BTS_TO_DISABLE/d"
+    telinit q
+  fi
+}
+
+enable_boot_to_desktop() {
+    update-rc.d lightdm enable 2
+    sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
+    disable_boot_to_scratch
+    disable_raspi_config_at_boot
+}
+
+
+echo "Running postinstall script..."
+echo "  Enabling boot to desktop"
+
+enable_boot_to_desktop
+
+# Add server startup to boot
+update-rc.d rstem_ided enable 2
+
+# Autostart IDE client web browser
+echo "  Enabling autostart of IDE client..."
+IDE_LINE="@sh /opt/raspberrystem/ide/start_client.sh"
+AUTOSTART_CFG="/etc/xdg/lxsession/LXDE-pi/autostart"
+if ! grep -q "$IDE_LINE" "$AUTOSTART_CFG"; then
+    echo "$IDE_LINE" >> "$AUTOSTART_CFG"
+    echo "    ... now enabled."
+else
+    echo "    ... was already enabled."
+fi
+
+

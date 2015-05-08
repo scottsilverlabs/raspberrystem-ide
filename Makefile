@@ -16,7 +16,7 @@
 #		/opt/raspberrystem/ide - IDE server and resources
 #		/etc/rstem_ide.conf - IDE config
 #		/var/local/raspberrystem/ide/website - top-level html
-#		/usr/local/bin/rstem_ide_server - Link to IDE server
+#		/usr/local/bin/rstem_ided - Link to IDE server
 #	- Dependency of lesson plans pip install
 #	- Depends on raspberrystem pip install
 #
@@ -24,7 +24,7 @@ PYTHON=python3
 SETUP=$(PYTHON) setup.py
 PIP=pip-3.2
 
-PI=pi@raspberrypi.local
+PI=pi@raspberrypi
 RUNONPI=ssh $(SSHFLAGS) -q -t $(PI) "cd rsinstall;"
 
 PACKAGES=github.com/kr/pty code.google.com/p/go.net/websocket
@@ -38,7 +38,7 @@ DUMMY:=$(shell scripts/version.sh)
 NAME:=$(shell cat NAME)
 VER:=$(shell cat VERSION)
 
-IDE_SOURCE_FILES=$(shell git ls-files assets ide.html)
+IDE_SOURCE_FILES=$(shell git ls-files assets ide.html start_client.sh)
 # Final targets
 IDE_TAR:=$(abspath $(NAME)-$(VER).tar.gz)
 TARGETS=$(IDE_TAR)
@@ -70,8 +70,8 @@ $(PACKAGES):
 .PHONY: run targets clean install
 
 run:
-	$(RUNONPI) "(sudo killall rstem_ide_server; exit 0)"
-	$(RUNONPI) "sudo rstem_ide_server" &
+	$(RUNONPI) "(sudo killall rstem_ided; exit 0)"
+	$(RUNONPI) "sudo rstem_ided" &
 
 server: server.go | is_go_installed $(PACKAGES)
 	GOARCH=arm GOARM=5 GOOS=linux go build $<
@@ -108,66 +108,3 @@ clean:
 	rm -f $(TARGETS)
 	rm -rf $(GOPATH)
 
-#########################################################################
-# local targets
-#
-
-.PHONY: local local-install local-run
-
-local: is_go_installed $(PACKAGES)
-	go build ./server.go
-
-local-install:
-	cp ./server /usr/bin/ideserver
-	sudo mkdir -p /etc/ide
-	sudo mkdir -p /var/local/raspberrystem/ide/
-	sudo mkdir -p /opt/raspberrystem/ide/
-	sudo chmod 777 /etc/ide
-	cp -R sitescrape/website /etc/ide
-	cp -R assets /opt/raspberrystem/ide/
-	cp *.html /opt/raspberrystem/ide/
-	cp settings.conf /etc/ide/
-
-local-run:
-	go run ./server.go
-
-#########################################################################
-# Deprecated targets
-#
-
-.PHONY: old-install deb
-
-old-install:
-	- mkdir ./sitescrape/website
-	tar -czf payload.tar.gz \
-		./server ./assets ./ide.html ./settings.conf ./sitescrape/website
-	ssh $(PI) "\
-		sudo mkdir -p /etc/ide/; \
-		sudo chmod 777 /etc/ide; \
-		cd /etc/ide; tar -xzf -; \
-		sudo mv ./server /usr/bin/ideserver \
-		" < ./payload.tar.gz
-
-define sshpayload
-mkdir /tmp/builddir; \
-cd /tmp/builddir; \
-cat - > raspberrystem.tar.gz; \
-mkdir -p debian/DEBIAN; \
-mkdir -p debian/usr/bin; \
-mkdir -p debian/etc/ide; \
-tar -xzf raspberrystem.tar.gz; \
-mv debcontrol debian/DEBIAN/control; \
-mv server debian/usr/bin/ideserver; \
-mv assets debian/etc/ide; \
-mv sitescrape/website debian/etc/ide/; \
-mv settings.conf debian/etc/ide; \
-mv ide.html debian/etc/ide; \
-sudo dpkg-deb --build debian > /dev/null; \
-cat debian.deb;
-endef
-
-deb: server
-	- mkdir ./sitescrape/website
-	tar -czf payload.tar.gz ./server ./assets ./debcontrol ./ide.html ./settings.conf ./sitescrape/website
-	ssh $(PI) "$(sshpayload)" < payload.tar.gz > raspberrystem.deb
-	ssh $(PI) "sudo sudo rm -r /tmp/builddir"

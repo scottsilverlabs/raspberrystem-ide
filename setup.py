@@ -19,6 +19,7 @@ import sys
 from setuptools import setup, find_packages
 from setuptools.command.install import install as _install
 import shutil
+import subprocess
 
 # Utility function to read the README file.
 def read(fname):
@@ -27,15 +28,17 @@ def read(fname):
 TGT_INSTALL_DIR = '/opt/raspberrystem/ide'
 TGT_HTML_DIR = '/var/local/raspberrystem/ide/website'
 TGT_CONFIG_FILE = '/etc/rstem_ide.conf'
-TGT_BIN_SYMLINK = '/usr/local/bin/rstem_ide_server'
+TGT_BIN_SYMLINK = '/usr/local/bin/rstem_ided'
+TGT_INITD = '/etc/init.d/rstem_ided'
 outputs = [
     TGT_INSTALL_DIR,
     TGT_HTML_DIR,
     TGT_CONFIG_FILE,
     TGT_BIN_SYMLINK,
+    TGT_INITD,
     ]
 
-def post_install():
+def _post_install(dir):
     # import rstem to find its install path
     # NOTE: Require dependency on rstem
     import rstem
@@ -49,6 +52,7 @@ def post_install():
         shutil.copytree(os.path.basename(dir), dir)
 
     print('Creating links...')
+
     # API docs symlink
     api_symlink = os.path.join(TGT_HTML_DIR, 'api')
     try:
@@ -57,6 +61,7 @@ def post_install():
         pass
     print('  symlink {} -->\n    {}'.format(api_symlink, api_path))
     os.symlink(api_path, api_symlink)
+
     # server binary symlink
     try:
         os.remove(TGT_BIN_SYMLINK)
@@ -67,18 +72,31 @@ def post_install():
     os.symlink(dest_bin, TGT_BIN_SYMLINK)
     os.chmod(TGT_BIN_SYMLINK, 0o4755)
 
+    # Copy config file
     SRC_CONFIG_FILE = '.' + TGT_CONFIG_FILE
     print('Copy config file {} -> {}'.format(SRC_CONFIG_FILE, TGT_CONFIG_FILE))
     shutil.copy(SRC_CONFIG_FILE, TGT_CONFIG_FILE)
 
+    # Copy and create link for init script
+    SRC_INITD = '.' + TGT_INITD
+    print('Copy init.d script {} -> {}'.format(SRC_INITD, TGT_INITD))
+    shutil.copy(SRC_INITD, TGT_INITD)
+    os.chmod(TGT_INITD, 0o755)
+    # symlink is created via postinstall script
+
+    # Additional post install steps via shell script
+    from subprocess import call
+    call('bash ./pkg/postinstall %s rstem' % dir, shell=True)
+
 # Post installation task to setup raspberry pi
 class install(_install):
+    # Required to force PiP to know about our additional files.
     def get_outputs(self):
         return super().get_outputs() + outputs
 
     def run(self):
         super().run()
-        post_install()
+        self.execute(_post_install, (self.install_lib,), msg='Running post install task...')
 
 setup(
     name = read('NAME').strip(),
@@ -92,7 +110,7 @@ setup(
     long_description = read('README.md'),
     # use https://pypi.python.org/pypi?%3Aaction=list_classifiers as help when editing this
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Topic :: Education',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3.2',
