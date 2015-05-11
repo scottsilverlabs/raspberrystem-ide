@@ -48,6 +48,7 @@ GIT_FILES=$(shell git ls-files)
 
 .PHONY: all is_go_installed $(PACKAGES)
 
+# Default target
 all: $(TARGETS)
 
 #########################################################################
@@ -64,7 +65,7 @@ $(PACKAGES):
 	fi
 
 #########################################################################
-# Pi targets
+# Targets
 #
 
 .PHONY: run targets clean install
@@ -89,6 +90,12 @@ ide/server: server $(IDE_SOURCE_FILES)
 $(IDE_TAR): ide/server $(GIT_FILES)
 	$(SETUP) sdist
 	mv dist/$(notdir $@) $@
+
+upload:
+	$(SETUP) sdist upload
+
+register:
+	$(SETUP) register
 
 targets:
 	@echo $(TARGETS)
