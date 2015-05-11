@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 )
@@ -221,18 +220,16 @@ func configuration(w http.ResponseWriter, r *http.Request) {
 }
 
 //Called as a goroutine to wait for the close command and kill the process.
-func watchInput(s *websocket.Conn, p *os.Process, pt *os.File, mut *sync.Mutex, run *bool) {
+func watchInput(s *websocket.Conn, p *os.Process, pt *os.File, run *bool, stopped *bool) {
 	data := make([]byte, 512)
 	for {
 		n, _ := s.Read(data)
 		payload := string(data[:n]) //[:n] to cut out padding
-		mut.Lock()
-		state := *run
-		mut.Unlock()
-		if !state {
+		if ! *run {
 			break
 		} else if payload == "close" {
-			p.Signal(syscall.SIGINT)
+			*stopped = true
+			p.Signal(syscall.SIGTERM)
 			break
 		} else if payload != "" {
 			pt.Write(data[:n])
@@ -253,26 +250,24 @@ func socketServer(s *websocket.Conn) {
 		s.Close()
 		return
 	}
-	mut := &sync.Mutex{}
-	run := new(bool)
-	*run = true
-	go watchInput(s, com.Process, pt, mut, run)
+	run := true
+	stopped := false
+	go watchInput(s, com.Process, pt, &run, &stopped)
 	for {
 		out := make([]byte, 1024)
 		n, err := pt.Read(out)
-		if err != nil {
-			if err != io.EOF && err.Error()[:4] != "read" {
-				s.Write([]byte("error: " + err.Error()))
-			}
+		if stopped {
+			s.Write([]byte("error: stopped"))
+			break
+		} else if err != nil {
+			s.Write([]byte("error: " + err.Error()))
 			break
 		} else if n > 0 {
 			s.Write([]byte("output: " + string(out[:n])))
 		}
 		time.Sleep(time.Millisecond * 10) //For minimal CPU impact
 	}
-	mut.Lock()
-	*run = false
-	mut.Unlock()
+	run = false
 	com.Process.Wait()
 	s.Close()
 }

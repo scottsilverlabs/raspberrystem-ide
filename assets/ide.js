@@ -552,10 +552,11 @@ function socket() {
 				outputPos = 0;
 				toggleOutput();
 			}
-			messageActual = message.substring(7).replace(/</g, "&lt;")
-				.replace(/>/g, "&gt;");
-			appendOutput("<span style=\"color:red;\">SERVER ERROR:" + messageActual +
-				"</span>\n");
+			msg = "-- PROGRAM FINISHED --";
+			if (message.substring(7) == "stopped") {
+				msg = "-- PROGRAM STOPPED --";
+			}
+			appendOutput("<span style=\"color:red;\">" + msg + "</span>\n");
 		}
 	};
 }
@@ -966,7 +967,7 @@ function loadFile(fname) {
 
 //Open file popup
 function openFile(button) {
-	var loopID = loading("Loading", "Generating theme list");
+	var loopID = loading("Loading", "Generating file list");
 	asyncGET("api/listfiles", function(response) {
 		console.log(response);
 		if (button)
