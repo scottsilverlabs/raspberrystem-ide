@@ -26,13 +26,13 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 TGT_INSTALL_DIR = '/opt/raspberrystem/ide'
-TGT_HTML_DIR = '/var/local/raspberrystem/ide/website'
+TGT_HTML_SYMLINK = '/opt/raspberrystem/pydoc'
 TGT_CONFIG_FILE = '/etc/rstem_ide.conf'
 TGT_BIN_SYMLINK = '/usr/local/bin/rstem_ided'
 TGT_INITD = '/etc/init.d/rstem_ided'
 outputs = [
     TGT_INSTALL_DIR,
-    TGT_HTML_DIR,
+    TGT_HTML_SYMLINK,
     TGT_CONFIG_FILE,
     TGT_BIN_SYMLINK,
     TGT_INITD,
@@ -42,25 +42,24 @@ def _post_install(dir):
     # import rstem to find its install path
     # NOTE: Require dependency on rstem
     import rstem
-    api_path = os.path.join(os.path.dirname(rstem.__file__), 'api', rstem.__name__)
+    pydoc_path = os.path.join(os.path.dirname(rstem.__file__), 'pydoc', rstem.__name__)
 
-    for dir in [TGT_INSTALL_DIR, TGT_HTML_DIR]:
+    for dir in [TGT_INSTALL_DIR]:
         print('Removing: ' + dir)
         shutil.rmtree(dir, ignore_errors=True)
-    for dir in [TGT_INSTALL_DIR, TGT_HTML_DIR]:
+    for dir in [TGT_INSTALL_DIR]:
         print('Installing: ' + dir)
         shutil.copytree(os.path.basename(dir), dir)
 
     print('Creating links...')
 
     # API docs symlink
-    api_symlink = os.path.join(TGT_HTML_DIR, 'api')
     try:
-        os.remove(api_symlink)
+        os.remove(TGT_HTML_SYMLINK)
     except OSError:
         pass
-    print('  symlink {} -->\n    {}'.format(api_symlink, api_path))
-    os.symlink(api_path, api_symlink)
+    print('  symlink {} -->\n    {}'.format(TGT_HTML_SYMLINK, pydoc_path))
+    os.symlink(pydoc_path, TGT_HTML_SYMLINK)
 
     # server binary symlink
     try:

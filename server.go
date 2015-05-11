@@ -17,11 +17,12 @@ import (
 )
 
 var SETTINGS_FILE = "/etc/rstem_ide.conf"
-var INSTALL_DIR = "/opt/raspberrystem/ide/"
-var IDE_HTML = INSTALL_DIR + "ide.html"
-var VAR_DIR = "/var/local/raspberrystem/ide/"
-var WEBSITE_DIR = VAR_DIR + "website"
-var LASTFILE_FILE = VAR_DIR + "lastfile"
+var COMPANY_DIR = "/opt/raspberrystem/"
+var IDE_DIR = COMPANY_DIR + "ide/"
+var PROJECTS_DIR = COMPANY_DIR + "projects/"
+var PYDOC_DIR = COMPANY_DIR + "pydoc/"
+var IDE_HTML = IDE_DIR + "ide.html"
+var LASTFILE_FILE = IDE_DIR + "lastfile"
 
 var page, _ = template.New("index").ParseFiles(IDE_HTML)
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
@@ -69,8 +70,9 @@ func main() {
 	http.HandleFunc("/api/configuration", configuration)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
-	http.Handle("/website/", http.StripPrefix("/website/", http.FileServer(http.Dir(WEBSITE_DIR))))
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(INSTALL_DIR+"assets"))))
+	http.Handle("/projects/", http.StripPrefix("/projects/", http.FileServer(http.Dir(PROJECTS_DIR))))
+	http.Handle("/pydoc/", http.StripPrefix("/pydoc/", http.FileServer(http.Dir(PYDOC_DIR))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(IDE_DIR+"assets"))))
 	err = http.ListenAndServe(":"+config["port"], nil)
 	if err != nil {
 		panic(err)
@@ -105,7 +107,7 @@ func listFiles(w http.ResponseWriter, r *http.Request) {
 //Lists the availible themes
 func listThemes(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	files, _ := ioutil.ReadDir(INSTALL_DIR + "assets/themes/")
+	files, _ := ioutil.ReadDir(IDE_DIR + "assets/themes/")
 	var list string
 	for _, f := range files {
 		if !f.IsDir() {
