@@ -41,7 +41,7 @@ echo "  Enabling boot to desktop"
 enable_boot_to_desktop
 
 # Add server startup to boot
-update-rc.d rstem_ided enable 2
+update-rc.d rstem_ided defaults
 
 # Autostart IDE client web browser
 echo "  Enabling autostart of IDE client..."
