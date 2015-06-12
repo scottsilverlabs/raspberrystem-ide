@@ -100,6 +100,9 @@ register:
 targets:
 	@echo $(TARGETS)
 
+uninstall:
+	$(RUNONPI) sudo $(PIP) uninstall -y $(NAME)
+
 install:
 	scp $(IDE_TAR) $(PI):/tmp
 	-$(RUNONPI) sudo $(PIP) uninstall -y $(NAME)
