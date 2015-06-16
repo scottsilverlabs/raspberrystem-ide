@@ -147,7 +147,7 @@ function headerClick() {
 		editor.focus();
 }
 
-//Set's the title text and sets to width of the title which is used for centering.
+//Sets the title text and sets to width of the title which is used for centering.
 function setTitle(text) {
 	var width = text.length*(2/3);
 	if (webShowing)
@@ -563,20 +563,20 @@ function socket() {
 
 function changeSocketInit() {
 	changeSocket = new WebSocket("ws://"+document.location.host+"/api/change");
-	changeSocket.onopen = function (event) {
+	changeSocket.onopen = function(event) {
 		changeSocket.send("COF:"+filename);
 		good = true;
 	};
-	changeSocket.onclose = function (event) {
+	changeSocket.onclose = function(event) {
 		changeSocket = null;
 		if (good)
 			setTimeout(5000, changeSocketInit);
 	};
-	changeSocket.onerror = function (event) {
+	changeSocket.onerror = function(event) {
 		if (!good)
 			alert("Your browser may not support web sockets\nFor the best experience use Google Chrome");
 	};
-	changeSocket.onmessage = function (event) {
+	changeSocket.onmessage = function(event) {
 		message = event.data;
 		if (message == "FILE") {
 			var pos = editor.getCursor();
@@ -587,7 +587,7 @@ function changeSocketInit() {
 		} else if (message.substring(0, 6) == "USERS:") {
 			var num = parseInt(message.substring(6));
 			if (num > 1)
-				setTitle(titleText + " - " + num + " Users");
+				setTitle(titleText + " (" + num + " users)");
 			else
 				setTitle(titleText);
 		} else {
