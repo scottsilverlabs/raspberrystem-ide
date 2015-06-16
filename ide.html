@@ -88,6 +88,13 @@
 				-webkit-transition: width 2s ease-in-out;
 				{{end}}
 			}
+
+			#output {				
+				transition: width 2s ease-in-out;
+				{{if eq .RaspiTransforms "true"}}
+				-webkit-transition: width 2s ease-in-out;
+				{{end}}
+			}
 		</style>
 	</head>
 	<body onkeyup="key(event)">

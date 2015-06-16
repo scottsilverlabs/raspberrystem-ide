@@ -665,6 +665,7 @@ function toggleWeb() {
 			button.style.transform = "rotateY(0deg)";
 		title.className = "headertextRight"; //classList.remove wasn't working in Chromium
 		ide.style.width = "50%";
+		output.style.width = "50%";
 		web.style.width = "50%";
 		web.style.left = "50%";
 	} else {
@@ -674,6 +675,7 @@ function toggleWeb() {
 			button.style.transform = "rotateY(180deg)";
 		title.className = "headertextCenter";
 		ide.style.width = "100%";
+		output.style.width = "100%";
 		web.style.width = "0";
 		web.style.left = "100%";
 	}
@@ -883,7 +885,7 @@ function newFile() {
 		fname = "Untitled" + i + ".py";
 	}
 	POST("/api/savefile", {"file": fname, "content": ""});
-	openFile();
+	loadFile(fname);
 }
 
 //Loading popup currently non-functional, TODO implement async GET for file operations.
