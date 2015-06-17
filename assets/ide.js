@@ -280,9 +280,80 @@ function save() {
 		changed = false;
 		saveButton.src = "/assets/images/savegray.png";
 		saveButton.style.cursor = "initial";
-		if (filename !== "")
+		if (filename !== "") {
 			POST("/api/savefile", {"file": filename, "content": editor.getValue()});
+			console.log(filename.match(/^Untitled([0-9]+)?\.py$/));
+			if (filename.match(/^Untitled([0-9]+)?\.py$/)) {
+				console.log('Filename match');
+				saveRename(filename);
+			}
+		}
 	}
+}
+
+function saveRename(fname) {
+	removePopup();
+	back = document.createElement("div");
+	document.body.appendChild(back);
+	back.classList.add("holder");
+	back.focus();
+
+	popup = document.createElement("div");
+	document.body.appendChild(popup);
+	popup.classList.add("filepopup");
+	popup.classList.add("popup");
+	back.onclick = removePopup;
+
+	var title = document.createElement("h1");
+	popup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.innerHTML = "Save File";
+
+	text = document.createElement("input");
+	popup.appendChild(text);
+	text.classList.add("editfiletext");
+	text.type = "text";
+	text.id = "editfile";
+	text.value = fname.replace(/-/g, " ");
+
+	var okay = document.createElement("div");
+	popup.appendChild(okay);
+	okay.classList.add("button");
+	okay.innerHTML = "OK";
+	okay.style.fontSize = 15;
+	okay.style.position = "relative";
+	okay.style.width = "20%";
+	okay.style.left = "40%";
+	okay.style.top = "0.7em";
+	setupButton(okay, 1, 0);
+	okay.onclick = function() {
+		origTval = text.value;
+		tval = origTval.replace(/ /g, "-");
+		if (tval != fname) {
+			var files = GET("/api/listfiles").split("\n");
+			if (files.indexOf(tval) != -1) {
+				ynPrompt("Overwrite", "Overwrite " + tval, function() {
+					POST("/api/copyfile", {"from": fname, "to": tval});
+					POST("/api/deletefile", {"file": fname});
+					removePopup();
+					loadFile(origTval);
+				},
+				function() {
+					saveRename(fname);
+				});
+			} else {
+				POST("/api/copyfile", {"from": fname, "to": tval});
+				POST("/api/deletefile", {"file": fname});
+				removePopup();
+				loadFile(origTval);
+			}
+		} else {
+			removePopup();
+			loadFile(origTval);
+		}
+	};
+	text.focus();
 }
 
 //Sets the output text to text
