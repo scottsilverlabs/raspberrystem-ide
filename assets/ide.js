@@ -282,7 +282,6 @@ function save() {
 		saveButton.style.cursor = "initial";
 		if (filename !== "") {
 			POST("/api/savefile", {"file": filename, "content": editor.getValue()});
-			console.log(filename.match(/^Untitled([0-9]+)?\.py$/));
 			if (filename.match(/^Untitled([0-9]+)?\.py$/)) {
 				console.log('Filename match');
 				saveRename(filename);
@@ -329,6 +328,8 @@ function saveRename(fname) {
 	setupButton(okay, 1, 0);
 	okay.onclick = function() {
 		origTval = text.value;
+		origExt = fname.split(".")[fname.split(".").length - 1];
+		if (origTval.split(".").length < 2) origTval += "." + origExt;
 		tval = origTval.replace(/ /g, "-");
 		if (tval != fname) {
 			var files = GET("/api/listfiles").split("\n");
