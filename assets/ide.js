@@ -277,14 +277,14 @@ function POST(url, args) {
 }
 
 //Saves the current file's contents to the server
-function save() {
+function save(override) {
 	if (changed) {
 		changed = false;
 		saveButton.src = "/assets/images/savegray.png";
 		saveButton.style.cursor = "initial";
 		if (filename !== "") {
 			POST("/api/savefile", {"file": filename, "content": editor.getValue()});
-			if (filename.match(/^Untitled([0-9]+)?\.py$/)) {
+			if (filename.match(/^Untitled([0-9]+)?\.py$/) && !override) {
 				console.log('Filename match');
 				saveRename(filename);
 			}
@@ -710,7 +710,7 @@ function runSpr() {
 //Called by the run button
 function run() {
 	if (ws === null) {
-		save();
+		save(true);
 		linepos = 0;
 		outputText.innerHTML = "";
 		if (type != "spr") {
