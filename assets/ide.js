@@ -11,6 +11,7 @@ window.onload = function() {
 		window.WebSocket = window.MozWebSocket;
 	if (document.location.host == "127.0.0.1")
 		document.getElementById("outputbutton").src = "/assets/images/arrow-down.png";
+
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
 	outputHolder = document.getElementById("outputActual");
@@ -29,6 +30,7 @@ window.onload = function() {
 	web = document.getElementById("webview");
 	titleHolder = document.getElementById("title");
 	config = JSON.parse(GET("/api/configuration"));
+
 	editor = CodeMirror(document.getElementById("codewrapper"), {
 		mode: {
 			name: "python",
@@ -1126,7 +1128,7 @@ function openFile(button) {
 //Called when a div is clicked in the change theme function
 function setTheme(obj) {
 	name = obj.innerHTML.toLowerCase().replace(/ /g, "-");
-	document.getElementById("theme").href = "/themes/"+name+".css";
+	document.getElementById("theme").href = "/assets/themes/" + name + ".css";
 	old = editor.getOption("theme");
 	editor.setOption("theme", name);
 	output.classList.remove("cm-s-"+old);
@@ -1167,7 +1169,7 @@ function changeTheme() {
 		for (var i in files) {
 			var filediv = document.createElement("div");
 			fileholder.appendChild(filediv);
-			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "");
+			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "").split(' ').map(function(s) { return s.substring(0, 1).toUpperCase() + s.substring(1); }).join(" ");
 			filediv.classList.add("filebutton");
 			if (i === 0)
 				filediv.style.marginTop = "0";
