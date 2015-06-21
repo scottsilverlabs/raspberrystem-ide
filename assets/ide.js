@@ -1120,7 +1120,7 @@ function openFile(button) {
 		var cancel = document.createElement("div");
 		popup.appendChild(cancel);
 		setupButton(cancel, 0, files.length + 1);
-		cancel.innerHTML = "Cancel";
+		cancel.innerHTML = "Close";
 		cancel.classList.add("button");
 		cancel.style.position = "relative";
 		cancel.style.marginTop = "-5px";
