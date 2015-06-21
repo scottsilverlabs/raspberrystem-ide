@@ -146,12 +146,7 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	name := strings.Trim(r.Form.Get("file"), " ./")
 	content := r.Form.Get("content")
-	lines := strings.Split(content, "\n")
-	ftype := strings.Split(name, ".")[len(strings.Split(name, "."))-1]
 
-	if len(lines[0]) < 2 || lines[0][0:2] != "#!" && config[ftype+"shebang"] != "" {
-		content = config[ftype+"shebang"] + "\n" + content
-	}
 	//Backup file
 	if stat, err := os.Stat(config["projectdir"] + name); err == nil {
 		os.Mkdir(config["projectdir"]+"."+name+".bak", os.ModeDir)
@@ -244,7 +239,13 @@ func watchInput(s *websocket.Conn, p *os.Process, pt *os.File, run *bool, stoppe
 func socketServer(s *websocket.Conn) {
 	data := make([]byte, 512)
 	n, _ := s.Read(data)
-	com := exec.Command(config["projectdir"] + string(data[:n])) //[:n] to cut out padding
+	content, _ := ioutil.ReadFile(config["projectdir"] + string(data[:n]))  //[:n] to cut out padding
+	var com *exec.Cmd
+	if string(content[:2]) == "#!" {
+		com = exec.Command(config["projectdir"] + string(data[:n]))
+	} else {
+		com = exec.Command("/usr/bin/python3", config["projectdir"] + string(data[:n]))
+	}
 	pt, err := pty.Start(com)
 	s.Write([]byte("started"))
 	if err != nil {
