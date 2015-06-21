@@ -30,6 +30,7 @@ window.onload = function() {
 	web = document.getElementById("webview");
 	titleHolder = document.getElementById("title");
 	config = JSON.parse(GET("/api/configuration"));
+	config.ip = config.ip.split("\n").filter(function(x) { return x != ""; }).join("\n");
 
 	editor = CodeMirror(document.getElementById("codewrapper"), {
 		mode: {
@@ -1043,6 +1044,67 @@ function loadFile(fname) {
 	});
 }
 
+//Settings dialog
+function settingsDialog() {
+	removePopup();
+
+	back = document.createElement("div");
+	document.body.appendChild(back);
+	back.classList.add("holder");
+	back.focus();
+
+	popup = document.createElement("div");
+	document.body.appendChild(popup);
+	popup.classList.add("folderpopup");
+	popup.classList.add("popup");
+	back.onclick = removePopup;
+
+	var title = document.createElement("h1");
+	popup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.innerHTML = "Settings";
+
+	var fileholder = document.createElement("div");
+	popup.appendChild(fileholder);
+	fileholder.classList.add("fileholder");
+
+	var ipHolder = document.createElement("div");
+	fileholder.appendChild(ipHolder);
+	ipHolder.innerHTML = config.ip.split("\n").join("<br>");
+	ipHolder.style.height = config.ip.split("\n").length*20 + "px";
+	ipHolder.classList.add("newfilebutton");
+	ipHolder.classList.add("filetext");
+	setupButton(ipHolder, 0, 0);
+
+	var buttons = {
+		"Change Theme": changeTheme
+	};
+
+	var j = 0;
+
+	//Populate div
+	for (i in buttons) {
+		var button = document.createElement("div");
+		fileholder.appendChild(button);
+		button.innerHTML = i;
+		button.classList.add("filebutton");
+		button.onclick = buttons[i];
+		setupButton(button, 0, j++);
+	}
+
+	var cancel = document.createElement("div");
+	popup.appendChild(cancel);
+	setupButton(cancel, 0, j);
+	cancel.innerHTML = "Close";
+	cancel.classList.add("button");
+	cancel.style.position = "relative";
+	cancel.style.marginTop = "-5px";
+	cancel.style.width = "25%";
+	cancel.style.left = "37.5%";
+	cancel.onclick = removePopup;
+}
+
 //Open file popup
 function openFile(button) {
 	var loopID = loading("Loading", "Generating file list");
@@ -1138,7 +1200,7 @@ function setTheme(obj) {
 	editor.setOption("theme", name);
 	output.classList.remove("cm-s-"+old);
 	output.classList.add("cm-s-"+name);
-	removePopup();
+	settingsDialog();
 }
 
 //Called by the change theme button
@@ -1190,7 +1252,7 @@ function changeTheme() {
 		cancel.style.marginTop = "-5px";
 		cancel.style.width = "25%";
 		cancel.style.left = "37.5%";
-		cancel.onclick = removePopup;
+		cancel.onclick = settingsDialog;
 	});
 }
 

@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net"
 	"os"
 	"os/exec"
 	"strconv"
@@ -58,6 +59,22 @@ func main() {
 	if string(last) != "" {
 		config["lastfile"] = string(last)
 	}
+
+	config["ip"] = ""
+	
+	ifaces, _ := net.Interfaces()
+	for _, iface := range ifaces {
+		addrs, _ := iface.Addrs()
+		for _, addr := range addrs {
+			if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil {
+					config["ip"] += iface.Name + ": " + ipnet.IP.String() + "\n"
+				}
+			}
+		}
+	}
+
+
 	os.Mkdir(config["projectdir"], 0775)
 	http.HandleFunc("/", index) //All requests to / and 404s will route to Index
 	http.HandleFunc("/api/listfiles", listFiles)

@@ -213,6 +213,21 @@ header {
     margin-top: 0 !important;
 }
 
+.filetext {
+    background-color: #EEE;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    font-size: 16px;
+    text-align: center;
+    margin: 0;
+    position: relative;
+    width: 96%;
+    left: 2%;
+    margin-top: 3%;
+    height: 20px;
+    padding: 2px;
+    user-select: none;
+}
+
 .filebutton {
     background-color: #D8D8D8;
     font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
