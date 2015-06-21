@@ -955,10 +955,10 @@ function newFile() {
 	var files = GET("/api/listfiles").split("\n");
 	if (files.indexOf(fname) != -1) {
 		var i = 1;
-		while (files.indexOf("Untitled"+(++i)+".py") != -1);
+		while (files.indexOf("Untitled" + (++i) + ".py") != -1);
 		fname = "Untitled" + i + ".py";
 	}
-	POST("/api/savefile", {"file": fname, "content": ""});
+	POST("/api/savefile", {"file": fname, "content": "import rstem\n"});
 	loadFile(fname);
 }
 
