@@ -1078,7 +1078,11 @@ function settingsDialog() {
 	setupButton(ipHolder, 0, 0);
 
 	var buttons = {
-		"Change Theme": changeTheme
+		"Change Theme": changeTheme,
+		"Clean Shutdown": function() {
+			GET('/api/poweroff');
+			removePopup();
+		}
 	};
 
 	var j = 0;

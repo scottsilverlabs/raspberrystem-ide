@@ -84,6 +84,7 @@ func main() {
 	http.HandleFunc("/api/copyfile", copyFile)
 	http.HandleFunc("/api/deletefile", deleteFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
+	http.HandleFunc("/api/poweroff", poweroff)
 	http.HandleFunc("/api/configuration", configuration)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
@@ -222,6 +223,13 @@ func configuration(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
 	enc.Encode(config)
+}
+
+func poweroff(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	io.WriteString(w, "")
+	exec.Command("poweroff").Run();
 }
 
 //Called as a goroutine to wait for the close command and kill the process.
