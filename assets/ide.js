@@ -414,8 +414,6 @@ function errorHighlight() {
 	var offset = 0;
 	var line, start, end, lnum;
 
-	if (editor.lineInfo(0).text.substring(0, 2) != "#!")
-		offset = 1;
 	for (var i in errors) {
 		var err = errors[i];
 		var errLines = err.split("\n");
@@ -1017,6 +1015,10 @@ function loadFile(fname) {
 	titleText = fname;
 	asyncGET("/api/readfile?file=" + filename, function(content) {
 		editor.setValue(content);
+		if (content == "error") {
+			editor.setValue("import rstem\n");
+			save(true);
+		}
 		if (type == "spr") {
 			editor.setOption("mode", null);
 			var lines = editor.lineCount();
@@ -1079,6 +1081,8 @@ function openFile(button) {
 		newfile.onclick = newFile;
 		setupButton(newfile, 0, 0);
 
+		console.log("'" + response + "'");
+
 		var files = response.split("\n");
 		//Force lower capitalized files to their correct sort position
 		var caps = [];
@@ -1094,23 +1098,24 @@ function openFile(button) {
 			files[index] = caps[i];
 		}
 		//Populate div
-		for (i in files) {
-			var filediv = document.createElement("div");
-			fileholder.appendChild(filediv);
-			filediv.innerHTML = files[i].replace(/-/g, " ");
-			filediv.classList.add("filebutton");
-			filediv.onclick = function() {
-				loadFile(this.innerHTML);
-			};
-			setupButton(filediv, 0, parseInt(i) + 1);
-			var pencilDiv = document.createElement("img");
-			fileholder.appendChild(pencilDiv);
-			pencilDiv.src = "/assets/images/pencil.png";
-			pencilDiv.classList.add("pencilbutton");
-			pencilDiv.draggable = false;
-			setupButton(pencilDiv, 1, parseInt(i) + 1);
-			pencilDiv.onclick = new Function("editFile(\""+files[i]+"\")");
-		}
+		if (response)
+			for (i in files) {
+				var filediv = document.createElement("div");
+				fileholder.appendChild(filediv);
+				filediv.innerHTML = files[i].replace(/-/g, " ");
+				filediv.classList.add("filebutton");
+				filediv.onclick = function() {
+					loadFile(this.innerHTML);
+				};
+				setupButton(filediv, 0, parseInt(i) + 1);
+				var pencilDiv = document.createElement("img");
+				fileholder.appendChild(pencilDiv);
+				pencilDiv.src = "/assets/images/pencil.png";
+				pencilDiv.classList.add("pencilbutton");
+				pencilDiv.draggable = false;
+				setupButton(pencilDiv, 1, parseInt(i) + 1);
+				pencilDiv.onclick = new Function("editFile(\""+files[i]+"\")");
+			}
 
 		var cancel = document.createElement("div");
 		popup.appendChild(cancel);

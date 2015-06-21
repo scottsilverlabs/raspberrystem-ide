@@ -124,21 +124,12 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	opts := r.URL.Query()
 	fname := strings.Trim(opts.Get("file"), " ./")
-	ftype := strings.Split(fname, ".")[len(strings.Split(fname, "."))-1]
 	content, err := ioutil.ReadFile(config["projectdir"] + fname)
 	if err != nil {
 		io.WriteString(w, "error")
 		return
 	}
-	contentString := string(content)
-	lines := strings.Split(contentString, "\n")
-	if len(lines[0]) > 1 && lines[0][0:2] == "#!" {
-		if (ftype == "py" && lines[0] == config["pyshebang"]) || (ftype == "sh" &&
-			lines[0] == config["shshebang"]) {
-			contentString = contentString[len(lines[0])+1:]
-		}
-	}
-	io.WriteString(w, contentString)
+	io.WriteString(w, string(content))
 }
 
 //Potential issue here because POST requests tend to have size limits
