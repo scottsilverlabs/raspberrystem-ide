@@ -1,7 +1,7 @@
 var run, save, GET, POST, changeHandle, changeSocket, openFile, removePopup,
-	changeSocketInit, toggleOutput, toggleWeb, changeTheme; //Function prototypes
-var config, outputOpen, outputPos, back, ws = null, titleText, filename, type, changed, webShowing = false;
-var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "changeTheme",
+	changeSocketInit, toggleOutput, toggleWeb, settingsDialog; //Function prototypes
+var config, outputOpen, outputPos, back, ws = null, titleText, filename, type, changed, webShowing = false, themes, currentTheme;
+var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "settingsDialog",
 	"openFile"];
 var leftButtons = ["Run", "Open File", "Save", "Theme"];
 var keybindings = {};
@@ -50,9 +50,10 @@ window.onload = function() {
 		viewportMargin: 3, //Default: 10
 		undoDepth: config.undodepth || 20 //Default: 20
 	});
-	themes = editor.options.theme.split(" ");
+	themes = editor.options.theme.split(" ")
 	for (var i in themes)
 		output.classList.add("cm-s-"+themes[i]);
+	currentTheme = themes[0];
 	editor.on("change", changeHandle);
 	changeSocketInit();
 	if (config.webviewopen == "true")
@@ -118,6 +119,7 @@ window.onload = function() {
 	}
 	if (GET("/api/listfiles").split("\n")[0] === "")
 		save(); //Create untitled document if there are no documents
+	asyncGET("api/listthemes", function(r) { themes = r.split("\n"); });
 	loadFile(filename);
 };
 
@@ -1076,25 +1078,48 @@ function settingsDialog() {
 	ipHolder.classList.add("newfilebutton");
 	ipHolder.classList.add("filetext");
 	setupButton(ipHolder, 0, 0);
+	var niceNames = themes.map(function(t) {
+		return t.replace(/\-/g, " ").split(" ").map(function(e) { return e.substring(0, 1).toUpperCase() + e.substring(1); }).join(" ").replace(/\.css$/, "");
+	});
 
 	var buttons = {
-		"Change Theme": changeTheme,
-		"Clean Shutdown": function() {
+		"Change Theme": { type: "list", content: niceNames, func: setTheme},
+		"Clean Shutdown": { type: "button", func: function() {
 			GET('/api/poweroff');
 			removePopup();
-		}
+		}}
 	};
 
 	var j = 0;
 
 	//Populate div
 	for (i in buttons) {
-		var button = document.createElement("div");
-		fileholder.appendChild(button);
-		button.innerHTML = i;
-		button.classList.add("filebutton");
-		button.onclick = buttons[i];
-		setupButton(button, 0, j++);
+		if (buttons[i].type == "button") {
+			var button = document.createElement("div");
+			fileholder.appendChild(button);
+			button.innerHTML = i;
+			button.classList.add("filebutton");
+			button.onclick = buttons[i];
+			setupButton(button, 0, j++);
+		} else if (buttons[i].type == "list") {
+			var lst = document.createElement("select");
+			lst.value = i;
+			lst.style.height = "28px"
+			lst.addEventListener("change", function() {
+				setTheme(lst.value);
+			});
+			console.log(buttons[i].content);
+			for (var j in buttons[i].content) {
+				var opt = document.createElement("option");
+				if (buttons[i].content[j] == currentTheme)
+					opt.selected = "selected";
+				lst.appendChild(opt);
+				opt.innerHTML = buttons[i].content[j];
+			}
+			fileholder.appendChild(lst);
+			lst.classList.add("filebutton");
+			lst.onclick = buttons[i];
+		}
 	}
 
 	var cancel = document.createElement("div");
@@ -1197,67 +1222,15 @@ function openFile(button) {
 }
 
 //Called when a div is clicked in the change theme function
-function setTheme(obj) {
-	name = obj.innerHTML.toLowerCase().replace(/ /g, "-");
+function setTheme(name) {
+	currentTheme = name;
+	name = name.toLowerCase().replace(/ /g, "-");
 	document.getElementById("theme").href = "/assets/themes/" + name + ".css";
 	old = editor.getOption("theme");
 	editor.setOption("theme", name);
 	output.classList.remove("cm-s-"+old);
 	output.classList.add("cm-s-"+name);
-	settingsDialog();
-}
-
-//Called by the change theme button
-function changeTheme() {
-	removePopup();
-	var loopID = loading("Loading", "Generating theme list");
-	asyncGET("api/listthemes", function(response) {
-		clearInterval(loopID);
-		removePopup();
-		back = document.createElement("div");
-		document.body.appendChild(back);
-		back.classList.add("holder");
-		back.focus();
-
-		popup = document.createElement("div");
-		document.body.appendChild(popup);
-		popup.classList.add("folderpopup");
-		popup.classList.add("popup");
-		back.onclick = removePopup;
-
-		var title = document.createElement("h1");
-		popup.appendChild(title);
-		title.classList.add("popuptitle");
-		title.classList.add("maincolor");
-		title.innerHTML = "Select Theme";
-
-		var fileholder = document.createElement("div");
-		popup.appendChild(fileholder);
-		fileholder.classList.add("fileholder");
-
-		//Files
-		files = response.split("\n");
-		for (var i in files) {
-			var filediv = document.createElement("div");
-			fileholder.appendChild(filediv);
-			filediv.innerHTML = files[i].replace(/-/g, " ").replace(/\.css/g, "").split(' ').map(function(s) { return s.substring(0, 1).toUpperCase() + s.substring(1); }).join(" ");
-			filediv.classList.add("filebutton");
-			if (i === 0)
-				filediv.style.marginTop = "0";
-			setupButton(filediv, 0, i);
-			filediv.onclick = function() { setTheme(this); };
-		}
-
-		var cancel = document.createElement("div");
-		popup.appendChild(cancel);
-		cancel.innerHTML = "Cancel";
-		cancel.classList.add("button");
-		cancel.style.position = "relative";
-		cancel.style.marginTop = "-5px";
-		cancel.style.width = "25%";
-		cancel.style.left = "37.5%";
-		cancel.onclick = settingsDialog;
-	});
+	//settingsDialog();
 }
 
 outputOpen = true;
