@@ -120,7 +120,8 @@ window.onload = function() {
 	if (GET("/api/listfiles").split("\n")[0] === "")
 		save(); //Create untitled document if there are no documents
 	asyncGET("api/listthemes", function(r) { themes = r.split("\n"); });
-	loadFile(filename);
+	loadFile(filename, true);
+	welcome();
 };
 
 //Save on window close
@@ -172,7 +173,7 @@ function unhover() {
 
 //Used to replicate hover actions on buttons for keyboard controls.
 function hover(button) {
-	if (back === null) return;
+	if (back === null || !currButton) return;
 	unhover();
 	currButton = button;
 	currButton.scrollIntoViewIfNeeded(); //May throw off the main viewing frame
@@ -1000,8 +1001,9 @@ function loading(titletext, bodyText) {
 }
 
 //Called when a file div is clicked in the open file popup
-function loadFile(fname) {
-	var intID = loading("LOADING", "LOADING " + fname);
+function loadFile(fname, override) {
+	if (!override)
+		var intID = loading("LOADING", "LOADING " + fname);
 	if (filename != fname)
 		save();
 	filename = fname.replace(/ /g, "-");
@@ -1036,10 +1038,10 @@ function loadFile(fname) {
 				changeSocket.send("COF:" + filename);
 			else
 				setTimeout(5000, function() { changeSocket.send("COF:" + filename); });
-		console.log(intID);
-		clearInterval(intID);
-		console.log("Cleared");
-		removePopup();
+		if (!override) {
+			clearInterval(intID);
+			removePopup();
+		}
 		saveButton.src = "/assets/images/savegray.png";
 		saveButton.style.cursor = "initial";
 		changed = false;
@@ -1104,7 +1106,7 @@ function settingsDialog() {
 		} else if (buttons[i].type == "list") {
 			var lst = document.createElement("select");
 			lst.value = i;
-			lst.style.height = "28px"
+			lst.style.height = "28px";
 			lst.addEventListener("change", function() {
 				setTheme(lst.value);
 			});
@@ -1261,6 +1263,73 @@ function toggleOutput() {
 		codewrapper.classList.add("codeShort");
 		editor.focus();
 		outputHolder.scrollTop = outputPos;
+	}
+}
+
+function welcome() {
+	var dis = window.localStorage.getItem('disableWelcome');
+	console.log(dis);
+	console.log(dis == "false");
+	if (!dis || dis == "false") {
+		removePopup();
+
+		back = document.createElement("div");
+		document.body.appendChild(back);
+		back.classList.add("holder");
+		back.focus();
+
+		popup = document.createElement("div");
+		document.body.appendChild(popup);
+		popup.classList.add("folderpopup");
+		popup.classList.add("popup");
+		back.onclick = removePopup;
+
+		var title = document.createElement("h1");
+		popup.appendChild(title);
+		title.classList.add("popuptitle");
+		title.classList.add("maincolor");
+		title.innerHTML = "Welcome";
+
+		var text = document.createElement("div");
+		popup.appendChild(text);
+		text.classList.add("welcomeText");
+		text.innerHTML = config.welcome.replace(/\\n/g, "<br>");
+
+		var showLabel = document.createElement("div");
+		showLabel.innerHTML = "Don't show again";
+		popup.appendChild(showLabel);
+		showLabel.style.position = "relative";
+		showLabel.style.fontWeight = "500";
+		showLabel.style.fontSize = "0.8em";
+		showLabel.style.left = "70%";
+		showLabel.style.marginTop = "-24px";
+		showLabel.style.zIndex = 7;
+
+		var show = document.createElement("input");
+		show.type = "checkbox";
+		popup.appendChild(show);
+		show.style.position = "relative";
+		show.style.left = "94%";
+		show.style.marginTop = "-12px";
+		show.style.zIndex = 7;
+		var on = false;
+		show.onchange = function() {
+			on = !on;
+			console.log(on);
+			window.localStorage.setItem('disableWelcome', on);
+		};
+
+		var cancel = document.createElement("div");
+		popup.appendChild(cancel);
+		setupButton(cancel, 0, 0);
+		cancel.innerHTML = "Close";
+		cancel.classList.add("button");
+		cancel.style.position = "relative";
+		cancel.style.marginTop = "-26px";
+		cancel.style.width = "25%";
+		cancel.style.left = "37.5%";
+		cancel.onclick = removePopup;
+		cancel.style.zIndex = 7;
 	}
 }
 

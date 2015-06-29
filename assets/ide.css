@@ -95,6 +95,20 @@ header {
     background-color: #C8C8C8;
 }
 
+.welcomeText {
+    background-color: #eee;
+    position: relative;
+    z-index: 7;
+    left: 0%;
+    padding: 10px;
+    height: calc(100% - 52px);
+    border-radius: 4px;
+    -ms-user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    font-size: 1.2em;
+}
+
 .popup {
     background-color: #eee;
     position: absolute;
