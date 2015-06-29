@@ -960,7 +960,7 @@ function newFile() {
 		while (files.indexOf("Untitled" + (++i) + ".py") != -1);
 		fname = "Untitled" + i + ".py";
 	}
-	POST("/api/savefile", {"file": fname, "content": "import rstem\n"});
+	POST("/api/savefile", {"file": fname, "content": ""});
 	loadFile(fname);
 }
 
@@ -1021,7 +1021,7 @@ function loadFile(fname, override) {
 	asyncGET("/api/readfile?file=" + filename, function(content) {
 		editor.setValue(content);
 		if (content == "error") {
-			editor.setValue("import rstem\n");
+			editor.setValue("");
 			save(true);
 		}
 		if (type == "spr") {
