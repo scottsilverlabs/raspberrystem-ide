@@ -122,6 +122,7 @@ window.onload = function() {
 	asyncGET("api/listthemes", function(r) { themes = r.split("\n"); });
 	loadFile(filename, true);
 	welcome();
+	setInterval(setOutputActual, 500);
 };
 
 //Save on window close
@@ -364,15 +365,25 @@ function saveRename(fname) {
 }
 
 //Sets the output text to text
+var buffer = "";
+var empty = false;
 var linepos = 0; //Used for tracking \r position
+
 function setOutput(text) {
-	outputText.innerHTML = text;
-	stdin.scrollIntoViewIfNeeded();
+	empty = true;
+	buffer = text;
 }
 
-//Appends to output and handles \r and \f
 function appendOutput(text) {
-	//text = text.replace(/\r\n/g, "\n"); 
+	buffer += text;
+}
+
+function setOutputActual() {
+	if (empty) {
+		outputText.innerHTML = "";
+		empty = false;
+	}
+	if (!buffer) return;
 	var lines = outputText.innerHTML.split("\n");
 	var lastline = lines.pop();
 	var content;
@@ -383,8 +394,8 @@ function appendOutput(text) {
 	else
 		content = "";
 	var i = 0;
-	while (i < text.length) {
-		var chr = text.substring(i, i + 1);
+	while (i < buffer.length) {
+		var chr = buffer.substring(i, i + 1);
 		i++;
 		if (chr == "\r") {
 			console.log("\\r:"+i);
@@ -402,9 +413,10 @@ function appendOutput(text) {
 			linepos++;
 		}
 	}
-	setOutput(content + lastline);
+	outputText.innerHTML = content + lastline;
+	stdin.scrollIntoViewIfNeeded();
+	buffer = "";
 }
-
 
 //Called when the script stops running on the server side, highlights errors in the output
 var errs = [];
@@ -599,7 +611,11 @@ function socket() {
 		document.getElementById("running").src = "/assets/images/rstemlogo.png";
 		stdin.style.width = "0";
 		//Remove trailing \n
-		var innerHTML = outputText.innerHTML;
+		var innerHTML;
+		if (!buffer)
+			innerHTML = outputText.innerHTML;
+		else
+			innerHTML = buffer;
 		if (innerHTML.substring(innerHTML.length - 1) == "\n")
 			setOutput(innerHTML.substring(0, innerHTML.length - 1));
 		editor.focus();
@@ -628,7 +644,16 @@ function socket() {
 				outputPos = 0;
 				toggleOutput();
 			}
-			msg = "-- PROGRAM FINISHED --";
+			var innerHTML;
+			if (!buffer)
+				innerHTML = outputText.innerHTML;
+			else
+				innerHTML = buffer;
+			if (innerHTML == "\r\n" || innerHTML == "\f\r\n") {
+				console.log("Resetting");
+				setOutput("");
+			}
+			var msg = "-- PROGRAM FINISHED --";
 			if (message.substring(7) == "stopped") {
 				msg = "-- PROGRAM STOPPED --";
 			}
