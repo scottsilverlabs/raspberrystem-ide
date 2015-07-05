@@ -148,6 +148,14 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	io.WriteString(w, string(content))
+	//Set last file
+	config["lastfile"] = fname
+	file, _ := os.OpenFile(LASTFILE_FILE, os.O_CREATE|os.O_WRONLY, 0744)
+	file.Truncate(0)
+	file.WriteString(fname)
+	file.Sync()
+	file.Close()
+	println("Read: " + fname)
 }
 
 //Potential issue here because POST requests tend to have size limits
@@ -182,13 +190,6 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	//Write to file
 	file, _ := os.OpenFile(config["projectdir"]+name, os.O_CREATE|os.O_WRONLY, 0744)
 	file.WriteString(content)
-	file.Sync()
-	file.Close()
-	//Set last file
-	config["lastfile"] = name
-	file, _ = os.OpenFile(LASTFILE_FILE, os.O_CREATE|os.O_WRONLY, 0744)
-	file.Truncate(0)
-	file.WriteString(name)
 	file.Sync()
 	file.Close()
 }

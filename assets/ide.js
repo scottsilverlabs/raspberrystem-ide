@@ -320,7 +320,6 @@ function saveRename(fname) {
 	popup.appendChild(text);
 	text.classList.add("editfiletext");
 	text.type = "text";
-	text.id = "editfile";
 	text.value = fname.replace(/-/g, " ");
 
 	var okay = document.createElement("div");
@@ -332,7 +331,7 @@ function saveRename(fname) {
 	okay.style.width = "20%";
 	okay.style.left = "40%";
 	okay.style.top = "0.7em";
-	setupButton(okay, 1, 0);
+	setupButton(okay, 0, 0);
 	okay.onclick = function() {
 		origTval = text.value;
 		origExt = fname.split(".")[fname.split(".").length - 1];
@@ -963,7 +962,11 @@ function editFile(fname) {
 	okay.style.top = "-4.9em";
 	setupButton(okay, 3, 0);
 	okay.onclick = function() {
-		tval = text.value.replace(/ /g, "-");
+		textval = text.value;
+		tval = textval.replace(/ /g, "-");
+		console.log('--');
+		console.log(tval);
+		console.log(textval);
 		if (tval != fname) {
 			var files = GET("/api/listfiles").split("\n");
 			if (files.indexOf(tval) != -1) {
@@ -971,6 +974,13 @@ function editFile(fname) {
 					POST("/api/copyfile", {"from": fname, "to": tval});
 					POST("/api/deletefile", {"file": fname});
 					removePopup();
+					console.log(textval + " == " + filename);
+					if (fname == filename)
+						loadFile(textval, true);
+					else if (textval == filename) {
+						console.log('Loading file');
+						loadFile(tval, true);
+					}
 					openFile();
 				},
 				function() {
@@ -980,6 +990,8 @@ function editFile(fname) {
 				POST("/api/copyfile", {"from": fname, "to": tval});
 				POST("/api/deletefile", {"file": fname});
 				removePopup();
+				if (fname == filename)
+						setTitle(textval);
 				openFile();
 			}
 		} else {
