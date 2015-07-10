@@ -22,6 +22,7 @@ var COMPANY_DIR = "/opt/raspberrystem/"
 var IDE_DIR = COMPANY_DIR + "ide/"
 var PROJECTS_DIR = COMPANY_DIR + "projects/"
 var PYDOC_DIR = COMPANY_DIR + "pydoc/"
+var PYTHON_ORG_DIR = COMPANY_DIR + "python.org/"
 var IDE_HTML = IDE_DIR + "ide.html"
 var LASTFILE_FILE = IDE_DIR + "lastfile"
 
@@ -90,6 +91,7 @@ func main() {
 	http.Handle("/api/change", websocket.Handler(changeServer))
 	http.Handle("/projects/", http.StripPrefix("/projects/", http.FileServer(http.Dir(PROJECTS_DIR))))
 	http.Handle("/pydoc/", http.StripPrefix("/pydoc/", http.FileServer(http.Dir(PYDOC_DIR))))
+	http.Handle("/python.org/", http.StripPrefix("/python.org/", http.FileServer(http.Dir(PYTHON_ORG_DIR))))
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(IDE_DIR+"assets"))))
 	err = http.ListenAndServe(":"+config["port"], nil)
 	if err != nil {

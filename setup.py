@@ -26,12 +26,14 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 TGT_INSTALL_DIR = '/opt/raspberrystem/ide'
+TGT_PYTHON_DOCS_DIR = '/opt/raspberrystem/python.org'
 TGT_HTML_SYMLINK = '/opt/raspberrystem/pydoc'
 TGT_CONFIG_FILE = '/etc/rstem_ide.conf'
 TGT_BIN_SYMLINK = '/usr/local/bin/rstem_ided'
 TGT_INITD = '/etc/init.d/rstem_ided'
 outputs = [
     TGT_INSTALL_DIR,
+    TGT_PYTHON_DOCS_DIR,
     TGT_HTML_SYMLINK,
     TGT_CONFIG_FILE,
     TGT_BIN_SYMLINK,
@@ -44,10 +46,10 @@ def _post_install(dir):
     import rstem
     pydoc_path = os.path.join(os.path.dirname(rstem.__file__), 'pydoc', rstem.__name__)
 
-    for dir in [TGT_INSTALL_DIR]:
+    for dir in [TGT_INSTALL_DIR, TGT_PYTHON_DOCS_DIR]:
         print('Removing: ' + dir)
         shutil.rmtree(dir, ignore_errors=True)
-    for dir in [TGT_INSTALL_DIR]:
+    for dir in [TGT_INSTALL_DIR, TGT_PYTHON_DOCS_DIR]:
         print('Installing: ' + dir)
         shutil.copytree(os.path.basename(dir), dir)
 

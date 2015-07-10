@@ -45,6 +45,10 @@ TARGETS=$(IDE_TAR)
 
 # Dependency files
 GIT_FILES=$(shell git ls-files)
+# GIT_GRAFTABLES are all directories in git that get directly grafted into the
+# source dist via the MANIFEST file.  We need to know these because we'll
+# git-clean them before building - otherwise, misc cruft can get into out dist.
+GIT_GRAFTABLES=python.org etc website pkg
 
 .PHONY: all is_go_installed $(PACKAGES)
 
@@ -88,6 +92,7 @@ ide/server: server $(IDE_SOURCE_FILES)
 	cp $< $@
 
 $(IDE_TAR): ide/server $(GIT_FILES)
+	git clean -dxf $(GIT_GRAFTABLES)
 	$(SETUP) sdist
 	mv dist/$(notdir $@) $@
 
