@@ -122,7 +122,6 @@ window.onload = function() {
 	asyncGET("api/listthemes", function(r) { themes = r.split("\n"); });
 	loadFile(filename, true);
 	welcome();
-	setInterval(setOutputActual, 500);
 };
 
 //Save on window close
@@ -364,42 +363,22 @@ function saveRename(fname) {
 }
 
 //Sets the output text to text
-var buffer = "";
-var empty = false;
-var acceptOutput = true;
-var bufferSize = 0;
-var maxBuffSize = 2*Math.pow(2, 20);
 var linepos = 0; //Used for tracking \r position
-
 function setOutput(text) {
-	if (acceptOutput) {
-		empty = true;
-		buffer = text;
-		bufferSize += text.length;
-	}
+	outputText.innerHTML = text;
+	stdin.scrollIntoViewIfNeeded();
 }
 
+//Appends to output and handles \r and \f
+var trim_msg = "<span style=\"color:red;\">-- OUTPUT TRIMMED --</span>\n";
 function appendOutput(text) {
-	if (acceptOutput) {
-		buffer += text;
-		bufferSize += text.length;
-	}
-}
-
-function setOutputActual() {
-	if (!acceptOutput) return;
-	if (empty) {
-		outputText.innerHTML = "";
-		empty = false;
-	}
-	if (bufferSize > maxBuffSize) {
-		acceptOutput = false;
-		outputText.innerHTML += "\n<span style=\"color:red;\">-- BUFFER OVERFLOW --</span>";
-	}
-	if (!buffer) return;
+	//text = text.replace(/\r\n/g, "\n"); 
 	var lines = outputText.innerHTML.split("\n");
 	var lastline = lines.pop();
 	var content;
+	if (lines.length > 100)
+		lines = lines.slice(-100);
+        lines.unshift(trim_msg);
 	if (lines.length > 1)
 		content = lines.join("\n") + "\n";
 	else if (lines.length == 1)
@@ -407,8 +386,8 @@ function setOutputActual() {
 	else
 		content = "";
 	var i = 0;
-	while (i < buffer.length) {
-		var chr = buffer.substring(i, i + 1);
+	while (i < text.length) {
+		var chr = text.substring(i, i + 1);
 		i++;
 		if (chr == "\r") {
 			console.log("\\r:"+i);
@@ -426,10 +405,9 @@ function setOutputActual() {
 			linepos++;
 		}
 	}
-	outputText.innerHTML = content + lastline;
-	stdin.scrollIntoViewIfNeeded();
-	buffer = "";
+	setOutput(content + lastline);
 }
+
 
 //Called when the script stops running on the server side, highlights errors in the output
 var errs = [];
@@ -612,32 +590,27 @@ var loopID;
 function socket() {
 	ws = new WebSocket("ws://"+document.location.host+"/api/socket");
 	ws.onopen = function(event) {
-		acceptOutput = true;
-		bufferSize = 0;
 		var a;
 		while ((a = errs.pop()) !== undefined)
 			a.clear();
 		ws.send(filename);
 	};
 	ws.onclose = function(event) {
-		acceptOutput = true;
 		ws = null;
 		errorHighlight();
 		playButton.src = "/assets/images/play.png";
 		document.getElementById("running").src = "/assets/images/rstemlogo.png";
 		stdin.style.width = "0";
 		//Remove trailing \n
-		var innerHTML;
-		if (!buffer)
-			innerHTML = outputText.innerHTML;
-		else
-			innerHTML = buffer;
+		var innerHTML = outputText.innerHTML;
 		if (innerHTML.substring(innerHTML.length - 1) == "\n")
 			setOutput(innerHTML.substring(0, innerHTML.length - 1));
 		editor.focus();
 	};
 	ws.onmessage = function(event) {
 		message = event.data;
+		if (message == "started")
+			document.getElementById("running").src = "/assets/images/running.gif";
 		if (message.substring(0, 8) == "output: ") {
 			if (!outputOpen) {
 				outputPos = 0;
@@ -650,30 +623,20 @@ function socket() {
 					}, 1000);
 				}
 			}
-			appendOutput(message.substring(8));
+			appendOutput(message.substring(8).replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;"));
 			return;
 		} else if (message.substring(0, 7) == "error: ") {
 			if (!outputOpen) {
 				outputPos = 0;
 				toggleOutput();
 			}
-			var innerHTML;
-			if (!buffer)
-				innerHTML = outputText.innerHTML;
-			else
-				innerHTML = buffer;
-			if (innerHTML == "\r\n" || innerHTML == "\f\r\n") {
-				console.log("Resetting");
-				setOutput("");
-			}
-			var msg = "-- PROGRAM FINISHED --";
+			msg = "-- PROGRAM FINISHED --";
 			if (message.substring(7) == "stopped") {
 				msg = "-- PROGRAM STOPPED --";
 			}
 			appendOutput("<span style=\"color:red;\">" + msg + "</span>\n");
-		} else if (message == "started")
-			document.getElementById("running").src = "/assets/images/running.gif";
-
+		}
 	};
 }
 
