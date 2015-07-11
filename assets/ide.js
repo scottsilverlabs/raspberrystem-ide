@@ -370,11 +370,15 @@ function setOutput(text) {
 }
 
 //Appends to output and handles \r and \f
+var trim_msg = "<span style=\"color:red;\">-- OUTPUT TRIMMED --</span>\n";
 function appendOutput(text) {
 	//text = text.replace(/\r\n/g, "\n"); 
 	var lines = outputText.innerHTML.split("\n");
 	var lastline = lines.pop();
 	var content;
+	if (lines.length > 100)
+		lines = lines.slice(-100);
+        lines.unshift(trim_msg);
 	if (lines.length > 1)
 		content = lines.join("\n") + "\n";
 	else if (lines.length == 1)
