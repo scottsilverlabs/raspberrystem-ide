@@ -366,35 +366,21 @@ function saveRename(fname) {
 //Sets the output text to text
 var buffer = "";
 var empty = false;
-var acceptOutput = true;
-var bufferSize = 0;
-var maxBuffSize = 2*Math.pow(2, 20);
 var linepos = 0; //Used for tracking \r position
 
 function setOutput(text) {
-	if (acceptOutput) {
-		empty = true;
-		buffer = text;
-		bufferSize += text.length;
-	}
+	empty = true;
+	buffer = text;
 }
 
 function appendOutput(text) {
-	if (acceptOutput) {
-		buffer += text;
-		bufferSize += text.length;
-	}
+	buffer += text;
 }
 
 function setOutputActual() {
-	if (!acceptOutput) return;
 	if (empty) {
 		outputText.innerHTML = "";
 		empty = false;
-	}
-	if (bufferSize > maxBuffSize) {
-		acceptOutput = false;
-		outputText.innerHTML += "\n<span style=\"color:red;\">-- BUFFER OVERFLOW --</span>";
 	}
 	if (!buffer) return;
 	var lines = outputText.innerHTML.split("\n");
@@ -612,15 +598,12 @@ var loopID;
 function socket() {
 	ws = new WebSocket("ws://"+document.location.host+"/api/socket");
 	ws.onopen = function(event) {
-		acceptOutput = true;
-		bufferSize = 0;
 		var a;
 		while ((a = errs.pop()) !== undefined)
 			a.clear();
 		ws.send(filename);
 	};
 	ws.onclose = function(event) {
-		acceptOutput = true;
 		ws = null;
 		errorHighlight();
 		playButton.src = "/assets/images/play.png";
@@ -638,6 +621,8 @@ function socket() {
 	};
 	ws.onmessage = function(event) {
 		message = event.data;
+		if (message == "started")
+			document.getElementById("running").src = "/assets/images/running.gif";
 		if (message.substring(0, 8) == "output: ") {
 			if (!outputOpen) {
 				outputPos = 0;
@@ -650,7 +635,8 @@ function socket() {
 					}, 1000);
 				}
 			}
-			appendOutput(message.substring(8));
+			appendOutput(message.substring(8).replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;"));
 			return;
 		} else if (message.substring(0, 7) == "error: ") {
 			if (!outputOpen) {
@@ -671,9 +657,7 @@ function socket() {
 				msg = "-- PROGRAM STOPPED --";
 			}
 			appendOutput("<span style=\"color:red;\">" + msg + "</span>\n");
-		} else if (message == "started")
-			document.getElementById("running").src = "/assets/images/running.gif";
-
+		}
 	};
 }
 
