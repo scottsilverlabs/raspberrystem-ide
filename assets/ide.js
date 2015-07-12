@@ -372,40 +372,7 @@ function setOutput(text) {
 //Appends to output and handles \r and \f
 var trim_msg = "<span style=\"color:red;\">-- OUTPUT TRIMMED --</span>\n";
 function appendOutput(text) {
-	//text = text.replace(/\r\n/g, "\n"); 
-	var lines = outputText.innerHTML.split("\n");
-	var lastline = lines.pop();
-	var content;
-	if (lines.length > 100)
-		lines = lines.slice(-100);
-        lines.unshift(trim_msg);
-	if (lines.length > 1)
-		content = lines.join("\n") + "\n";
-	else if (lines.length == 1)
-		content = lines[0] + "\n";
-	else
-		content = "";
-	var i = 0;
-	while (i < text.length) {
-		var chr = text.substring(i, i + 1);
-		i++;
-		if (chr == "\r") {
-			console.log("\\r:"+i);
-			linepos = 0;
-		} else if (chr == "\f") {
-			lastline = "";
-			content = "";
-			linepos = 0;
-		} else if (chr == "\n") {
-			content += lastline + "\n";
-			lastline = "";
-			linepos = 0;
-		} else {
-			lastline = lastline.substring(0, linepos) + chr + lastline.substring(linepos + 1);
-			linepos++;
-		}
-	}
-	setOutput(content + lastline);
+	setOutput(outputText.innerHTML + text);
 }
 
 
@@ -608,33 +575,26 @@ function socket() {
 		editor.focus();
 	};
 	ws.onmessage = function(event) {
+        if (!outputOpen) {
+            outputPos = 0;
+            toggleOutput();
+            if (document.location.host == "127.0.0.1") {
+                stdin.focus();
+            } else {
+                setTimeout(function() {
+                    stdin.focus();
+                }, 1000);
+            }
+        }
 		message = event.data;
-		if (message == "started")
+        var cmd = message.substring(0,8);
+        var payload = message.substring(8).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+		if (cmd == "started:") {
 			document.getElementById("running").src = "/assets/images/running.gif";
-		if (message.substring(0, 8) == "output: ") {
-			if (!outputOpen) {
-				outputPos = 0;
-				toggleOutput();
-				if (document.location.host == "127.0.0.1") {
-					stdin.focus();
-				} else {
-					setTimeout(function() {
-						stdin.focus();
-					}, 1000);
-				}
-			}
-			appendOutput(message.substring(8).replace(/</g, "&lt;")
-				.replace(/>/g, "&gt;"));
-			return;
-		} else if (message.substring(0, 7) == "error: ") {
-			if (!outputOpen) {
-				outputPos = 0;
-				toggleOutput();
-			}
-			msg = "-- PROGRAM FINISHED --";
-			if (message.substring(7) == "stopped") {
-				msg = "-- PROGRAM STOPPED --";
-			}
+		} else if (cmd == "output :") {
+			setOutput(payload);
+		} else if (cmd == "error  :") {
+			msg = payload == "stopped" ? "-- PROGRAM STOPPED --" : "-- PROGRAM FINISHED --";
 			appendOutput("<span style=\"color:red;\">" + msg + "</span>\n");
 		}
 	};

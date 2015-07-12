@@ -15,6 +15,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"sync"
 )
 
 var SETTINGS_FILE = "/etc/rstem_ide.conf"
@@ -25,6 +26,12 @@ var PYDOC_DIR = COMPANY_DIR + "pydoc/"
 var PYTHON_ORG_DIR = COMPANY_DIR + "python.org/"
 var IDE_HTML = IDE_DIR + "ide.html"
 var LASTFILE_FILE = IDE_DIR + "lastfile"
+
+var MAX_OUTPUT_BUF_SIZE = 100000
+var MAX_TRUNC_OUTPUT_BUF_SIZE = 1000
+var NUM_TRUNC_OUTPUT_LINES = 20
+var SLOW_OUTPUT_UPDATE_MSEC = time.Duration(500) * time.Millisecond
+var FAST_OUTPUT_UPDATE_MSEC = time.Duration(50) * time.Millisecond
 
 var page, _ = template.New("index").ParseFiles(IDE_HTML)
 var hostname, _ = ioutil.ReadFile("/etc/hostname")
@@ -266,27 +273,87 @@ func socketServer(s *websocket.Conn) {
 		com = exec.Command("/usr/bin/python3", config["projectdir"] + string(data[:n]))
 	}
 	pt, err := pty.Start(com)
-	s.Write([]byte("started"))
+	s.Write([]byte("started:"))
 	if err != nil {
-		s.Write([]byte("error: " + err.Error()))
+		s.Write([]byte("error  :" + err.Error()))
 		s.Close()
 		return
 	}
 	run := true
 	stopped := false
+	var buffered_output string
+	var last_output time.Time
+	var trunc_buf string
+
+	timer := time.NewTimer(0)
+
 	go watchInput(s, com.Process, pt, &run, &stopped)
+
+    // Mutex to protect conncurrent writes from timer
+    var mutex = &sync.Mutex{}
+
 	for {
 		out := make([]byte, 1024)
 		n, err := pt.Read(out)
+		mutex.Lock()
 		if stopped {
-			s.Write([]byte("error: stopped"))
+			s.Write([]byte("output :" + buffered_output))
+			s.Write([]byte("error  :" + "stopped"))
 			break
 		} else if err != nil {
-			s.Write([]byte("error: " + err.Error()))
+			s.Write([]byte("output :" + buffered_output))
+			s.Write([]byte("error  :" + err.Error()))
 			break
 		} else if n > 0 {
-			s.Write([]byte("output: " + string(out[:n])))
+			// Buffer new data to buffered_output, but only upto the last
+            // MAX_OUTPUT_BUF_SIZE bytes
+			buffered_output += string(out[:n])
+			if len(buffered_output) > MAX_OUTPUT_BUF_SIZE {
+				buffered_output = buffered_output[len(buffered_output)-MAX_OUTPUT_BUF_SIZE:]
+			}
+
+			// Write the full untrunctaed buffer at a slow rate, and a truncated
+			// version of it (as little as fills the output window) at a faster
+			// rate (but not TOO fast).
+			if (time.Since(last_output) > SLOW_OUTPUT_UPDATE_MSEC) {
+				s.Write([]byte("output :" + buffered_output))
+				last_output = time.Now()
+			} else if (time.Since(last_output) > FAST_OUTPUT_UPDATE_MSEC) {
+				// Truncate to last NUM_TRUNC_OUTPUT_LINES lines
+				lines := 0
+				var i int
+				for i = len(buffered_output) - 1; i > 0; i-- {
+					if buffered_output[i] == '\n' {
+						lines++
+						if lines > NUM_TRUNC_OUTPUT_LINES {
+							break
+						}
+					}
+				}
+
+				// Worst case, truncate to MAX_OUTPUT_BUF_SIZE bytes
+				if len(buffered_output) - i > MAX_TRUNC_OUTPUT_BUF_SIZE {
+					trunc_buf = buffered_output[len(buffered_output)-MAX_TRUNC_OUTPUT_BUF_SIZE:]
+				} else {
+					trunc_buf = buffered_output[i:]
+				}
+
+				s.Write([]byte("output :" + trunc_buf))
+				last_output = time.Now()
+			}
+
+			// Timer to update buffered output a short time later.  If more
+			// output occurs, this timer will continually be put off.
+			timer.Reset(SLOW_OUTPUT_UPDATE_MSEC)
+			go func() {
+				<-timer.C
+				mutex.Lock()
+				s.Write([]byte("output :" + buffered_output))
+				last_output = time.Now()
+				mutex.Unlock()
+			}()
 		}
+		mutex.Unlock()
 		time.Sleep(time.Millisecond * 10) //For minimal CPU impact
 	}
 	run = false
