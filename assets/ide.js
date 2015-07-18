@@ -156,10 +156,13 @@ function headerClick() {
 //Sets the title text and sets to width of the title which is used for centering.
 function setTitle(text) {
 	var width = text.length*(2/3);
-	if (webShowing)
+	if (webShowing) {
 		document.getElementById("running").style.marginLeft = "-" + (parseFloat(width) + 5) + "em";
-	else
+		document.getElementById("nosign").style.marginLeft = "-" + (parseFloat(width) + 5.5) + "em";
+	} else {
 		document.getElementById("running").style.marginLeft = "-" + ((width/2) + 2) + "em";		
+		document.getElementById("nosign").style.marginLeft = "-" + ((width/2) + 2.5) + "em";		
+	}
 	titleHolder.innerHTML = text.replace(/-/g, " ");
 	titleHolder.style.width = width + "em";
 }
@@ -600,20 +603,28 @@ function socket() {
 	};
 }
 
+var reconnLoop;
 function changeSocketInit() {
+	if (reconnLoop) {
+		clearInterval(reconnLoop);
+		reconnLoop = null;
+	}
 	changeSocket = new WebSocket("ws://"+document.location.host+"/api/change");
 	changeSocket.onopen = function(event) {
 		changeSocket.send("COF:"+filename);
 		good = true;
+		document.getElementById("nosign").style.display = "none";
 	};
 	changeSocket.onclose = function(event) {
 		changeSocket = null;
 		if (good)
-			setTimeout(5000, changeSocketInit);
+			reconnLoop = setInterval(changeSocketInit, 5000);
+		document.getElementById("nosign").style.display = "block";
 	};
 	changeSocket.onerror = function(event) {
 		if (!good)
 			alert("Your browser may not support web sockets\nFor the best experience use Google Chrome");
+		document.getElementById("nosign").style.display = "block";
 	};
 	changeSocket.onmessage = function(event) {
 		message = event.data;
