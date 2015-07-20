@@ -709,24 +709,16 @@ function toggleWeb() {
 	webShowing = !webShowing;
 	setTitle(title.innerHTML);
 	if (webShowing) {
-		if (document.location.host == "127.0.0.1")
-			button.src = "/assets/images/arrow-right.png";
-		else
-			button.style.transform = "rotateY(0deg)";
+		button.src = "/assets/images/arrow-right.png";
 		title.className = "headertextRight"; //classList.remove wasn't working in Chromium
 		ide.style.width = "50%";
 		output.style.width = "50%";
-		web.style.width = "50%";
 		web.style.left = "50%";
 	} else {
-		if (document.location.host == "127.0.0.1")
-			button.src = "/assets/images/arrow-left.png";
-		else
-			button.style.transform = "rotateY(180deg)";
+		button.src = "/assets/images/arrow-left.png";
 		title.className = "headertextCenter";
 		ide.style.width = "100%";
 		output.style.width = "100%";
-		web.style.width = "0";
 		web.style.left = "100%";
 	}
 	editor.focus();
@@ -1228,10 +1220,7 @@ function toggleOutput() {
 	outputOpen = !outputOpen;
 	if (!outputOpen) {
 		outputPos = outputHolder.scrollTop;
-		if (document.location.host == "127.0.0.1")
-			button.src = "/assets/images/arrow-up.png";
-		else
-			button.style.transform = "rotateZ(-90deg)";
+		button.src = "/assets/images/arrow-up.png";
 		button.style.marginTop = "-5em";
 		output.classList.remove("outputOpen");
 		output.classList.add("outputClosed");
@@ -1239,10 +1228,7 @@ function toggleOutput() {
 		codewrapper.classList.add("codeLong");
 		setTimeout(function() { ide.scrollIntoViewIfNeeded(); }, 10);
 	} else {
-		if (document.location.host == "127.0.0.1")
-					button.src = "/assets/images/arrow-down.png";
-		else
-			button.style.transform = "rotateZ(90deg)";
+		button.src = "/assets/images/arrow-down.png";
 		button.style.marginTop = "-2.75em";
 		output.classList.remove("outputClosed");
 		output.classList.add("outputOpen");
