@@ -1221,7 +1221,6 @@ function toggleOutput() {
 	if (!outputOpen) {
 		outputPos = outputHolder.scrollTop;
 		button.src = "/assets/images/arrow-up.png";
-		button.style.marginTop = "-5em";
 		output.classList.remove("outputOpen");
 		output.classList.add("outputClosed");
 		codewrapper.classList.remove("codeShort");
@@ -1229,7 +1228,6 @@ function toggleOutput() {
 		setTimeout(function() { ide.scrollIntoViewIfNeeded(); }, 10);
 	} else {
 		button.src = "/assets/images/arrow-down.png";
-		button.style.marginTop = "-2.75em";
 		output.classList.remove("outputClosed");
 		output.classList.add("outputOpen");
 		codewrapper.classList.remove("codeLong");

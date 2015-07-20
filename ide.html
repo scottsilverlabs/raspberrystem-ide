@@ -81,6 +81,14 @@
 			    height: calc(100% - {{.OutputSize}}% - 3em);
 			    height: -webkit-calc(100% - {{.OutputSize}}% - 3em);
 			}
+
+			.fancybutton {
+				transition: box-shadow 0.1s ease-in-out;
+				{{if eq .RaspiTransforms "true"}}
+				-webkit-transition: box-shadow 0.1s ease-in-out;
+				{{end}}
+				border-radius: 5px;
+			}
 		</style>
 	</head>
 	<body onkeyup="key(event)">
@@ -90,7 +98,7 @@
 				<img draggable="false" id="open" class="headerbutton fancybutton" src="/assets/images/folder.png" onclick="openFile(true)"></img>
 				<img draggable="false" id="save" class="headerbutton fancybutton" src="/assets/images/savegray.png"></img>
 				<img draggable="false" id="themeb" class="headerbutton fancybutton" src="/assets/images/theme.png" onclick="settingsDialog()"></img>
-				<img id="running" style="left:50%;position:absolute;transition:margin-left 0.5s;" draggable="false" class="headerbutton" src="/assets/images/rstemlogo.png"></img>
+				<img id="running" style="left:50%;position:absolute;transition:margin-left 0.5s;-webkit-transition:margin-left 0.5s;" draggable="false" class="headerbutton" src="/assets/images/rstemlogo.png"></img>
 				<img id="nosign" style="left:50%;position:absolute;transition:margin-left 0.5s;top: 0;" draggable="false" class="headerbutton" src="/assets/images/nosign.png"></img>
 				<h4 id="title">Untitled</h4>
 			</header>

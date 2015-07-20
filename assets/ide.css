@@ -46,20 +46,14 @@ header {
 
 #outputbutton {
     position: relative;
-    margin-top: -2.75em;
+    margin-top: -5em;
     height: 2em;
-    transition: margin-top 0.5s;
-    -webkit-transition: margin-top 0.5s;
     filter: invert(100%);
     -webkit-filter: invert(100%);
-    margin-left: -3em;
+    margin-left: -2em;
     left: 100%;
 }
 
-.fancybutton {
-    transition: box-shadow 0.1s ease-in-out;
-    border-radius: 5px;
-}
 .fancybutton:hover {
     box-shadow: inset 0 0 4px #fff, 0 0 3px #333;
 }
