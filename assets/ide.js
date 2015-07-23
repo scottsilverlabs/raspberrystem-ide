@@ -30,6 +30,7 @@ window.onload = function() {
 	web = document.getElementById("webview");
 	titleHolder = document.getElementById("title");
 	config = JSON.parse(GET("/api/configuration"));
+	config.bootfiles = config.bootfiles.split(",").filter(function(x) { return x != ""; });
 	config.ip = config.ip.split("\n").filter(function(x) { return x != ""; }).join("\n");
 
 	editor = CodeMirror(document.getElementById("codewrapper"), {
@@ -112,9 +113,11 @@ window.onload = function() {
 	/* Create keybinding table:
 	keybindings[keyString] = function() { bindableFunction(); } */
 	for (i in config) {
-		var func = config[i].substring(0, 1).toLowerCase() + config[i].substring(1);
-		if (bindableFunc.indexOf(func) + 1) {
-			keybindings[i] = new Function(func + "()");
+		if (typeof config[i] == "string") {
+			var func = config[i].substring(0, 1).toLowerCase() + config[i].substring(1);
+			if (bindableFunc.indexOf(func) + 1) {
+				keybindings[i] = new Function(func + "()");
+			}
 		}
 	}
 	if (GET("/api/listfiles").split("\n")[0] === "")
@@ -1065,6 +1068,15 @@ function settingsDialog() {
 
 	var buttons = {
 		"Change Theme": { type: "list", content: niceNames, func: setTheme},
+		"Run this file on boot:": { type: "checkbox", func: function() {
+			if (config.bootfiles.indexOf(filename) != -1) {
+				config.bootfiles = config.bootfiles.filter(function(x) {return x != filename;});
+			} else {
+				config.bootfiles.push(filename);
+			}
+			GET("/api/setbootfiles?files=" + config.bootfiles.join(','));
+			console.log(config.bootfiles);
+		}},
 		"Clean Shutdown": { type: "button", func: function() {
 			GET('/api/poweroff');
 			removePopup();
@@ -1100,6 +1112,19 @@ function settingsDialog() {
 			fileholder.appendChild(lst);
 			lst.classList.add("filebutton");
 			lst.onclick = buttons[i];
+		} else if (buttons[i].type == "checkbox") {
+			var button = document.createElement("div");
+			var box = document.createElement("input");
+			box.type = "checkbox";
+			box.style.float = "right";
+			box.onclick = buttons[i].func;
+			if (config.bootfiles.indexOf(filename) != -1)
+				box.checked = true;
+			fileholder.appendChild(button);
+			button.innerHTML = i;
+			button.appendChild(box);
+			button.classList.add("checkboxdiv");
+			setupButton(box, 0, j++);
 		}
 	}
 

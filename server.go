@@ -16,6 +16,9 @@ import (
 	"syscall"
 	"time"
 	"sync"
+	"encoding/gob"
+	"bytes"
+	"fmt"
 )
 
 var SETTINGS_FILE = "/etc/rstem_ide.conf"
@@ -25,7 +28,7 @@ var PROJECTS_DIR = COMPANY_DIR + "projects/"
 var PYDOC_DIR = COMPANY_DIR + "pydoc/"
 var PYTHON_ORG_DIR = COMPANY_DIR + "python.org/"
 var IDE_HTML = IDE_DIR + "ide.html"
-var LASTFILE_FILE = IDE_DIR + "lastfile"
+var DATA_FILE = IDE_DIR + "storage"
 
 var MAX_OUTPUT_BUF_SIZE = 100000
 var MAX_TRUNC_OUTPUT_BUF_SIZE = 1000
@@ -39,6 +42,7 @@ var users = make(map[string]string)  //Used to track users and their current fil
 var config = make(map[string]string) //Used for settings
 var changeSockets = make(map[string][]*websocket.Conn)
 var lastSocket *websocket.Conn
+var savedConfig = make(map[string]string)
 
 func main() {
 	settings, err := ioutil.ReadFile(SETTINGS_FILE)
@@ -63,12 +67,19 @@ func main() {
 		panic(err)
 	}
 	config["projectdir"] = strings.Replace(config["projectdir"], "~", os.Getenv("HOME"), 1)
-	last, _ := ioutil.ReadFile(LASTFILE_FILE)
-	if string(last) != "" {
-		config["lastfile"] = string(last)
+
+	if _, err := os.Stat(DATA_FILE); os.IsNotExist(err) {
+		println("Creating initial storage file")
+		savedConfig["lastfile"] = ""
+		savedConfig["loadfile"] = ""
+		savedConfig["bootfiles"] = ""
+		saveMap();
 	}
+	loadMap();
 
 	config["ip"] = ""
+	config["lastfile"] = savedConfig["lastfile"]
+	config["bootfiles"] = savedConfig["bootfiles"]
 	
 	ifaces, _ := net.Interfaces()
 	for _, iface := range ifaces {
@@ -82,8 +93,19 @@ func main() {
 		}
 	}
 
-
 	os.Mkdir(config["projectdir"], 0775)
+
+	if savedConfig["bootfiles"] != "" {
+		for _, v := range strings.Split(savedConfig["bootfiles"], ",") {
+			content, _ := ioutil.ReadFile(config["projectdir"] + v)
+			if string(content[:2]) == "#!" {
+				go exec.Command(config["projectdir"] + v).Run();
+			} else {
+				go exec.Command("/usr/bin/python3", config["projectdir"] + v).Run();				
+			}
+		}
+	}
+
 	http.HandleFunc("/", index) //All requests to / and 404s will route to Index
 	http.HandleFunc("/api/listfiles", listFiles)
 	http.HandleFunc("/api/listthemes", listThemes)
@@ -93,6 +115,7 @@ func main() {
 	http.HandleFunc("/api/deletefile", deleteFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.HandleFunc("/api/poweroff", poweroff)
+	http.HandleFunc("/api/setbootfiles", setbootfiles)
 	http.HandleFunc("/api/configuration", configuration)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
@@ -104,6 +127,29 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func saveMap() {
+	b := new(bytes.Buffer)
+	e := gob.NewEncoder(b)
+	err := e.Encode(savedConfig)
+	if err != nil {
+		panic(err)
+	}
+
+	ioutil.WriteFile(DATA_FILE, b.Bytes(), 0644)
+}
+
+func loadMap() {
+	f, _ := os.Open(DATA_FILE)
+	d := gob.NewDecoder(f)
+	err := d.Decode(&savedConfig)
+	if err != nil {
+	     fmt.Println(err)
+	     os.Exit(1)
+	}
+
+	f.Close()
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -159,11 +205,8 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(content))
 	//Set last file
 	config["lastfile"] = fname
-	file, _ := os.OpenFile(LASTFILE_FILE, os.O_CREATE|os.O_WRONLY, 0744)
-	file.Truncate(0)
-	file.WriteString(fname)
-	file.Sync()
-	file.Close()
+	savedConfig["lastfile"] = fname
+	saveMap()
 	println("Read: " + fname)
 }
 
@@ -203,6 +246,7 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 	file.Close()
 }
 
+//Basically: cp from to
 func copyFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	from := strings.Trim(r.Form.Get("from"), " ./")
@@ -216,6 +260,7 @@ func copyFile(w http.ResponseWriter, r *http.Request) {
 	file.Close()
 }
 
+//file = filename to delete
 func deleteFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	fname := strings.Trim(r.Form.Get("file"), " ./")
@@ -229,6 +274,8 @@ func hostnameOut(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(hostname))
 }
 
+
+//Returns the config file as JSON
 func configuration(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
@@ -237,9 +284,18 @@ func configuration(w http.ResponseWriter, r *http.Request) {
 
 func poweroff(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	io.WriteString(w, "")
 	exec.Command("poweroff").Run();
+}
+
+func setbootfiles(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	r.ParseForm()
+	files := r.Form.Get("files")
+	config["bootfiles"] = files
+	savedConfig["bootfiles"] = files
+	println("Setting boot files to " + files)
+	saveMap()
 }
 
 //Called as a goroutine to wait for the close command and kill the process.
@@ -306,7 +362,7 @@ func socketServer(s *websocket.Conn) {
 			break
 		} else if n > 0 {
 			// Buffer new data to buffered_output, but only upto the last
-            // MAX_OUTPUT_BUF_SIZE bytes
+			// MAX_OUTPUT_BUF_SIZE bytes
 			buffered_output += string(out[:n])
 			if len(buffered_output) > MAX_OUTPUT_BUF_SIZE {
 				buffered_output = buffered_output[len(buffered_output)-MAX_OUTPUT_BUF_SIZE:]
