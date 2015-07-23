@@ -54,7 +54,7 @@ window.onload = function() {
 	themes = editor.options.theme.split(" ")
 	for (var i in themes)
 		output.classList.add("cm-s-"+themes[i]);
-	currentTheme = themes[0];
+	currentTheme = /*window.localStorage.getItem("currentTheme") ||*/ themes[0];
 	editor.on("change", changeHandle);
 	changeSocketInit();
 	if (config.webviewopen == "true")
@@ -109,7 +109,7 @@ window.onload = function() {
 
 		ide.style.height = ide.style.height.replace("2em", "2.5em");
 	}
-	filename = config.lastfile || "Untitled.py";
+	filename = config.overridelastfile || config.lastfile || "Untitled.py";
 	/* Create keybinding table:
 	keybindings[keyString] = function() { bindableFunction(); } */
 	for (i in config) {
@@ -1032,112 +1032,133 @@ function loadFile(fname, override) {
 
 //Settings dialog
 function settingsDialog() {
-	removePopup();
+	var loopID = loading("Loading", "Generating file list");
+	asyncGET("api/listfiles", function(response) {
+		console.log(response);
+		clearInterval(loopID);
 
-	back = document.createElement("div");
-	document.body.appendChild(back);
-	back.classList.add("holder");
-	back.focus();
+		removePopup();
 
-	popup = document.createElement("div");
-	document.body.appendChild(popup);
-	popup.classList.add("folderpopup");
-	popup.classList.add("popup");
-	back.onclick = removePopup;
+		back = document.createElement("div");
+		document.body.appendChild(back);
+		back.classList.add("holder");
+		back.focus();
 
-	var title = document.createElement("h1");
-	popup.appendChild(title);
-	title.classList.add("popuptitle");
-	title.classList.add("maincolor");
-	title.innerHTML = "Settings";
+		popup = document.createElement("div");
+		document.body.appendChild(popup);
+		popup.classList.add("folderpopup");
+		popup.classList.add("popup");
+		back.onclick = removePopup;
 
-	var fileholder = document.createElement("div");
-	popup.appendChild(fileholder);
-	fileholder.classList.add("fileholder");
+		var title = document.createElement("h1");
+		popup.appendChild(title);
+		title.classList.add("popuptitle");
+		title.classList.add("maincolor");
+		title.innerHTML = "Settings";
 
-	var ipHolder = document.createElement("div");
-	fileholder.appendChild(ipHolder);
-	ipHolder.innerHTML = config.ip.split("\n").join("<br>");
-	ipHolder.style.height = config.ip.split("\n").length*20 + "px";
-	ipHolder.classList.add("newfilebutton");
-	ipHolder.classList.add("filetext");
-	setupButton(ipHolder, 0, 0);
-	var niceNames = themes.map(function(t) {
-		return t.replace(/\-/g, " ").split(" ").map(function(e) { return e.substring(0, 1).toUpperCase() + e.substring(1); }).join(" ").replace(/\.css$/, "");
-	});
+		var fileholder = document.createElement("div");
+		popup.appendChild(fileholder);
+		fileholder.classList.add("fileholder");
 
-	var buttons = {
-		"Change Theme": { type: "list", content: niceNames, func: setTheme},
-		"Run this file on boot:": { type: "checkbox", func: function() {
-			if (config.bootfiles.indexOf(filename) != -1) {
-				config.bootfiles = config.bootfiles.filter(function(x) {return x != filename;});
-			} else {
-				config.bootfiles.push(filename);
+		var ipHolder = document.createElement("div");
+		fileholder.appendChild(ipHolder);
+		ipHolder.innerHTML = config.ip.split("\n").join("<br>");
+		ipHolder.style.height = config.ip.split("\n").length*20 + "px";
+		ipHolder.classList.add("newfilebutton");
+		ipHolder.classList.add("filetext");
+		setupButton(ipHolder, 0, 0);
+		var niceNames = themes.map(function(t) {
+			return t.replace(/\-/g, " ").split(" ").map(function(e) { return e.substring(0, 1).toUpperCase() + e.substring(1); }).join(" ").replace(/\.css$/, "");
+		});
+
+		var buttons = {
+			"Theme": { type: "list", curr: currentTheme, content: niceNames, func: setTheme},
+			"Start file": { type: "list", curr: config.overridelastfile, content: ["-- Last file opened --"].concat(response.split("\n")), func: function(c) {
+				if (c == "-- Last file opened --") {
+					GET("/api/setoverridelastfile?file=");
+					config.overridelastfile = "";
+				} else {
+					GET("/api/setoverridelastfile?file=" + c);
+					config.overridelastfile = c;
+				}
+			}},
+			"Run this file on boot:": { type: "checkbox", func: function() {
+				if (config.bootfiles.indexOf(filename) != -1) {
+					config.bootfiles = config.bootfiles.filter(function(x) {return x != filename;});
+				} else {
+					config.bootfiles.push(filename);
+				}
+				GET("/api/setbootfiles?files=" + config.bootfiles.join(','));
+				console.log(config.bootfiles);
+			}},
+			"Clean Shutdown": { type: "button", func: function() {
+				GET('/api/poweroff');
+				removePopup();
+			}}
+		};
+
+		var j = 0;
+
+		//Populate div
+		for (i in buttons) {
+			if (buttons[i].type == "button") {
+				var button = document.createElement("div");
+				fileholder.appendChild(button);
+				button.innerHTML = i;
+				button.classList.add("filebutton");
+				button.onclick = buttons[i];
+				setupButton(button, 0, j++);
+			} else if (buttons[i].type == "list") {
+				var container = document.createElement("div");
+				var text = document.createElement("div");
+				var lst = document.createElement("select");
+				text.innerHTML = i;
+				container.classList.add("checkboxdiv");
+				lst.value = i;
+				(function(l, f){
+					l.addEventListener("change", function() {
+						f(l.value);
+					});
+				})(lst, buttons[i].func);
+				for (var j in buttons[i].content) {
+					var opt = document.createElement("option");
+					if (buttons[i].content[j] == buttons[i].curr)
+						opt.selected = "selected";
+					lst.appendChild(opt);
+					opt.innerHTML = buttons[i].content[j];
+				}
+				container.appendChild(text);
+				container.appendChild(lst);
+				fileholder.appendChild(container);
+				lst.classList.add("settingsdropdown");
+				lst.onclick = buttons[i];
+			} else if (buttons[i].type == "checkbox") {
+				var container = document.createElement("div");
+				var box = document.createElement("input");
+				box.type = "checkbox";
+				box.style.float = "right";
+				box.onclick = buttons[i].func;
+				if (config.bootfiles.indexOf(filename) != -1)
+					box.checked = true;
+				fileholder.appendChild(container);
+				container.innerHTML = i;
+				container.appendChild(box);
+				container.classList.add("checkboxdiv");
+				setupButton(box, 0, j++);
 			}
-			GET("/api/setbootfiles?files=" + config.bootfiles.join(','));
-			console.log(config.bootfiles);
-		}},
-		"Clean Shutdown": { type: "button", func: function() {
-			GET('/api/poweroff');
-			removePopup();
-		}}
-	};
-
-	var j = 0;
-
-	//Populate div
-	for (i in buttons) {
-		if (buttons[i].type == "button") {
-			var button = document.createElement("div");
-			fileholder.appendChild(button);
-			button.innerHTML = i;
-			button.classList.add("filebutton");
-			button.onclick = buttons[i];
-			setupButton(button, 0, j++);
-		} else if (buttons[i].type == "list") {
-			var lst = document.createElement("select");
-			lst.value = i;
-			lst.style.height = "28px";
-			lst.addEventListener("change", function() {
-				setTheme(lst.value);
-			});
-			console.log(buttons[i].content);
-			for (var j in buttons[i].content) {
-				var opt = document.createElement("option");
-				if (buttons[i].content[j] == currentTheme)
-					opt.selected = "selected";
-				lst.appendChild(opt);
-				opt.innerHTML = buttons[i].content[j];
-			}
-			fileholder.appendChild(lst);
-			lst.classList.add("filebutton");
-			lst.onclick = buttons[i];
-		} else if (buttons[i].type == "checkbox") {
-			var button = document.createElement("div");
-			var box = document.createElement("input");
-			box.type = "checkbox";
-			box.style.float = "right";
-			box.onclick = buttons[i].func;
-			if (config.bootfiles.indexOf(filename) != -1)
-				box.checked = true;
-			fileholder.appendChild(button);
-			button.innerHTML = i;
-			button.appendChild(box);
-			button.classList.add("checkboxdiv");
-			setupButton(box, 0, j++);
 		}
-	}
 
-	var cancel = document.createElement("div");
-	popup.appendChild(cancel);
-	setupButton(cancel, 0, j);
-	cancel.innerHTML = "Close";
-	cancel.classList.add("button");
-	cancel.style.position = "relative";
-	cancel.style.marginTop = "-5px";
-	cancel.style.width = "25%";
-	cancel.style.left = "37.5%";
-	cancel.onclick = removePopup;
+		var cancel = document.createElement("div");
+		popup.appendChild(cancel);
+		setupButton(cancel, 0, j);
+		cancel.innerHTML = "Close";
+		cancel.classList.add("button");
+		cancel.style.position = "relative";
+		cancel.style.marginTop = "-5px";
+		cancel.style.width = "25%";
+		cancel.style.left = "37.5%";
+		cancel.onclick = removePopup;
+	});
 }
 
 //Open file popup
@@ -1230,13 +1251,13 @@ function openFile(button) {
 //Called when a div is clicked in the change theme function
 function setTheme(name) {
 	currentTheme = name;
+	//window.localStorage.setItem("currentTheme", name);
 	name = name.toLowerCase().replace(/ /g, "-");
 	document.getElementById("theme").href = "/assets/themes/" + name + ".css";
 	old = editor.getOption("theme");
 	editor.setOption("theme", name);
 	output.classList.remove("cm-s-"+old);
 	output.classList.add("cm-s-"+name);
-	//settingsDialog();
 }
 
 outputOpen = true;
@@ -1263,9 +1284,7 @@ function toggleOutput() {
 }
 
 function welcome() {
-	var dis = window.localStorage.getItem('disableWelcome');
-	console.log(dis);
-	console.log(dis == "false");
+	var dis = window.localStorage.getItem("disableWelcome");
 	if (!dis || dis == "false") {
 		removePopup();
 
@@ -1312,7 +1331,7 @@ function welcome() {
 		show.onchange = function() {
 			on = !on;
 			console.log(on);
-			window.localStorage.setItem('disableWelcome', on);
+			window.localStorage.setItem("disableWelcome", on);
 		};
 
 		var cancel = document.createElement("div");

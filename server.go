@@ -73,6 +73,7 @@ func main() {
 		savedConfig["lastfile"] = ""
 		savedConfig["loadfile"] = ""
 		savedConfig["bootfiles"] = ""
+		savedConfig["overridelastfile"] = ""
 		saveMap();
 	}
 	loadMap();
@@ -80,6 +81,7 @@ func main() {
 	config["ip"] = ""
 	config["lastfile"] = savedConfig["lastfile"]
 	config["bootfiles"] = savedConfig["bootfiles"]
+	config["overridelastfile"] = savedConfig["overridelastfile"]
 	
 	ifaces, _ := net.Interfaces()
 	for _, iface := range ifaces {
@@ -116,6 +118,7 @@ func main() {
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.HandleFunc("/api/poweroff", poweroff)
 	http.HandleFunc("/api/setbootfiles", setbootfiles)
+	http.HandleFunc("/api/setoverridelastfile", setoverridelastfile)
 	http.HandleFunc("/api/configuration", configuration)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
@@ -295,6 +298,16 @@ func setbootfiles(w http.ResponseWriter, r *http.Request) {
 	config["bootfiles"] = files
 	savedConfig["bootfiles"] = files
 	println("Setting boot files to " + files)
+	saveMap()
+}
+
+func setoverridelastfile(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	r.ParseForm()
+	file := r.Form.Get("file")
+	config["overridelastfile"] = file
+	savedConfig["overridelastfile"] = file
+	println("Setting override lastfile to " + file)
 	saveMap()
 }
 
