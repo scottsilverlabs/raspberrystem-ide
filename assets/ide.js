@@ -51,10 +51,10 @@ window.onload = function() {
 		viewportMargin: 3, //Default: 10
 		undoDepth: config.undodepth || 20 //Default: 20
 	});
-	themes = editor.options.theme.split(" ")
+	themes = editor.options.theme.split(" ");
 	for (var i in themes)
 		output.classList.add("cm-s-"+themes[i]);
-	currentTheme = /*window.localStorage.getItem("currentTheme") ||*/ themes[0];
+	currentTheme = window.localStorage.getItem("currentTheme") || themes[0];
 	editor.on("change", changeHandle);
 	changeSocketInit();
 	if (config.webviewopen == "true")
@@ -125,6 +125,7 @@ window.onload = function() {
 	asyncGET("api/listthemes", function(r) { themes = r.split("\n"); });
 	loadFile(filename, true);
 	welcome();
+	setTheme(currentTheme);
 };
 
 //Save on window close
@@ -1251,7 +1252,7 @@ function openFile(button) {
 //Called when a div is clicked in the change theme function
 function setTheme(name) {
 	currentTheme = name;
-	//window.localStorage.setItem("currentTheme", name);
+	window.localStorage.setItem("currentTheme", name);
 	name = name.toLowerCase().replace(/ /g, "-");
 	document.getElementById("theme").href = "/assets/themes/" + name + ".css";
 	old = editor.getOption("theme");
