@@ -1067,7 +1067,6 @@ function settingsDialog() {
 		ipHolder.style.height = config.ip.split("\n").length*20 + "px";
 		ipHolder.classList.add("newfilebutton");
 		ipHolder.classList.add("filetext");
-		setupButton(ipHolder, 0, 0);
 		var niceNames = themes.map(function(t) {
 			return t.replace(/\-/g, " ").split(" ").map(function(e) { return e.substring(0, 1).toUpperCase() + e.substring(1); }).join(" ").replace(/\.css$/, "");
 		});
@@ -1093,12 +1092,13 @@ function settingsDialog() {
 				console.log(config.bootfiles);
 			}},
 			"Clean Shutdown": { type: "button", func: function() {
-				GET('/api/poweroff');
+				console.log("Poweroff");
+				GET("/api/poweroff");
 				removePopup();
 			}}
 		};
 
-		var j = 0;
+		var buttonnum = 0;
 
 		//Populate div
 		for (i in buttons) {
@@ -1107,8 +1107,8 @@ function settingsDialog() {
 				fileholder.appendChild(button);
 				button.innerHTML = i;
 				button.classList.add("filebutton");
-				button.onclick = buttons[i];
-				setupButton(button, 0, j++);
+				button.onclick = buttons[i].func;
+				setupButton(button, 0, buttonnum++);
 			} else if (buttons[i].type == "list") {
 				var container = document.createElement("div");
 				var text = document.createElement("div");
@@ -1145,13 +1145,13 @@ function settingsDialog() {
 				container.innerHTML = i;
 				container.appendChild(box);
 				container.classList.add("checkboxdiv");
-				setupButton(box, 0, j++);
+				setupButton(box, 0, buttonnum++);
 			}
 		}
 
 		var cancel = document.createElement("div");
 		popup.appendChild(cancel);
-		setupButton(cancel, 0, j);
+		setupButton(cancel, 0, buttonnum);
 		cancel.innerHTML = "Close";
 		cancel.classList.add("button");
 		cancel.style.position = "relative";
