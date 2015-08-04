@@ -36,7 +36,6 @@ TGT_OPENBOX_FILE = '/home/pi/.config/openbox/lxde-pi-rc.xml'
 outputs = [
     TGT_INSTALL_DIR,
     TGT_PYTHON_DOCS_DIR,
-    TGT_HTML_SYMLINK,
     TGT_CONFIG_FILE,
     TGT_BIN_SYMLINK,
     TGT_INITD,
@@ -57,7 +56,9 @@ def _post_install(dir):
 
     print('Creating links...')
 
-    # API docs symlink
+    # API docs symlink - note: TGT_HTML_SYMLINK not considered an output of the
+    # install because if it is, then on pip uninstall, it will not remove the
+    # symlink, but instead removes the files linked TO.
     try:
         os.remove(TGT_HTML_SYMLINK)
     except OSError:
