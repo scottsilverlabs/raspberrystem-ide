@@ -924,8 +924,10 @@ function editFile(fname) {
 				POST("/api/copyfile", {"from": fname, "to": tval});
 				POST("/api/deletefile", {"file": fname});
 				removePopup();
-				if (fname == filename)
+				if (fname == filename) {
 						setTitle(textval);
+						filename = tval;					
+				}
 				openFile();
 			}
 		} else {
