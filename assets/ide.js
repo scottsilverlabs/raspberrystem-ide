@@ -380,7 +380,7 @@ function setOutput(text) {
 	stdin.scrollIntoViewIfNeeded();
 }
 
-//Appends to output and handles \r and \f
+//Appends to output
 var trim_msg = "<span style=\"color:red;\">-- OUTPUT TRIMMED --</span>\n";
 function appendOutput(text) {
 	setOutput(outputText.innerHTML + text);
@@ -389,72 +389,35 @@ function appendOutput(text) {
 
 //Called when the script stops running on the server side, highlights errors in the output
 var errs = [];
-var errRegex = new RegExp(/\s+File ".+", line \d+.*\n.+\n.+\^\n.+: .+/g);
-var traceRegex = new RegExp(/Traceback.*:\n(\s+File ".+", line \d+.*\n.*\n)+.*(Error|Interrupt|Exception).*/g);
-var stripRegex = new RegExp(/(^\s+|\s+$)/g);
+var errFileRegex = new RegExp(/File "(.+?)", line (\d+)(, in .+)?\n(\s+.+)/g);
+var errDataRegex = new RegExp(/File "(.+?)", line (\d+)(?:, in .+)?\n(.+)\n(?:\s*\^\s*)?(.*(?:Error|Interrupt|Exception): .*)/);
+var errMsgRegex = new RegExp(/(File ".+?", line \d+(?:, in .+)?\n.+\n(?:\s*\^\s*)?)(.*(?:Error|Interrupt|Exception): )(.*)/);
 function errorHighlight() {
-	var errString = outputText.innerHTML;
-	var lines = errString.split("\n");
-	var errors = errString.match(errRegex) || [];
-	var offset = 0;
-	var line, start, end, lnum;
-
-	for (var i in errors) {
-		var err = errors[i];
-		var errLines = err.split("\n");
-		var errLinePos = errLines[0].split(", ")[1].substring(5);
-		line = editor.lineInfo(errLinePos - 1 - offset);
-		var stripped = errLines[1].replace(stripRegex, "");
-		var match = line.text.indexOf(stripped);
-		var start = {"line": errLinePos-1, "ch": match};
-		end = {"line": errLinePos-1, "ch": match+stripped.length};
-
+	var msgs = outputText.innerHTML;
+	console.log(msgs);
+	var err = msgs.match(errDataRegex);
+    setOutput(msgs
+		.replace(errMsgRegex, '$1<span style="color:red">$2</span>$3')
+		.replace(errFileRegex, '<span style="color:red">File "<\/span>$1"<span style="color:red">, line <\/span>$2<span style="color:red">$3<\/span>\n$4')
+		.replace(/Traceback \(most recent call last\):\n/, '<span style="color:red">$&</span>'));
+    console.log(err);
+	if (err && err[1].endsWith("/"+filename)) {
+		var line = err[2] - 1;
+	    var lineText = editor.getLine(line);
+	    var offset = lineText.length - lineText.trimLeft().length;
+	    var start, end;
+		if (err[4].startsWith("IndentationError:")) {
+			start = { "line": line, "ch": 0 };
+			end = { "line": line, "ch": offset };
+		} else {
+			start = { "line": line, "ch": offset };
+			end = { "line": line, "ch": lineText.length };
+		}
 		errs.push(editor.markText(start, end, {
 			className: "cm-error",
 			clearOnEnter: true,
-			title: errLines[3],
+			title: err[4],
 		}));
-		if (i === 0)
-			editor.scrollTo(0, errLinePos);
-		setOutput(outputText.innerHTML.replace(err, "<span style=\"color:red;\">" +
-			err + "</span>"));
-	}
-	var traces = errString.match(traceRegex);
-	for (var j = 0; traces && j < traces.length; j++) {
-		var split = traces[j].split("\n");
-		var message = split[0];
-		for (i = 1; i < split.length-1; i++) {
-			line = split[i];
-			if (i%2 !== 0) {
-				end = 0;
-				for (var k = 8; k < line.length; k++)
-					if (line.substr(k, 1) == "\"")
-						end = k;
-				message += "\n"+line.substring(0, 8) + "<span class=\"cm-variable\">" +
-					line.substring(8, end) + "</span>";
-				var nextend = end+8;
-				while (parseInt(line.substr(nextend, 1)) || line.substr(nextend, 1) == "0")
-					nextend++;
-				message += line.substring(end, end+8) + "<span class=\"cm-variable\">" +
-					line.substring(end+8, nextend) + "</span>" + line.substring(nextend);
-				if (line.substring(end-filename.length, end) == filename) {
-					lnum = parseInt(line.substring(end + 8, nextend)) - 1 - offset;
-					start = {"line": lnum, "ch": 0};
-					end = {"line": lnum, "ch": editor.getLine(lnum).length};
-					errs.push(editor.markText(start, end, {
-						className: "cm-error",
-						clearOnEnter: true,
-						title: "Traceback",
-					}));
-					editor.scrollTo(0, lnum);
-				}
-			} else {
-				message += "\n"+"<span class=\"cm-variable\">"+line+"</span>";
-			}
-		}
-		message += "\n"+split[split.length - 1];
-		setOutput(outputText.innerHTML.replace(traces[j], 
-			"<span style=\"color:red;\">" + message + "</span>"));
 	}
 }
 
@@ -598,6 +561,8 @@ function socket() {
             }
         }
 		message = event.data;
+		console.log(">>-----------<<");
+		console.log(message);
         var cmd = message.substring(0,8);
         var payload = message.substring(8).replace(/</g, "&lt;").replace(/>/g, "&gt;");
 		if (cmd == "started:") {

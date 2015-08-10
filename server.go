@@ -117,8 +117,8 @@ func main() {
 	http.HandleFunc("/api/deletefile", deleteFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.HandleFunc("/api/poweroff", poweroff)
-	http.HandleFunc("/api/setbootfiles", setbootfiles)
-	http.HandleFunc("/api/setoverridelastfile", setoverridelastfile)
+	http.HandleFunc("/api/setbootfiles", setBootFiles)
+	http.HandleFunc("/api/setoverridelastfile", setOverrideLastFile)
 	http.HandleFunc("/api/configuration", configuration)
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
@@ -291,7 +291,7 @@ func poweroff(w http.ResponseWriter, r *http.Request) {
 	exec.Command("poweroff").Run();
 }
 
-func setbootfiles(w http.ResponseWriter, r *http.Request) {
+func setBootFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	r.ParseForm()
 	files := r.Form.Get("files")
@@ -301,7 +301,7 @@ func setbootfiles(w http.ResponseWriter, r *http.Request) {
 	saveMap()
 }
 
-func setoverridelastfile(w http.ResponseWriter, r *http.Request) {
+func setOverrideLastFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	r.ParseForm()
 	file := r.Form.Get("file")
