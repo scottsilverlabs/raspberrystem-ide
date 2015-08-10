@@ -25,12 +25,14 @@ import subprocess
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+TGT_CONFIG_FILE = '/etc/rstem_ide.conf'
 TGT_INSTALL_DIR = '/opt/raspberrystem/ide'
 TGT_PYTHON_DOCS_DIR = '/opt/raspberrystem/python.org'
 TGT_HTML_SYMLINK = '/opt/raspberrystem/pydoc'
 TGT_CONFIG_FILE = '/etc/rstem_ide.conf'
 TGT_BIN_SYMLINK = '/usr/local/bin/rstem_ided'
 TGT_INITD = '/etc/init.d/rstem_ided'
+TGT_OPENBOX_FILE = '/home/pi/.config/openbox/lxde-pi-rc.xml'
 outputs = [
     TGT_INSTALL_DIR,
     TGT_PYTHON_DOCS_DIR,
@@ -84,6 +86,15 @@ def _post_install(dir):
     shutil.copy(SRC_INITD, TGT_INITD)
     os.chmod(TGT_INITD, 0o755)
     # symlink is created via postinstall script
+
+    # WM rc config file
+    try:
+        print('Backup {} -> {}'.format(TGT_OPENBOX_FILE, TGT_OPENBOX_FILE + '.old'))
+        shutil.copy(TGT_OPENBOX_FILE, TGT_OPENBOX_FILE + '.old')
+    except:
+        pass
+    print('Copy {} -> {}'.format("./configfiles/lxde-pi-rc.xml", TGT_OPENBOX_FILE))
+    shutil.copy("./configfiles/lxde-pi-rc.xml", TGT_OPENBOX_FILE)
 
     # Additional post install steps via shell script
     from subprocess import call

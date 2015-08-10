@@ -149,6 +149,10 @@ window.onkeydown = function(k) {
 		keybindings[keyseq]();
 		return false; //Used to prevent default action
 	}
+	if (k.keyCode >= 112 && k.keyCode <= 123) { //Disable F1 through F12 default actions
+		k.preventDefault();
+		return false;
+	}
 };
 
 //Focus on the editor when the header is clicked
