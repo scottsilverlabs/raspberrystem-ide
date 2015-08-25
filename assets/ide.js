@@ -51,6 +51,7 @@ window.onload = function() {
 		viewportMargin: 3, //Default: 10
 		undoDepth: config.undodepth || 20 //Default: 20
 	});
+
 	themes = editor.options.theme.split(" ");
 	for (var i in themes)
 		output.classList.add("cm-s-"+themes[i]);
@@ -111,7 +112,8 @@ window.onload = function() {
 	}
 	filename = config.overridelastfile || config.lastfile || "Untitled.py";
 	/* Create keybinding table:
-	keybindings[keyString] = function() { bindableFunction(); } */
+	   keybindings[keyString] = function() { bindableFunction(); }
+	*/
 	for (i in config) {
 		if (typeof config[i] == "string") {
 			var func = config[i].substring(0, 1).toLowerCase() + config[i].substring(1);
@@ -120,6 +122,7 @@ window.onload = function() {
 			}
 		}
 	}
+
 	if (GET("/api/listfiles").split("\n")[0] === "")
 		save(); //Create untitled document if there are no documents
 	asyncGET("api/listthemes", function(r) { themes = r.split("\n"); });
@@ -148,8 +151,7 @@ window.onkeydown = function(k) {
 		k.preventDefault(); //Used to prevent default action...duh.
 		keybindings[keyseq]();
 		return false; //Used to prevent default action
-	}
-	if (k.keyCode >= 112 && k.keyCode <= 123) { //Disable F1 through F12 default actions
+	} else if (k.keyCode >= 112 && k.keyCode <= 123) { //Disable F1 through F12 default actions
 		k.preventDefault();
 		return false;
 	}
@@ -1002,6 +1004,176 @@ function loadFile(fname, override) {
 	});
 }
 
+//Handles updating on the server side
+function runUpdate() {
+	removePopup();
+
+	var newback = document.createElement("div");
+	document.body.appendChild(newback);
+	newback.classList.add("holder");
+	newback.focus();
+
+	var newpopup = document.createElement("div");
+	document.body.appendChild(newpopup);
+	newpopup.classList.add("filepopup");
+	newpopup.classList.add("popup");
+
+	var title = document.createElement("h1");
+	newpopup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.style.height = "1.1em";
+	title.innerHTML = "Updating";
+
+	var text = document.createElement("div");
+	newpopup.appendChild(text);
+	text.classList.add("deletetext");
+	text.marginTop = "0.2em";
+	text.style.height = "70px";
+	text.style.fontSize = "0.9em";
+	text.innerHTML = "Updating using pip";
+	text.style.overflow = "hidden";
+
+	ws = new WebSocket("ws://"+document.location.host+"/api/upgrade");
+	ws.onopen = function(event) {};
+	ws.onclose = function(event) {
+		document.body.removeChild(newback);
+		document.body.removeChild(newpopup);
+	};
+	ws.onmessage = function(event) {
+		var msg = event.data.split("\n");
+		console.log(msg);
+		var last = msg[msg.length - 1] == "" ? msg[msg.length - 2] : msg[msg.length - 1];
+		console.log(last);
+		var lastIn = last.lastIndexOf("Downloading");
+		if (lastIn != -1)
+			last = last.substring(lastIn);
+		text.innerHTML = last;
+	};
+}
+
+//Software updates dialog
+function softwareDialog() {
+	var loopID = loading("Loading", "Getting software versions");
+	asyncGET("/api/softwareversions", function(response) {
+		if (response == "ConnErr") {
+			removePopup();
+
+			back = document.createElement("div");
+			document.body.appendChild(back);
+			back.classList.add("holder");
+			back.focus();
+
+			popup = document.createElement("div");
+			document.body.appendChild(popup);
+			popup.classList.add("filepopup");
+			popup.classList.add("popup");
+			popup.style.height = "130px";
+			back.onclick = removePopup;
+
+			var title = document.createElement("h1");
+			popup.appendChild(title);
+			title.classList.add("popuptitle");
+			title.classList.add("maincolor");
+			title.innerHTML = "Error";
+
+			var text = document.createElement("div");
+			popup.appendChild(text);
+			text.classList.add("deletetext");
+			text.innerHTML = "Software updates require an Internet connection. For more information, visit www.raspberrystem.com";
+			text.style.left = "0";
+			text.style.fontSize = "14px";
+
+			var cancel = document.createElement("div");
+			popup.appendChild(cancel);
+			cancel.innerHTML = "Cancel";
+			cancel.classList.add("filecancel");
+			cancel.classList.add("button");
+			cancel.style.left = "27.5%";
+    		cancel.style.top = "39px";
+			cancel.onclick = settingsDialog;
+			setupButton(cancel, 0, 0);	
+			return
+		}
+
+		var softVersions = JSON.parse(response);
+		clearInterval(loopID);
+		removePopup();
+
+		back = document.createElement("div");
+		document.body.appendChild(back);
+		back.classList.add("holder");
+		back.onclick = removePopup;
+		back.focus();
+
+		popup = document.createElement("div");
+		document.body.appendChild(popup);
+		popup.classList.add("folderpopup");
+		popup.classList.add("popup");
+		popup.style.marginTop = "-87.5px";
+		popup.style.height = "175px";
+
+		var title = document.createElement("h1");
+		popup.appendChild(title);
+		title.classList.add("popuptitle");
+		title.classList.add("maincolor");
+		title.innerHTML = "Software Updates";
+
+		var table = document.createElement("table");
+		popup.appendChild(table);
+
+		var header = document.createElement("tr");
+		var pname = document.createElement("th");
+		var pcurr = document.createElement("th");
+		var pnew = document.createElement("th");
+		pname.innerHTML = "Package Name";
+		pcurr.innerHTML = "Current Version";
+		pnew.innerHTML = "Available version";
+		header.appendChild(pname);
+		header.appendChild(pcurr);
+		header.appendChild(pnew);
+		table.appendChild(header);
+
+		for (var name in softVersions) {
+			var x = softVersions[name];
+			var row = document.createElement("tr");
+			var pkg = document.createElement("td");
+			var curr = document.createElement("td");
+			var avail = document.createElement("td");
+			curr.classList.add('centeritem');
+			row.appendChild(pkg);
+			row.appendChild(curr);
+			row.appendChild(avail);
+			pkg.innerHTML = name;
+			curr.innerHTML = x[0];
+			avail.innerHTML = x[1];
+			table.appendChild(row);
+		}
+
+		var cancel = document.createElement("div");
+		popup.appendChild(cancel);
+		setupButton(cancel, 0, 0);
+		cancel.innerHTML = "Close";
+		cancel.classList.add("button");
+		cancel.style.position = "relative";
+		cancel.style.marginTop = "7px";
+		cancel.style.width = "25%";
+		cancel.style.left = "20%";
+		cancel.onclick = settingsDialog;
+
+		var update = document.createElement("div");
+		popup.appendChild(update);
+		setupButton(update, 0, 1);
+		update.innerHTML = "Update All";
+		update.classList.add("button");
+		update.style.position = "relative";
+		update.style.marginTop = "-30px";
+		update.style.width = "25%";
+		update.style.left = "55%";
+		update.onclick = runUpdate; //TODO
+	});
+}
+
 //Settings dialog
 function settingsDialog() {
 	var loopID = loading("Loading", "Generating file list");
@@ -1062,6 +1234,7 @@ function settingsDialog() {
 				GET("/api/setbootfiles?files=" + config.bootfiles.join(','));
 				console.log(config.bootfiles);
 			}},
+			"Software Updates...": { type: "button", func: softwareDialog },
 			"Clean Shutdown": { type: "button", func: function() {
 				console.log("Poweroff");
 				GET("/api/poweroff");

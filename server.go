@@ -19,6 +19,7 @@ import (
 	"encoding/gob"
 	"bytes"
 	"fmt"
+	"regexp"
 )
 
 var SETTINGS_FILE = "/etc/rstem_ide.conf"
@@ -120,6 +121,8 @@ func main() {
 	http.HandleFunc("/api/setbootfiles", setBootFiles)
 	http.HandleFunc("/api/setoverridelastfile", setOverrideLastFile)
 	http.HandleFunc("/api/configuration", configuration)
+	http.HandleFunc("/api/softwareversions", softwareVersions)
+	http.Handle("/api/upgrade", websocket.Handler(upgradeServer))
 	http.Handle("/api/socket", websocket.Handler(socketServer))
 	http.Handle("/api/change", websocket.Handler(changeServer))
 	http.Handle("/projects/", http.StripPrefix("/projects/", http.FileServer(http.Dir(PROJECTS_DIR))))
@@ -291,6 +294,52 @@ func poweroff(w http.ResponseWriter, r *http.Request) {
 	exec.Command("poweroff").Run();
 }
 
+//Returns the current installed and downloadable software versions, or ConnErr
+func softwareVersions(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	//Check that pypi.python.org is accessible
+	throwaway, err := http.Get("http://pypi.python.org/")
+	if err == nil {
+		rstem, _ := http.Get("https://pypi.python.org/pypi/raspberrystem/")
+		rstemIde, _ := http.Get("http://pypi.python.org/pypi/raspberrystem_ide/")
+		rstemProjects, _ := http.Get("http://pypi.python.org/pypi/raspberrystem_projects/")
+		defer throwaway.Body.Close()
+		defer rstem.Body.Close()
+		defer rstemIde.Body.Close()
+		defer rstemProjects.Body.Close()
+		r := regexp.MustCompile("<title>[^:]+")
+		rstemc, _ := ioutil.ReadAll(rstem.Body)
+		rstemIdec, _ := ioutil.ReadAll(rstemIde.Body)
+		rstemProjectsc, _ := ioutil.ReadAll(rstemProjects.Body)
+		tmp := strings.Split(r.FindString(string(rstemc)), " ")
+		rstemv := tmp[len(tmp) - 2]
+		tmp = strings.Split(r.FindString(string(rstemIdec)), " ")
+		rstemIdev := tmp[len(tmp) - 2]
+		tmp = strings.Split(r.FindString(string(rstemProjectsc)), " ")
+		rstemProjectsv := tmp[len(tmp) - 2]
+
+		out, _ := exec.Command("pip-3.2", "freeze").CombinedOutput()
+		r = regexp.MustCompile("raspberrystem.*==\\d+\\.\\d+\\.\\d+")
+		rpackages := r.FindAllString(string(out), -1)
+		var rstemiv, rstemIdeiv, rstemProjectsiv = "uninstalled", "uninstalled", "uninstalled"
+		for _, v := range(rpackages) {
+			sp := strings.Split(v, "==")
+			if sp[0] == "raspberrystem" {
+				rstemiv = sp[1]
+			} else if sp[0] == "raspberrystem-ide" {
+				rstemIdeiv = sp[1]
+			} else if sp[0] == "raspberrystem-projects" {
+				rstemProjectsiv = sp[1]
+			}
+		}
+		io.WriteString(w, "{\n\t\"raspberrystem\": [\"" + rstemiv + "\", \"" + rstemv + "\"],\n")
+		io.WriteString(w, "\t\"raspberrystem-ide\": [\"" + rstemIdeiv + "\", \"" + rstemIdev + "\"],\n")
+		io.WriteString(w, "\t\"raspberrystem-projects\": [\"" + rstemProjectsiv + "\", \"" + rstemProjectsv + "\"]\n}")
+	} else {
+		io.WriteString(w, "ConnErr")
+	}
+}
+
 func setBootFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	r.ParseForm()
@@ -309,6 +358,28 @@ func setOverrideLastFile(w http.ResponseWriter, r *http.Request) {
 	savedConfig["overridelastfile"] = file
 	println("Setting override lastfile to " + file)
 	saveMap()
+}
+
+func upgradeServer(s *websocket.Conn) {
+	com := exec.Command("pip-3.2", "install", "--upgrade", "raspberrystem", "raspberrystem-projects", "raspberrystem-ide")
+	pt, _ := pty.Start(com)
+	for {
+		out := make([]byte, 1024)
+		n, err := pt.Read(out)
+		if err != nil {
+			s.Write([]byte(err.Error()))
+			break
+		} else {
+			s.Write(out[:n])
+		}
+		time.Sleep(time.Millisecond * 10) //For minimal CPU impact
+	}
+	com.Process.Wait()
+	s.Write([]byte("Upgrade finished, restarting IDE"))
+	out, _ := exec.Command("/etc/init.d/rstem_ided", "restart").CombinedOutput()
+	s.Write(out)
+	time.Sleep(time.Millisecond * 1000)
+	s.Close()
 }
 
 //Called as a goroutine to wait for the close command and kill the process.
