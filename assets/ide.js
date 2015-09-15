@@ -6,6 +6,15 @@ var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "settingsDialog"
 var leftButtons = ["Run", "Open File", "Save", "Theme"];
 var keybindings = {};
 
+// Polyfill endsWith/startsWith() support
+String.prototype.endsWith = function(suffix) {
+    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+};
+String.prototype.startsWith = function(searchString) {
+    return this.indexOf(searchString, 0) === 0;
+};
+
+
 window.onload = function() {
 	if (window.MozWebSocket)
 		window.WebSocket = window.MozWebSocket;
