@@ -1234,6 +1234,8 @@ function settingsDialog() {
 					config.overridelastfile = c;
 				}
 			}},
+            /* 
+            // Future (TBD) add run on boot support
 			"Run this file on boot:": { type: "checkbox", func: function() {
 				if (config.bootfiles.indexOf(filename) != -1) {
 					config.bootfiles = config.bootfiles.filter(function(x) {return x != filename;});
@@ -1243,6 +1245,7 @@ function settingsDialog() {
 				GET("/api/setbootfiles?files=" + config.bootfiles.join(','));
 				console.log(config.bootfiles);
 			}},
+            */
 			"Software Updates...": { type: "button", func: softwareDialog },
 			"Clean Shutdown": { type: "button", func: function() {
 				console.log("Poweroff");
