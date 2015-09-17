@@ -1095,7 +1095,7 @@ function softwareDialog() {
 
 			var cancel = document.createElement("div");
 			popup.appendChild(cancel);
-			cancel.innerHTML = "Cancel";
+			cancel.innerHTML = "OK";
 			cancel.classList.add("filecancel");
 			cancel.classList.add("button");
 			cancel.style.left = "27.5%";
@@ -1179,7 +1179,7 @@ function softwareDialog() {
 		update.style.marginTop = "-30px";
 		update.style.width = "25%";
 		update.style.left = "55%";
-		update.onclick = runUpdate; //TODO
+		update.onclick = runUpdate;
 	});
 }
 
