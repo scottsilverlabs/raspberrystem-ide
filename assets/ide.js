@@ -8,10 +8,10 @@ var keybindings = {};
 
 // Polyfill endsWith/startsWith() support
 String.prototype.endsWith = function(suffix) {
-    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+	return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 String.prototype.startsWith = function(searchString) {
-    return this.indexOf(searchString, 0) === 0;
+	return this.indexOf(searchString, 0) === 0;
 };
 
 
@@ -407,11 +407,11 @@ function errorHighlight() {
 	var msgs = outputText.innerHTML;
 	console.log(msgs);
 	var err = msgs.match(errDataRegex);
-    setOutput(msgs
+	setOutput(msgs
 		.replace(errMsgRegex, '$1<span style="color:red">$2</span>$3')
 		.replace(errFileRegex, '<span style="color:red">File "<\/span>$1"<span style="color:red">, line <\/span>$2<span style="color:red">$3<\/span>\n$4')
 		.replace(/Traceback \(most recent call last\):\n/, '<span style="color:red">$&</span>'));
-    console.log(err);
+	console.log(err);
 	if (err && err[1].endsWith("/"+filename)) {
 		var line = err[2] - 1;
 	    var lineText = editor.getLine(line);
@@ -560,22 +560,22 @@ function socket() {
 		editor.focus();
 	};
 	ws.onmessage = function(event) {
-        if (!outputOpen) {
-            outputPos = 0;
-            toggleOutput();
-            if (document.location.host == "127.0.0.1") {
-                stdin.focus();
-            } else {
-                setTimeout(function() {
-                    stdin.focus();
-                }, 1000);
-            }
-        }
+		if (!outputOpen) {
+			outputPos = 0;
+			toggleOutput();
+			if (document.location.host == "127.0.0.1") {
+				stdin.focus();
+			} else {
+				setTimeout(function() {
+					stdin.focus();
+				}, 1000);
+			}
+		}
 		message = event.data;
 		console.log(">>-----------<<");
 		console.log(message);
-        var cmd = message.substring(0,8);
-        var payload = message.substring(8).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+		var cmd = message.substring(0,8);
+		var payload = message.substring(8).replace(/</g, "&lt;").replace(/>/g, "&gt;");
 		if (cmd == "started:") {
 			document.getElementById("running").src = "/assets/images/running.gif";
 		} else if (cmd == "output :") {
@@ -720,6 +720,31 @@ function removePopup() {
 	}
 	back = null;
 	place = [0, 0];
+}
+
+function foreverAlert(titleText, bodyText) {
+	removePopup();
+
+	back = document.createElement("div");
+	document.body.appendChild(back);
+	back.classList.add("holder");
+	back.focus();
+
+	popup = document.createElement("div");
+	document.body.appendChild(popup);
+	popup.classList.add("filepopup");
+	popup.classList.add("popup");
+
+	var title = document.createElement("h1");
+	popup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.innerHTML = titleText;
+
+	text = document.createElement("div");
+	popup.appendChild(text);
+	text.classList.add("deletetext");
+	text.innerHTML = bodyText;
 }
 
 //Creates a basic yes/no prompt which calls yes or no based on response.
@@ -1099,7 +1124,7 @@ function softwareDialog() {
 			cancel.classList.add("filecancel");
 			cancel.classList.add("button");
 			cancel.style.left = "27.5%";
-    		cancel.style.top = "39px";
+			cancel.style.top = "39px";
 			cancel.onclick = settingsDialog;
 			setupButton(cancel, 0, 0);	
 			return
@@ -1183,9 +1208,23 @@ function softwareDialog() {
 	});
 }
 
+function shutdownDialog() {
+	ynPrompt("Shutdown", "Shutdown now?", function() {
+		foreverAlert("Shutdown", "Shutting down, please wait...");
+		console.log("Poweroff");
+		asyncGET("/api/poweroff");
+		if (document.location.host != "127.0.0.1") {
+			setTimeout(function() { removePopup(); }, 10000);
+		}
+	},
+	function() {
+		removePopup();
+	});
+}
+
 //Settings dialog
 function settingsDialog() {
-	var loopID = loading("Loading", "Generating file list");
+	var loopID = loading("Loading", "Generating settings information");
 	asyncGET("api/listfiles", function(response) {
 		console.log(response);
 		clearInterval(loopID);
@@ -1234,8 +1273,8 @@ function settingsDialog() {
 					config.overridelastfile = c;
 				}
 			}},
-            /* 
-            // Future (TBD) add run on boot support
+			/* 
+			// Future (TBD) add run on boot support
 			"Run this file on boot:": { type: "checkbox", func: function() {
 				if (config.bootfiles.indexOf(filename) != -1) {
 					config.bootfiles = config.bootfiles.filter(function(x) {return x != filename;});
@@ -1245,13 +1284,9 @@ function settingsDialog() {
 				GET("/api/setbootfiles?files=" + config.bootfiles.join(','));
 				console.log(config.bootfiles);
 			}},
-            */
+			*/
 			"Software Updates...": { type: "button", func: softwareDialog },
-			"Clean Shutdown": { type: "button", func: function() {
-				console.log("Poweroff");
-				GET("/api/poweroff");
-				removePopup();
-			}}
+			"Clean Shutdown": { type: "button", func: shutdownDialog }
 		};
 
 		var buttonnum = 0;
