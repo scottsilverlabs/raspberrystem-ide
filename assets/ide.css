@@ -70,7 +70,7 @@ td {
     height: 2em;
     filter: invert(100%);
     -webkit-filter: invert(100%);
-    margin-left: -2em;
+    margin-left: -40px;
     left: 100%;
 }
 
