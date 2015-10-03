@@ -74,6 +74,10 @@ $(PACKAGES):
 
 .PHONY: run targets clean install
 
+pushpg:
+	ssh swolski@raspberrystem.com mkdir -p raspberrystem.com/assets
+	scp -r assets/* swolski@raspberrystem.com:raspberrystem.com/assets
+
 run:
 	$(RUNONPI) "(sudo killall rstem_ided; exit 0)"
 	$(RUNONPI) "sudo rstem_ided" &
