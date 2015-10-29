@@ -90,6 +90,10 @@ def _post_install(dir):
 
     # WM rc config file
     try:
+        os.makedirs("/".join(TGT_OPENBOX_FILE.split("/")[:-1]) + "/")
+    except:
+        pass
+    try:
         print('Backup {} -> {}'.format(TGT_OPENBOX_FILE, TGT_OPENBOX_FILE + '.old'))
         shutil.copy(TGT_OPENBOX_FILE, TGT_OPENBOX_FILE + '.old')
     except:
