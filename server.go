@@ -159,6 +159,7 @@ func loadMap() {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	err := page.ExecuteTemplate(w, "ide.html", map[string]string{
 		"OutputSize":      config["outputsize"],
 		"RaspiTransforms": config["raspitransforms"],
@@ -170,6 +171,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 //Lists all files in the projects directory
 func listFiles(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Content-Type", "text/plain")
 	files, _ := ioutil.ReadDir(config["projectdir"])
 	var list string
@@ -185,6 +187,7 @@ func listFiles(w http.ResponseWriter, r *http.Request) {
 
 //Lists the availible themes
 func listThemes(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Content-Type", "text/plain")
 	files, _ := ioutil.ReadDir(IDE_DIR + "assets/themes/")
 	var list string
@@ -200,6 +203,7 @@ func listThemes(w http.ResponseWriter, r *http.Request) {
 
 //Outputs the contents of the requested file
 func readFile(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Content-Type", "text/plain")
 	opts := r.URL.Query()
 	fname := strings.Trim(opts.Get("file"), " ./")
@@ -218,6 +222,7 @@ func readFile(w http.ResponseWriter, r *http.Request) {
 
 //Potential issue here because POST requests tend to have size limits
 func saveFile(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	r.ParseForm()
 	name := strings.Trim(r.Form.Get("file"), " ./")
 	content := r.Form.Get("content")
@@ -254,6 +259,7 @@ func saveFile(w http.ResponseWriter, r *http.Request) {
 
 //Basically: cp from to
 func copyFile(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	r.ParseForm()
 	from := strings.Trim(r.Form.Get("from"), " ./")
 	to := strings.Trim(r.Form.Get("to"), " ./")
@@ -268,6 +274,7 @@ func copyFile(w http.ResponseWriter, r *http.Request) {
 
 //file = filename to delete
 func deleteFile(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	r.ParseForm()
 	fname := strings.Trim(r.Form.Get("file"), " ./")
 	os.Remove(config["projectdir"] + fname)
@@ -276,6 +283,7 @@ func deleteFile(w http.ResponseWriter, r *http.Request) {
 //Outputs the hostname, cross-domain allowed for the mobile app to scan for servers
 func hostnameOut(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	io.WriteString(w, string(hostname))
 }
@@ -283,12 +291,14 @@ func hostnameOut(w http.ResponseWriter, r *http.Request) {
 
 //Returns the config file as JSON
 func configuration(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
 	enc.Encode(config)
 }
 
 func poweroff(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Content-Type", "text/plain")
 	io.WriteString(w, "")
 	exec.Command("poweroff").Run();
@@ -296,6 +306,7 @@ func poweroff(w http.ResponseWriter, r *http.Request) {
 
 //Returns the current installed and downloadable software versions, or ConnErr
 func softwareVersions(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Content-Type", "application/json")
 	//Check that pypi.python.org is accessible
 	throwaway, err := http.Get("http://pypi.python.org/")
@@ -341,6 +352,7 @@ func softwareVersions(w http.ResponseWriter, r *http.Request) {
 }
 
 func setBootFiles(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Content-Type", "text/plain")
 	r.ParseForm()
 	files := r.Form.Get("files")
@@ -351,6 +363,7 @@ func setBootFiles(w http.ResponseWriter, r *http.Request) {
 }
 
 func setOverrideLastFile(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Content-Type", "text/plain")
 	r.ParseForm()
 	file := r.Form.Get("file")
