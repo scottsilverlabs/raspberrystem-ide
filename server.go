@@ -118,6 +118,7 @@ func main() {
 	http.HandleFunc("/api/deletefile", deleteFile)
 	http.HandleFunc("/api/hostname", hostnameOut)
 	http.HandleFunc("/api/poweroff", poweroff)
+	http.HandleFunc("/api/reboot", reboot)
 	http.HandleFunc("/api/setbootfiles", setBootFiles)
 	http.HandleFunc("/api/setoverridelastfile", setOverrideLastFile)
 	http.HandleFunc("/api/configuration", configuration)
@@ -302,6 +303,13 @@ func poweroff(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	io.WriteString(w, "")
 	exec.Command("poweroff").Run();
+}
+
+func reboot(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Content-Type", "text/plain")
+	io.WriteString(w, "")
+	exec.Command("reboot").Run();
 }
 
 //Returns the current installed and downloadable software versions, or ConnErr

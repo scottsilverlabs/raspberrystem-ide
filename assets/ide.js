@@ -747,6 +747,45 @@ function foreverAlert(titleText, bodyText) {
 	text.innerHTML = bodyText;
 }
 
+//Creates a basic message prompt
+function confirmPrompt(titleText, bodyText, okayText, callback) {
+	removePopup();
+	
+	back = document.createElement("div");
+	document.body.appendChild(back);
+	back.classList.add("holder");
+	back.focus();
+
+	popup = document.createElement("div");
+	document.body.appendChild(popup);
+	popup.classList.add("filepopup");
+	popup.classList.add("popup");
+	popup.style.height = "163px";
+	back.onclick = removePopup;
+
+	var title = document.createElement("h1");
+	popup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.innerHTML = titleText;
+
+	text = document.createElement("div");
+	popup.appendChild(text);
+	text.classList.add("deletetext");
+	text.style.height = "87px";
+	text.innerHTML = bodyText;
+
+	var okay = document.createElement("div");
+	popup.appendChild(okay);
+	okay.classList.add("fileokay");
+	okay.classList.add("button");
+	okay.onclick = callback;
+	okay.style.left = "27.5%";
+	console.log(okayText);
+	okay.innerHTML = okayText;
+	setupButton(okay, 0, 0);
+}
+
 //Creates a basic yes/no prompt which calls yes or no based on response.
 function ynPrompt(titleText, bodyText, yes, no) {
 	removePopup();
@@ -1209,7 +1248,64 @@ function softwareDialog() {
 }
 
 function shutdownDialog() {
-	ynPrompt("Shutdown", "Shutdown now?", function() {
+	var buttons = [
+		["Shutdown", function() {
+			if (document.location.host == "127.0.0.1")
+				foreverAlert("Shutting Down", "The RaspberrySTEM will now reboot.");
+			else
+				confirmPrompt("Shutting Down", "The RaspberrySTEM will now shutdown. The RaspberrySTEM Development Environment will not be usable until the RaspberrySTEM is restarted.", "OK", removePopup)
+			asyncGET("/api/poweroff");
+		}],
+		["Reboot", function() {
+			if (document.location.host == "127.0.0.1")
+				foreverAlert("Rebooting", "The RaspberrySTEM will now shutdown.");
+			else
+				confirmPrompt("Rebooting", "The RaspberrySTEM will now reboot. The RaspberrySTEM Development Environment will not be usable until the RaspberrySTEM restarts.", "OK", removePopup)
+			asyncGET("/api/reboot");
+		}],
+		["Cancel", settingsDialog]
+	];
+
+	removePopup();
+
+	back = document.createElement("div");
+	document.body.appendChild(back);
+	back.classList.add("holder");
+	back.focus();
+
+	popup = document.createElement("div");
+	document.body.appendChild(popup);
+	popup.classList.add("folderpopup");
+	popup.classList.add("popup");
+	popup.style.height = "151px";
+	back.onclick = removePopup;
+
+	var title = document.createElement("h1");
+	popup.appendChild(title);
+	title.classList.add("popuptitle");
+	title.classList.add("maincolor");
+	title.innerHTML = "Clean Shutdown";
+
+	var fileholder = document.createElement("div");
+	popup.appendChild(fileholder);
+	fileholder.classList.add("fileholder");
+	fileholder.style.height = "110px";
+	fileholder.style.margin = "0";
+	fileholder.style.marginLeft = "15px";
+	fileholder.style.marginRight = "15px";
+
+	for (var i in buttons) {
+		var b = buttons[i];
+
+		var button = document.createElement("div");
+		fileholder.appendChild(button);
+		button.innerHTML = b[0];
+		button.classList.add("filebutton");
+		button.onclick = b[1];
+		setupButton(button, 0, i);
+	}
+
+/*	ynPrompt("Shutdown", "Shutdown now?", function() {
 		foreverAlert("Shutdown", "Shutting down, please wait...");
 		console.log("Poweroff");
 		asyncGET("/api/poweroff");
@@ -1219,7 +1315,7 @@ function shutdownDialog() {
 	},
 	function() {
 		removePopup();
-	});
+	});*/
 }
 
 //Settings dialog
