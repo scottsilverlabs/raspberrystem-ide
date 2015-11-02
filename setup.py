@@ -33,6 +33,7 @@ TGT_CONFIG_FILE = '/etc/rstem_ide.conf'
 TGT_BIN_SYMLINK = '/usr/local/bin/rstem_ided'
 TGT_INITD = '/etc/init.d/rstem_ided'
 TGT_OPENBOX_FILE = '/home/pi/.config/openbox/lxde-pi-rc.xml'
+TGT_DESKTOP_FILE = '/home/pi/desktop/openbox/rstem.desktop'
 outputs = [
     TGT_INSTALL_DIR,
     TGT_PYTHON_DOCS_DIR,
@@ -100,6 +101,10 @@ def _post_install(dir):
         pass
     print('Copy {} -> {}'.format("./configfiles/lxde-pi-rc.xml", TGT_OPENBOX_FILE))
     shutil.copy("./configfiles/lxde-pi-rc.xml", TGT_OPENBOX_FILE)
+
+    # Desktop link
+    print('Copy {} -> {}'.format("./configfiles/rstem.desktop", TGT_DESKTOP_FILE))
+    shutil.copy("./configfiles/rstem.desktop", TGT_DESKTOP_FILE)
 
     # Additional post install steps via shell script
     from subprocess import call

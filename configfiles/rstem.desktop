@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RaspberrySTEM IDE
+Comment=
+Exec=/opt/raspberrystem/ide/start_ide
+Icon=/opt/raspberrystem/ide/assets/images/rstemlogo.png
+Path=
+Terminal=false
+StartupNotify=false
