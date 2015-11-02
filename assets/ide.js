@@ -1090,6 +1090,10 @@ function runUpdate() {
 	document.body.appendChild(newpopup);
 	newpopup.classList.add("filepopup");
 	newpopup.classList.add("popup");
+	newpopup.style.left = "37.5%";
+	newpopup.style.top = "37.5%";
+	newpopup.style.height = "50%";
+	newpopup.style.width = "50%";
 
 	var title = document.createElement("h1");
 	newpopup.appendChild(title);
@@ -1104,24 +1108,19 @@ function runUpdate() {
 	text.marginTop = "0.2em";
 	text.style.height = "70px";
 	text.style.fontSize = "0.9em";
-	text.innerHTML = "Updating using pip";
-	text.style.overflow = "hidden";
+	text.innerHTML = "Updating using pip<br>";
+	text.style.overflowY = "auto";
+	text.style.height = "90%";
 
-	ws = new WebSocket("ws://"+document.location.host+"/api/upgrade");
+	var ws = new WebSocket("ws://" + document.location.host + "/api/upgrade");
 	ws.onopen = function(event) {};
 	ws.onclose = function(event) {
+		removePopup();
 		document.body.removeChild(newback);
 		document.body.removeChild(newpopup);
 	};
 	ws.onmessage = function(event) {
-		var msg = event.data.split("\n");
-		console.log(msg);
-		var last = msg[msg.length - 1] == "" ? msg[msg.length - 2] : msg[msg.length - 1];
-		console.log(last);
-		var lastIn = last.lastIndexOf("Downloading");
-		if (lastIn != -1)
-			last = last.substring(lastIn);
-		text.innerHTML = last;
+		text.innerHTML += event.data.replace(/\n/g, "<br>");
 	};
 }
 
