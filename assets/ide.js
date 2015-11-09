@@ -832,6 +832,8 @@ function ynPrompt(titleText, bodyText, yes, no) {
 //Are you sure prompt for file deletion
 function deletePrompt(fname) {
 	ynPrompt("Delete", "Delete " + fname + "?", function() {
+		if (fname == filename)
+			loadFile("Untitled.py")
 		POST("/api/deletefile", {"file": fname});
 		removePopup();
 		openFile();
