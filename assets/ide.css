@@ -70,8 +70,12 @@ td {
     height: 2em;
     filter: invert(100%);
     -webkit-filter: invert(100%);
-    margin-left: -40px;
+    margin-left: -2em;
     left: 100%;
+}
+
+.outputbuttonclosed {
+    margin-top: -5em !important;
 }
 
 .fancybutton:hover {

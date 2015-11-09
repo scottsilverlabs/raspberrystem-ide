@@ -1,6 +1,7 @@
 var run, save, GET, POST, changeHandle, changeSocket, openFile, removePopup,
 	changeSocketInit, toggleOutput, toggleWeb, settingsDialog; //Function prototypes
-var config, outputOpen, outputPos, back, ws = null, titleText, filename, type, changed, webShowing = false, themes, currentTheme;
+var config, outputOpen, outputPos, back, ws = null, titleText, filename, type, changed,
+	webShowing = false, themes, currentTheme, outputbutton;
 var bindableFunc = ["save", "run", "toggleWeb", "toggleOutput", "settingsDialog",
 	"openFile"];
 var leftButtons = ["Run", "Open File", "Save", "Theme"];
@@ -16,10 +17,11 @@ String.prototype.startsWith = function(searchString) {
 
 
 window.onload = function() {
+	outputbutton = document.getElementById("outputbutton");
 	if (window.MozWebSocket)
 		window.WebSocket = window.MozWebSocket;
 	if (document.location.host == "127.0.0.1")
-		document.getElementById("outputbutton").src = "/assets/images/arrow-down.png";
+		outputbutton.src = "/assets/images/arrow-down.png";
 
 	codewrapper = document.getElementById("codewrapper");
 	output = document.getElementById("output");
@@ -148,6 +150,18 @@ window.onbeforeunload = function() {
 
 //Process keybindings
 window.onkeydown = function(k) {
+	//Checks to move the output arrow if to avoid it overlapping with the scrollbar
+	if (editor.getScrollerElement().scrollHeight > editor.getScrollerElement().clientHeight) {
+		outputbutton.style.marginLeft = "-40px";
+	} else {
+		outputbutton.style.marginLeft = ""; //"-2em"
+	}
+	if (editor.getScrollerElement().scrollWidth > editor.getScrollerElement().clientWidth) {
+		outputbutton.style.marginTop = "-6em";
+	} else {
+		outputbutton.style.marginTop = "";//"-5em";
+	}
+
 	var keyseq = "";
 	if (k.ctrlKey || k.metaKey)
 		keyseq += "ctrl+";
@@ -1551,18 +1565,19 @@ function setTheme(name) {
 
 outputOpen = true;
 function toggleOutput() {
-	var button = document.getElementById("outputbutton");
 	outputOpen = !outputOpen;
 	if (!outputOpen) {
 		outputPos = outputHolder.scrollTop;
-		button.src = "/assets/images/arrow-up.png";
+		outputbutton.src = "/assets/images/arrow-up.png";
+		outputbutton.classList.add("outputbuttonclosed")
 		output.classList.remove("outputOpen");
 		output.classList.add("outputClosed");
 		codewrapper.classList.remove("codeShort");
 		codewrapper.classList.add("codeLong");
 		setTimeout(function() { ide.scrollIntoViewIfNeeded(); }, 10);
 	} else {
-		button.src = "/assets/images/arrow-down.png";
+		outputbutton.src = "/assets/images/arrow-down.png";
+		outputbutton.classList.remove("outputbuttonclosed")
 		output.classList.remove("outputClosed");
 		output.classList.add("outputOpen");
 		codewrapper.classList.remove("codeLong");
